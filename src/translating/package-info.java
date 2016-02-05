@@ -1,0 +1,8 @@
+/**
+ * 
+ */
+/**
+ * @author ignasi
+ *
+ */
+package translating;
