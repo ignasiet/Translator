@@ -163,6 +163,7 @@ public class LinearTranslation extends Translation{
 	}
 
 	protected void translateActions(Hashtable<String, Action> list_actions) {
+		//TODO: test when Tags are needed
 		Enumeration<String> e = list_actions.keys();
 		while(e.hasMoreElements()){
 			Action a = list_actions.get(e.nextElement().toString());
