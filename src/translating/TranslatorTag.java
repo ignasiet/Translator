@@ -15,7 +15,7 @@ import pddlElements.Effect;
  * @author ignasi
  *
  */
-public class Translator_Kt extends Translation{
+public class TranslatorTag extends Translation{
 
 	/**
 	 * 
@@ -27,12 +27,14 @@ public class Translator_Kt extends Translation{
 	private Hashtable<String,ArrayList<String>> taggedEffects = new Hashtable<String,ArrayList<String>>();
 	//protected ArrayList<String> predicates_opposed;
 	private Domain domain_translated = new Domain();
+	private Domain domain_to_trans;
 	
-	public Translator_Kt(Domain domain_to_translate) {
+	public TranslatorTag(Domain domain_to_translate) {
 		// 0 - Copy domain metadata
 		list_disjunctions = domain_to_translate.list_disjunctions;
 		domain_translated.Name = domain_to_translate.Name;
 		domain_translated.ProblemInstance = domain_to_translate.ProblemInstance;
+		domain_to_trans = domain_to_translate;
 		// 1 - Translate predicates (all)
 		translatePredicates(domain_to_translate.predicates_grounded, domain_to_translate.predicates_invariants_grounded);
 		// 2-Translate initial state
@@ -57,16 +59,14 @@ public class Translator_Kt extends Translation{
 
 	private void addTagMaximalEffects(Action a, Action a_translated) {
 		//1 - Tag maximal:
-		//If this action has any precondition that is affected by uncertainty, 
+		// If this action has any precondition that is affected by uncertainty, 
 		// effects carry the uncertainty with tags -> add effects multiplied by tags
-		for(String precond: a._precond){
-			Disjunction set_tag = needsEffectsTagMaximal(precond);
+		// trying something different:
+		for(Disjunction set_tag : list_disjunctions){
 			if(set_tag != null){
 				//1- Take preconditions different from tag and add as K operators
-				for(String tag : set_tag.getIterator()){
-					Effect support_e = new Effect();
-					Effect cancel_e = new Effect();
-					for(String precond_not_uncertain : a._precond){
+				for(String tag : set_tag.getIterator()){					
+					/*for(String precond_not_uncertain : a._precond){
 						if(!precond_not_uncertain.equals(precond)){
 							support_e._Condition.add("K" + precond_not_uncertain);
 							cancel_e._Condition.add("~K" + ParserHelper.complement(precond_not_uncertain));
@@ -79,11 +79,19 @@ public class Translator_Kt extends Translation{
 						addPredicate("K" + precond_not_uncertain + _Tags.get(tag));
 						addPredicate("K" + ParserHelper.complement(precond_not_uncertain));
 						addPredicate("K" + ParserHelper.complement(precond_not_uncertain) + _Tags.get(tag));
-					}
+					}*/
 					for(Effect effect : a._Effects){
+						Effect support_e = new Effect();
+						Effect cancel_e = new Effect();
+						for(String preconditions : a._precond){
+							support_e._Condition.add("K" + preconditions + _Tags.get(tag));
+							cancel_e._Condition.add("~K" + ParserHelper.complement(preconditions) + _Tags.get(tag));
+							addPredicate("K" + preconditions + _Tags.get(tag));
+							addPredicate("K" + ParserHelper.complement(preconditions) + _Tags.get(tag));
+						}
 						for(String effect_condition : effect._Condition){
-							support_e._Condition.add("K" + effect_condition);
-							cancel_e._Condition.add("~K" + ParserHelper.complement(effect_condition));
+							support_e._Condition.add("K" + effect_condition + _Tags.get(tag));
+							cancel_e._Condition.add("~K" + ParserHelper.complement(effect_condition) + _Tags.get(tag));
 							addPredicate("K" + effect_condition);
 							addPredicate("K" + ParserHelper.complement(effect_condition));
 						}
@@ -94,9 +102,9 @@ public class Translator_Kt extends Translation{
 							addPredicate("K" + effect_effect + _Tags.get(tag));
 							addPredicate("K" + ParserHelper.complement(effect_effect) + _Tags.get(tag));
 						}
-					}
-					a_translated._Effects.add(support_e);
-					a_translated._Effects.add(cancel_e);
+						a_translated._Effects.add(support_e);
+						a_translated._Effects.add(cancel_e);
+					}					
 				}				
 			}
 		}
@@ -148,7 +156,7 @@ public class Translator_Kt extends Translation{
 
 	private void addDeductiveActions(Domain domain_to_translate) {
 		Action a = new Action();
-		a.Name = "Closure-merge-K";
+		a.Name = "Closure_mergep_K";
 		for(Disjunction disj: domain_to_translate.list_disjunctions){			
 			for(String predicate : disj.getIterator()){
 				Effect kEffect = new Effect();
@@ -195,7 +203,7 @@ public class Translator_Kt extends Translation{
 			ArrayList<String> list_tags = taggedEffects.get(predicate);
 			Action a = new Action();
 			a.deductive_action = true;
-			a.Name = "Contingent-Merge-" + predicate;
+			a.Name = "Closure_Mergep_" + predicate;
 			Effect eff = new Effect();
 			eff._Effects.add("K" + predicate);
 			for(String tag : list_tags){
@@ -217,11 +225,11 @@ public class Translator_Kt extends Translation{
 				Action a_translated = new Action();
 				a_translated.IsObservation = false;
 				a_translated.Name = a.Name;
-				for(String precondition : a._precond){
+				/*for(String precondition : a._precond){
 					//Preconditions now are conditions of conditionals effects
 					//TODO: add M-predicates
 					a_translated._precond.add("K" + precondition);
-				}
+				}*/
 				if(a.deductive_action){
 					a_translated.deductive_action = true;
 				}
@@ -275,10 +283,25 @@ public class Translator_Kt extends Translation{
 			addPredicate("K" + effect);
 			cancelRule._Effects.add("~K" + ParserHelper.complement(effect));
 			addPredicate("K" + ParserHelper.complement(effect));
+			if(!effect.startsWith("~") && isFalseInitially(effect)){
+				domain_translated.state.put("K~" + effect, 1);
+			}
 		}
 		returnList.add(supportRule);
 		returnList.add(cancelRule);
 		return returnList;
+	}
+
+	private boolean isFalseInitially(String effect) {
+		if(!domain_to_trans.state.containsKey(effect)){
+			for(Disjunction d : list_disjunctions){
+				if(d.contains(effect)){
+					return false;
+				}
+			}
+			return true;
+		}
+		return false;
 	}
 
 	private void translateObservations(Action a) {
@@ -307,12 +330,22 @@ public class Translator_Kt extends Translation{
 				branch1._Branches.add("~K" + ParserHelper.complement(effect_result));
 				branch2._Branches.add("~K" + effect_result);
 				branch2._Branches.add("K" + ParserHelper.complement(effect_result));
-				for(Disjunction disj : list_disjunctions){
+				//Modified here
+				/*for(Disjunction disj : list_disjunctions){
 					if(disj.contains(effect_result)){
 						for(String tag : disj.getIterator()){
 							branch1._Branches.add("K" + effect_result + _Tags.get(tag));
 							branch2._Branches.add("K" + ParserHelper.complement(effect_result)+ _Tags.get(tag));
 						}
+					}
+				}*/
+				//End here
+				for(Disjunction disj : list_disjunctions){
+					for(String tag : disj.getIterator()){
+						branch1._Branches.add("K" + effect_result + _Tags.get(tag));
+						branch2._Branches.add("K" + ParserHelper.complement(effect_result)+ _Tags.get(tag));
+						addPredicate("K" + effect_result + _Tags.get(tag));
+						addPredicate("K" + ParserHelper.complement(effect_result) + _Tags.get(tag));
 					}
 				}
 			}

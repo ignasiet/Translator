@@ -28,6 +28,7 @@ public class Main {
 		options.addOption("d", "domain", true, "Domain file.");
 		options.addOption("p", "problem", true, "Problem file.");
 		options.addOption("r", "hidden", true, "Real World file.");
+		options.addOption("t", "trans", true, "Translation.");
 		
 		try {
 	        // parse the command line arguments
@@ -49,11 +50,25 @@ public class Main {
 					System.out.println("No simulation");
 					simulateFlag = false;
 				}
+				String translationType = "ktype";
+				if(cmd.hasOption("t")){
+					switch(cmd.getOptionValue("t")){
+					case "1":
+						translationType = "linear";
+						break;
+					case "2":
+						translationType = "deadend";
+						break;
+					default:
+						translationType = "ktype";
+						break;
+					}					
+				}
 				String domainfile = cmd.getOptionValue("d");
 				String problemfile = cmd.getOptionValue("p");
 				String outputfile = cmd.getOptionValue("o");
 				String hiddenfile = cmd.getOptionValue("r");
-				Planner.startPlanner(domainfile, problemfile, hiddenfile, outputfile);
+				Planner.startPlanner(domainfile, problemfile, hiddenfile, outputfile, translationType);
 				//Time for the planner:
 				for(int i = 0; i<10; i++){
 					long startTime = System.currentTimeMillis();

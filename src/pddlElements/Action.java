@@ -80,7 +80,7 @@ public class Action{
 	    		//_Positive_effects.add(effect);
 	    	}
 	    }
-		this._Effects.add(e);
+		_Effects.add(e);
 	}
 	
 	public String ToString(String negateString){
@@ -110,23 +110,30 @@ public class Action{
 		if(!_Effects.isEmpty()){
 			auxStr = auxStr + "\n:effect ";
 			auxStr = auxStr + "(and ";
+			String condEffects = "";
+			String auxStrEffects = "";
 			for(Effect ef : _Effects){
-				if(ef._Condition.isEmpty()){
+				if(ef._Condition.isEmpty()){					
 					for(String effect : ef._Effects){
-						auxStr = auxStr + ParserHelper.negateString(effect, negateString);
+						auxStrEffects = auxStrEffects + ParserHelper.negateString(effect, negateString);
 					}
 				}else{
-					auxStr = auxStr + "\n(when (and ";
+					condEffects = condEffects + "\n(when (and ";
 					for(String effect : ef._Condition){
-						auxStr = auxStr + ParserHelper.negateString(effect, negateString);
+						condEffects = condEffects + ParserHelper.negateString(effect, negateString);
 					}					
-					auxStr = auxStr + ") (and ";
+					condEffects = condEffects + ") (and ";
 					for(String effect : ef._Effects){
-						auxStr = auxStr + ParserHelper.negateString(effect, negateString);
+						condEffects = condEffects + ParserHelper.negateString(effect, negateString);
 					}
-					auxStr = auxStr + "))";
+					condEffects = condEffects + "))";
 				}
 			}
+			if(auxStrEffects.length() > 1){
+				auxStr = auxStr + auxStrEffects + "\n" + condEffects;
+			}else{
+				auxStr = auxStr + condEffects;
+			}			
 			auxStr = auxStr + ")";
 		}
 		if(IsObservation){

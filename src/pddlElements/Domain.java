@@ -32,6 +32,7 @@ public class Domain {
 	public String ProblemInstance;
 	private Integer counter = 0;
 	public ArrayList<Axiom> _Axioms = new ArrayList<Axiom>();
+	//public Hashtable<String, ArrayList<String>> relevance = new Hashtable<String, ArrayList<String>>();
 	
 	
 	public void parsePredicates(String predicates_list){
@@ -92,7 +93,12 @@ public class Domain {
 
 	public void ground_all_actions() {
 		for(Action a : action_list){
-			ground_actions(a);
+			if(!a._parameters.isEmpty()){
+				ground_actions(a);
+			}else{
+				System.out.println("Action already instantiated: " + a.Name);
+				list_actions.put(a.Name, a);
+			}
 		}
 	}
 	
@@ -115,7 +121,7 @@ public class Domain {
 		}
 		for(Action a : action_list){
 			for(String predicate : a._precond){
-				String auxPredicate = predicate;
+				String auxPredicate = predicate;				
 				if(predicate.contains("_")){
 					auxPredicate = predicate.substring(0, predicate.indexOf("_"));
 				}
@@ -125,7 +131,7 @@ public class Domain {
 			}
 			for(Effect eff : a._Effects){
 				for(String eff_cond : eff._Condition){
-					String auxPredicate = eff_cond;
+					String auxPredicate = eff_cond.replace("~", "");
 					if(eff_cond.contains("_")){
 						auxPredicate = eff_cond.substring(0, eff_cond.indexOf("_"));
 					}
@@ -138,6 +144,7 @@ public class Domain {
 	}
 	
 	private boolean isUncertain(String predicate){
+		predicate = predicate.replace("~", "");
 		for(Disjunction disj: list_disjunctions){
 			if(disj.hasInside(predicate)){
 				return true;
@@ -336,9 +343,12 @@ public class Domain {
 	}*/
 	
 	public void parseGoalState(String goal_state){
-		Matcher m = Pattern.compile("\\(([^)]+)\\)").matcher(goal_state);
-	    while(m.find()) {	    	
-	    	goalState.add(ParserHelper.cleanString(m.group(1)));
+		//Matcher m = Pattern.compile("\\(([^)]+)\\)").matcher(goal_state);
+		Matcher m = Pattern.compile("\\((.*?)\\)").matcher(goal_state);
+	    while(m.find()) {
+	    	String aux = m.group(1);
+	    	aux = aux.replace("(", "").trim();
+	    	goalState.add(ParserHelper.cleanString(aux));
 	    }
 	}
 	

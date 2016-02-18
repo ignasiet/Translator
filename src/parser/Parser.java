@@ -1,6 +1,7 @@
 package parser;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Scanner;
 
@@ -106,7 +107,8 @@ public class Parser {
 			cleanedElement = cleanedElement.trim().replace("\n", "");
 			cleanedElement = cleanedElement.replaceAll("\\s+", " ");
 			cleanedElement = cleanedElement.substring(2, cleanedElement.length()-1).trim();
-			cleanedElement = cleanedElement.substring(2, cleanedElement.length()-1).trim();
+			cleanedElement = cleanedElement.trim().replace(":", "");
+			//cleanedElement = cleanedElement.substring(2, cleanedElement.length()-1).trim();
 			_Domain.parseGoalState(cleanedElement);
 			break;
 		default:
@@ -137,6 +139,49 @@ public class Parser {
 			break;
 		case "effect":
 			/*Tirar parentesis*/
+			/*First loop to iterate and decompose the effects*/
+			ExprList e = ParserHelper.itemize(predicate);
+			Iterator<Expr> it = e.iterator();
+			ArrayList<String> list = new ArrayList<String>();
+			if(predicate.contains("and")){
+				while(it.hasNext()){
+					String s = it.next().toString().trim();
+					if(!s.equals("and")){
+						if(s.contains("when")){
+							a._IsConditionalEffect = true;
+							Effect effect = new Effect(s);
+							a._Effects.add(effect);
+						}else{
+							s = cleanParentesis(s);
+							list.add(s);
+						}
+					}
+				}
+			}else{
+				if(predicate.contains("when")){
+					a._IsConditionalEffect = true;
+					Effect effect = new Effect(predicate);
+					a._Effects.add(effect);
+				}else{
+					predicate = cleanParentesis(predicate);
+					list.add(predicate);
+				}
+			}
+			/*while(it.hasNext()){
+				String s = it.next().toString().trim();
+				if(!s.equals("and")){
+					if(s.contains("when")){
+						a._IsConditionalEffect = true;
+						Effect effect = new Effect(s);
+						a._Effects.add(effect);
+					}else{
+						s = cleanParentesis(s);
+						list.add(s);
+					}
+				}
+			}*/
+			a.parseEffects(list.toString());
+			/*
 			if(predicate.contains("when")){
 				a._IsConditionalEffect = true;
 				Effect effect = new Effect(predicate);
@@ -144,7 +189,7 @@ public class Parser {
 			}else{
 				predicate = cleanParentesis(predicate);
 				a.parseEffects(predicate);
-			}			
+			}*/
 			break;
 		}
 	}

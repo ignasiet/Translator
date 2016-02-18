@@ -162,9 +162,9 @@ public class ParserHelper {
 						newCond.add(cond);
 					}
 				}
-				eff._Condition = newCond;
-			}
-			
+				eff._Condition = (ArrayList<String>) newCond.clone();
+				newCond.clear();
+			}			
 		}
 		//TODO: 4- Clean predicates 
 		return domain;

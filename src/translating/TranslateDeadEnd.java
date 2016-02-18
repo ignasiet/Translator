@@ -10,12 +10,13 @@ import pddlElements.Branch;
 import pddlElements.Disjunction;
 import pddlElements.Domain;
 import pddlElements.Effect;
+import planner.CausalGraph;
 
 /**
  * @author ignasi
  *
  */
-public class Translator_Kt extends Translation{
+public class TranslateDeadEnd extends Translation{
 
 	/**
 	 * 
@@ -27,9 +28,11 @@ public class Translator_Kt extends Translation{
 	private Hashtable<String,ArrayList<String>> taggedEffects = new Hashtable<String,ArrayList<String>>();
 	//protected ArrayList<String> predicates_opposed;
 	private Domain domain_translated = new Domain();
+	private CausalGraph causal;
 	
-	public Translator_Kt(Domain domain_to_translate) {
+	public TranslateDeadEnd(Domain domain_to_translate, CausalGraph cg) {
 		// 0 - Copy domain metadata
+		causal = cg;
 		list_disjunctions = domain_to_translate.list_disjunctions;
 		domain_translated.Name = domain_to_translate.Name;
 		domain_translated.ProblemInstance = domain_to_translate.ProblemInstance;
@@ -211,12 +214,18 @@ public class Translator_Kt extends Translation{
 		Enumeration<String> e = list_actions.keys();
 		while(e.hasMoreElements()){
 			Action a = list_actions.get(e.nextElement().toString());
+			Effect complexEff;
+			if((complexEff = isComplex(a))!=null){
+				a._Effects.remove(a._Effects.indexOf(complexEff));
+				translateDeadAction(a, complexEff);
+			}
 			if(a.IsObservation){
 				translateObservations(a);
 			}else{
 				Action a_translated = new Action();
 				a_translated.IsObservation = false;
 				a_translated.Name = a.Name;
+				
 				for(String precondition : a._precond){
 					//Preconditions now are conditions of conditionals effects
 					//TODO: add M-predicates
@@ -229,7 +238,10 @@ public class Translator_Kt extends Translation{
 					a_translated._IsConditionalEffect = true;
 				}
 				for(Effect eff : a._Effects){
-					a_translated._Effects.addAll(translateEffects(eff, a._precond));
+					ArrayList<Effect> list_effects = translateEffects(eff, a._precond);
+					if(list_effects != null){
+						a_translated._Effects.addAll(list_effects);
+					}
 				}
 				if(!a.deductive_action){
 					addTagMaximalEffects(a, a_translated);
@@ -237,6 +249,27 @@ public class Translator_Kt extends Translation{
 				domain_translated.list_actions.put(a_translated.Name, a_translated);
 			}
 		}
+	}
+	
+	private Effect isComplex(Action a){
+		if(a.IsObservation){
+			return null;
+		}
+		for(Effect eff: a._Effects){
+			for(String cond : eff._Condition){
+				if(_Tags.containsKey(cond.replace("~", ""))){
+					System.out.println("Warning, uncertain cond in effect (not a simple problem): " + cond);
+					if(causal.isPossibleDeadEnd(eff)){
+						System.out.println("Dead end effect (probably): ");
+						System.out.println("Condition: " + eff._Condition.toString());
+						System.out.println("Effects: " + eff._Effects.toString());
+					}
+					//translateDeadAction(eff, _precond, cond);
+					return eff;
+				}
+			}
+		}
+		return null;
 	}
 	
 	private Disjunction needsEffectsTagMaximal(String predicate){
@@ -266,7 +299,7 @@ public class Translator_Kt extends Translation{
 		}
 		for(String effect : eff._Effects){
 			supportRule._Effects.add("K" + effect);
-			//TODO: eliminate effects starting with ~:
+			//todo: eliminate effects starting with ~:
 			if(effect.startsWith("~")){
 				supportRule._Effects.add("~K" + effect.substring(1));
 			}else{
@@ -279,6 +312,42 @@ public class Translator_Kt extends Translation{
 		returnList.add(supportRule);
 		returnList.add(cancelRule);
 		return returnList;
+	}
+
+	private void translateDeadAction(Action oldAction, Effect complexEff) {
+		Action a = new Action();
+		//TODO: Verificar relevancia!
+		String complexPrec = complexEff._Condition.get(0);
+		oldAction._precond.add(ParserHelper.complement(complexPrec));
+		complexPrec = complexPrec.substring(complexPrec.indexOf("_")+1);
+		for(Effect eff : oldAction._Effects){
+			for(String e : eff._Effects){
+				if(complexPrec.equals(e.substring(e.indexOf("_")+1))){
+					a.Name = "Closure_merge_imply_dead_" + complexPrec;
+					System.out.println("Creating action: " + a.Name);
+					a._precond.add("K" + e);
+				}
+			}			
+		}
+		
+		for(String c : complexEff._Condition){
+			a._precond.add("K" + c);
+		}
+		for(String h : complexEff._Effects){
+			a._Effects.add(newEffect("K" + h));
+		}
+		/*a.Name = "Closure_merge_imply_dead_" + cond;
+		System.out.println("Creating action: " + a.Name);
+		for(String c : eff._Condition){
+			a._precond.add("K" + cond);
+		}
+		for(String p : _precond){
+			a._precond.add("K" + cond);
+		}
+		for(String h : eff._Effects){
+			a._Effects.add(newEffect("K" + h));
+		}*/
+		domain_translated.list_actions.put(a.Name, a);
 	}
 
 	private void translateObservations(Action a) {

@@ -19,7 +19,9 @@ import parser.ParserHelper;
 import pddlElements.Domain;
 import pddlElements.Printer;
 import translating.LinearTranslation;
+import translating.TranslateDeadEnd;
 import translating.Translation;
+import translating.TranslatorTag;
 import translating.Translator_Kt;
 
 
@@ -30,10 +32,11 @@ public class Planner {
 	public static int actions_executed = 0;
 	public static int actions_left = 0;
 	private static String outputPath = "";
+	private static CausalGraph cg;
 	private static ArrayList<String> _Plan = new ArrayList<>();
 	private static Hashtable<String, String> _ObservationSelected = new Hashtable<String, String>();
 	
-	public static void startPlanner(String domain_file_path, String problem_file_path, String hidden_file, String file_out_path){
+	public static void startPlanner(String domain_file_path, String problem_file_path, String hidden_file, String file_out_path, String type){
 		/*Define problem*/
 		if(!(file_out_path == null)){
 			outputPath = file_out_path;
@@ -55,12 +58,13 @@ public class Planner {
 		
 		//TODO: Print domain, to test for errors: show Thiago
 		// to create a domain generator
-		//Printer.print(path_print + "d-balls.pddl", domain);		
+		//Printer.print(path_print + "d-balls.pddl", domain);
 		
 		/*Time measure: translation*/
 		domain = ParserHelper.cleanProblem(domain);
 		startTime = System.currentTimeMillis();
-		Translator_Kt tr = new Translator_Kt(domain);
+		cg = new CausalGraph(domain);
+		Translation tr = translate(type, domain);
 		//LinearTranslation tr = new LinearTranslation(domain);
 		endTime = System.currentTimeMillis();
 		System.out.println("Translation time: " + (endTime - startTime) + " Milliseconds");
@@ -79,6 +83,20 @@ public class Planner {
 		/*Print domain*/
 		if(!(file_out_path == null)){
 			printDomain(tr);
+		}
+	}
+	
+	private static Translation translate(String type, Domain domain){
+		if(type.equals("linear")){
+			LinearTranslation lt = new LinearTranslation(domain, cg);
+			return lt;
+		}else if(type.equals("deadend")){
+			//TranslateDeadEnd tr = new TranslateDeadEnd(domain, cg);
+			TranslatorTag tr = new TranslatorTag(domain);
+			return tr;
+		}else{
+			Translator_Kt tr = new Translator_Kt(domain);
+			return tr;
 		}
 	}
 	
@@ -155,7 +173,7 @@ public class Planner {
 			String regexString = "'[0-9][0-9]*:'";*/
 			
 			String[] CMD_ARRAY = { programName, commandA, valueTrue , commandC, 
-					valueTrue, commandV, valueTrue, commandK, valueTrue, 
+					valueTrue, commandV, valueTrue, commandK, valueFalse, 
 					commandPath, path, operatorFile, domainPathFile, factFile, problemPathFile};
 			ProcessBuilder builder = new ProcessBuilder();
 			builder.command(CMD_ARRAY);
@@ -174,17 +192,34 @@ public class Planner {
 		    p.getOutputStream().close();
 		    p.getErrorStream().close();
 		    //Store the plan:
-			Readplan();		
+			//Readplan();
+		    ReadStats();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-	}
-	
+	}	
+
 	private static String readFile(String path, Charset encoding) throws IOException{
 		byte[] encoded = Files.readAllBytes(Paths.get(path));
 		return new String(encoded, encoding);
+	}
+
+	private static void ReadStats() {
+		try{
+			String content1 = readFile("plan.txt", Charset.defaultCharset());
+			Matcher m = Pattern.compile("Total number of actions: ([0-9][0-9]*)").matcher(content1);			
+		    while(m.find()) {
+		    	String aux = m.group(1).trim();
+		    	//getPlan().add(aux);
+		    	System.out.println("Plan Size: " + aux);
+		    }
+		}catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}		
 	}
 
 	private static void Readplan() {
