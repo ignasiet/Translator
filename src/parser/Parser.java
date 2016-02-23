@@ -58,7 +58,7 @@ public class Parser {
 		//System.out.println(element);
 	    switch (type) {
 		case "domain":
-			_Domain.Name = element.toString().replaceAll("[()]", "").trim().replace(type, "").trim();
+			_Domain.Name = element.toString().replaceAll("[()]", "").trim().replace(type, "").replace(":", "").trim();
 			break;
 		case "problem":
 			_Domain.ProblemInstance = element.toString().replaceAll("[()]", "").trim().replace(type, "").trim();

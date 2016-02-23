@@ -1,5 +1,6 @@
 package translating;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
@@ -24,11 +25,13 @@ public class LinearTranslation extends Translation{
 	private ArrayList<Disjunction> list_disjunctions;
 	private CausalGraph causal;
 	private Domain domain_translated = new Domain();
-	private Hashtable<String, Effect> deadends = new Hashtable<String, Effect>();
+	private Hashtable<String, Effect> complexEffects = new Hashtable<String, Effect>();
+	private Domain _Domain;
 	
 	public LinearTranslation(Domain domain_to_translate, CausalGraph cg) {
 		// 0 - Copy domain metadata
 		causal = cg;
+		_Domain = domain_to_translate;
 		list_disjunctions = domain_to_translate.list_disjunctions;
 		domain_translated.Name = domain_to_translate.Name;
 		domain_translated.ProblemInstance = domain_to_translate.ProblemInstance;
@@ -60,25 +63,29 @@ public class LinearTranslation extends Translation{
 		}
 		for(Effect eff: a._Effects){
 			for(String cond : eff._Condition){
-				if(deadends.containsKey(cond.replace("~", ""))){
+				if(complexEffects.containsKey(cond.replace("~", ""))){
 					return eff;
 				}
-				for(Disjunction d : list_disjunctions){
-					if(d.contains(cond.replace("~", ""))){
-						System.out.println("Warning, uncertain cond in effect (not a simple problem): " + cond);
-						if(causal.isPossibleDeadEnd(eff)){
-							System.out.println("Dead end effect (probably): ");
-							System.out.println("Condition: " + eff._Condition.toString());
-							System.out.println("Effects: " + eff._Effects.toString());
-							deadends.put(cond.replace("~", ""), eff);
-						}
-						//translateDeadAction(eff, _precond, cond);
-						return eff;
-					}
-				}				
+				if(_Domain.isUncertainPredicate(cond.replace("~", ""))){
+					System.out.println("Warning, uncertain cond in effect (not a simple problem): " + cond);
+					complexEffects.put(cond.replace("~", ""), eff);
+					return eff;
+				}
 			}
 		}
 		return null;
+	}
+	
+	private boolean isDeadEndEffect(Effect eff){
+		if(causal.isPossibleDeadEnd(eff)){
+			System.out.println("Dead end effect (probably): ");
+			System.out.println("Condition: " + eff._Condition.toString());
+			System.out.println("Effects: " + eff._Effects.toString());
+			//deadends.put(cond.replace("~", ""), eff);
+			return true;
+		}else{
+			return false;
+		}
 	}
 
 	private void translateInvariants(Domain domain_to_translate) {
@@ -110,7 +117,7 @@ public class LinearTranslation extends Translation{
 					a.Name = "Closure_merge_imply_not_" + h.substring(1) + "_" + i;
 				}else{
 					//a.Name = i + "_deduct_" + h;
-					a.Name = "Closure_merge_imply__" + h.substring(1) + "_" + i;
+					a.Name = "Closure_merge_imply_" + h + "_" + i;
 				}
 			}
 			domain_translated.list_actions.put(a.Name, a);
@@ -130,24 +137,26 @@ public class LinearTranslation extends Translation{
 			for(String predicate : disj.getIterator()){
 				Action a = new Action();
 				Action aInverted = new Action();
-				Axiom kAx1 = new Axiom();
-				Axiom kAx2 = new Axiom();
+				//Axiom kAx1 = new Axiom();
+				//Axiom kAx2 = new Axiom();
 				a.Name = "Closure_merge_oneof-" + predicate;
-				kAx1._Name = a.Name;
+				//kAx1._Name = a.Name;
 				aInverted.Name = "Closure_merge_negate-oneof-" + predicate;
-				kAx2._Name = aInverted.Name;
+				//kAx2._Name = aInverted.Name;
 				Effect kEffect = new Effect();
 				Effect kEffectInverted = new Effect();
 				kEffect._Effects.add("K" + predicate);
-				kAx1._Head.add("K" + predicate);
+				//kAx1._Head.add("K" + predicate);
 				aInverted._precond.add("K" + predicate);
-				kAx2._Body.add("K" + predicate);
+				//kAx2._Body.add("K" + predicate);
+				addPredicate("K" + predicate);
 				for(String p_opposed : disj.getIterator()){
 					if(!p_opposed.equals(predicate)){
 						a._precond.add("K~" + p_opposed);
 						kEffectInverted._Effects.add("K~" + p_opposed);
-						kAx2._Head.add("K~" + p_opposed);
-						kAx1._Body.add("K~" + p_opposed);
+						addPredicate("K~" + p_opposed);
+						//kAx2._Head.add("K~" + p_opposed);
+						//kAx1._Body.add("K~" + p_opposed);
 					}
 				}
 				a._Effects.add(kEffect);
@@ -156,8 +165,8 @@ public class LinearTranslation extends Translation{
 				aInverted.deductive_action = true;
 				domain_translated.list_actions.put(a.Name, a);
 				domain_translated.list_actions.put(aInverted.Name, aInverted);
-				domain_translated._Axioms.add(kAx1);
-				domain_translated._Axioms.add(kAx2);
+				//domain_translated._Axioms.add(kAx1);
+				//domain_translated._Axioms.add(kAx2);
 			}
 		}
 	}
@@ -169,19 +178,30 @@ public class LinearTranslation extends Translation{
 			Action a = list_actions.get(e.nextElement().toString());
 			Effect complexEff;
 			if((complexEff = isComplex(a))!=null){
-				a._Effects.remove(a._Effects.indexOf(complexEff));
-				translateDeadAction(a, complexEff);
+				if(isDeadEndEffect(complexEff)){
+					a._Effects.remove(a._Effects.indexOf(complexEff));
+					translateDeadAction(a, complexEff);
+				}else{
+					System.out.println("Houston, we have a problem!");
+					addTagEffects(a);
+					continue;
+				}
 			}
 			if(a.IsObservation){
 				translateObservations(a);
+				continue;
 			}else{
 				Action a_translated = new Action();
 				a_translated.IsObservation = false;
 				a_translated.Name = a.Name;
 				for(String precondition : a._precond){
 					//Preconditions now are conditions of conditionals effects
-					//TODO: add M-predicates
 					a_translated._precond.add("K" + precondition);
+					if(!_Domain.state.containsKey(precondition.replace("~", "")) 
+							&& (!_Domain.isUncertainPredicate(precondition.replace("~", "")))){
+						domain_translated.state.put("K" + ParserHelper.complement(precondition.replace("~", "")), 1);
+						addPredicate("K" + ParserHelper.complement(precondition.replace("~", "")));
+					}
 				}
 				if(a.deductive_action){
 					a_translated.deductive_action = true;
@@ -197,10 +217,140 @@ public class LinearTranslation extends Translation{
 		}
 	}
 	
+	private void addTagEffects(Action a) {
+		Action a_translated = new Action();
+		a_translated.IsObservation = false;
+		a_translated.Name = a.Name;
+		//actions with tags have no preconditions: all are moved to effects conditions
+		// and for each effect we should have n*2 effects where n is the number of affected tags
+		for(Effect effect : a._Effects){
+			if(effect._Condition.isEmpty()){
+				/*Effect e = new Effect();
+				for(String eff : effect._Effects){
+					e._Effects.add("K" + eff);
+					addPredicate("K" + eff);
+				}
+				a_translated._Effects.add(e);*/
+				ArrayList<String> emptyPreconditions = new ArrayList<>();
+				for(Disjunction d : list_disjunctions){
+					a_translated._Effects.addAll(translateTags(emptyPreconditions, effect, d));
+				}
+			}
+			for(String cond : effect._Condition){				
+				for(Disjunction d : list_disjunctions){
+					createTagAction(d, cond);
+					if(d.contains(cond)){
+						a_translated._Effects.addAll(translateTags(a._precond, effect, d));
+					}else{
+						if(!_Domain.state.contains(cond.replace("~", ""))){
+							domain_translated.state.put("K" + ParserHelper.complement(cond.replace("~", "")), 1);
+							addPredicate("K" + ParserHelper.complement(cond.replace("~", "")));
+						}
+					}
+				}
+			}
+		}
+		domain_translated.list_actions.put(a_translated.Name, a_translated);
+	}
+	
+	private void createTagAction(Disjunction d, String pred){
+		pred = pred.replace("~", "");
+		if(!domain_translated.list_actions.containsKey("Closure_Mergep_Tag_" + pred)){
+			Action a = new Action();
+			a.Name = "Closure_Mergep_Tag_" + pred;
+			Effect e1 = new Effect();
+			Effect e2 = new Effect();
+			e1._Condition.add("K" + pred);
+			e2._Condition.add("K" + ParserHelper.complement(pred));
+			for(String tag : d.getIterator()){
+				e1._Effects.add("K" + pred + "__" + tag);
+				e2._Effects.add("K" + ParserHelper.complement(pred) + "__" + tag);
+			}
+			a._Effects.add(e1);
+			a._Effects.add(e2);
+			domain_translated.list_actions.put(a.Name, a);
+		}		
+	}	
+
+	private ArrayList<Effect> translateTags(ArrayList<String> precond, Effect effect, Disjunction d) {
+		ArrayList<Effect> returnList = new ArrayList<Effect>();
+		//Tag 0:
+		Effect support0 = new Effect();
+		Effect cancel0 = new Effect();
+		for(String prec : precond){
+			support0._Condition.add("K" + prec);
+			cancel0._Condition.add("~K" + ParserHelper.complement(prec));
+			addPredicate("K" + prec);
+			if(!_Domain.state.containsKey(prec.replace("~", ""))){
+				domain_translated.state.put("K" + ParserHelper.complement(prec.replace("~", "")), 1);
+			}
+		}
+		for(String cond : effect._Condition){
+			support0._Condition.add("K" + cond);
+			cancel0._Condition.add("~K" + ParserHelper.complement(cond));
+			addPredicate("K" + cond);
+		}
+		for(String eff : effect._Effects){
+			support0._Effects.add("K" + eff);
+			cancel0._Effects.add("~K" + ParserHelper.complement(eff));
+			addPredicate("K" + eff);
+		}
+		returnList.add(support0);
+		returnList.add(cancel0);
+		//
+		for(String tag : d.getIterator()){
+			Effect support = new Effect();
+			Effect cancel = new Effect();
+			for(String prec : precond){
+				support._Condition.add("K" + prec + "__" + tag);
+				cancel._Condition.add("~K" + ParserHelper.complement(prec) + "__" + tag);
+				addPredicate("K" + prec + "__" + tag);
+				if(!_Domain.state.contains(prec.replace("~", ""))){
+					domain_translated.state.put("K" + ParserHelper.complement(prec.replace("~", "")) + "__" + tag, 1);
+				}
+			}
+			for(String cond : effect._Condition){
+				support._Condition.add("K" + cond + "__" + tag);
+				cancel._Condition.add("~K" + ParserHelper.complement(cond) + "__" + tag);
+				addPredicate("K" + cond + "__" + tag);
+			}
+			for(String eff : effect._Effects){
+				support._Effects.add("K" + eff + "__" + tag);
+				cancel._Effects.add("~K" + ParserHelper.complement(eff) + "__" + tag);
+				addPredicate("K" + eff + "__" + tag);
+			}
+			returnList.add(support);
+			returnList.add(cancel);
+			//Add contingent merge!
+			Action a1 = new Action();
+			//Action a2 = new Action();
+			a1.Name = "Closure_mergep_imply_deduct_" + tag;
+			//a2.Name = "Closure_merge_imply_deduct_" + tag;
+			Effect e1 = new Effect();
+			//Effect e2 = new Effect();			
+			for(String tag2 : d.getIterator()){	
+				a1._precond.add("K" + tag + "__" + tag2);
+				if(tag.equals(tag2)){
+					domain_translated.state.put("K" + tag + "__" + tag2, 1);
+					//a1._precond.add("K" + tag + "__" + tag2);
+					//e2._Effects.add("K" + tag + "__" + tag2);
+				}else{
+					domain_translated.state.put("K" + ParserHelper.complement(tag) + "__" + tag2, 1);
+					//a2._precond.add("K" + ParserHelper.complement(tag) + "__" + tag2);
+				}
+			}
+			e1._Effects.add("K" + tag);
+			a1._Effects.add(e1);
+			//a2._Effects.add(e2);
+			//Add contingent merge actions:
+			domain_translated.list_actions.put(a1.Name, a1);
+			//domain_translated.list_actions.put(a2.Name, a2);
+		}
+		return returnList;
+	}
+
 	private void translateActionCollectGoal(String pred){
-		if(domain_translated.list_actions.containsKey("Collect_Goal")){
-			
-		}else{
+		if(!domain_translated.list_actions.containsKey("Collect_Goal")){
 			Action a = new Action();
 			a.Name = "Collect_Goal";
 			System.out.println("Creating action: " + a.Name);
@@ -272,7 +422,6 @@ public class LinearTranslation extends Translation{
 		}
 		for(String effect : eff._Effects){
 			supportRule._Effects.add("K" + effect);
-			//TODO: eliminate effects starting with ~:
 			if(effect.startsWith("~")){
 				supportRule._Effects.add("~K" + effect.substring(1));
 			}else{
@@ -294,7 +443,6 @@ public class LinearTranslation extends Translation{
 		a_translated.IsObservation = true;
 		a_translated.Name = a.Name;
 		Effect e = new Effect();
-		Branch b = new Branch();
 		for(String precondition : a._precond){
 			a_translated._precond.add("K" + precondition);
 			e._Condition.add("K" + precondition);
@@ -347,7 +495,7 @@ public class LinearTranslation extends Translation{
 			domain_translated.predicates_count.put(predicate, 1);
 		}
 	}
-
+	
 	protected void translateInitialState(Hashtable<String, Integer> state) {
 		Enumeration<String> e = state.keys();
 		//1-Add state 
@@ -357,6 +505,7 @@ public class LinearTranslation extends Translation{
 			addPredicate("K" + key_state);
 		}
 	}
+	
 
 	public Domain getDomainTranslated() {
 		return domain_translated;

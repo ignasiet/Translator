@@ -143,10 +143,20 @@ public class Domain {
 		}
 	}
 	
-	private boolean isUncertain(String predicate){
+	public boolean isUncertain(String predicate){
 		predicate = predicate.replace("~", "");
 		for(Disjunction disj: list_disjunctions){
 			if(disj.hasInside(predicate)){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public boolean isUncertainPredicate(String predicate){
+		predicate = predicate.replace("~", "");
+		for(Disjunction disj: list_disjunctions){
+			if(disj.contains(predicate)){
 				return true;
 			}
 		}
