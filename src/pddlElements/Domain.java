@@ -2,6 +2,7 @@ package pddlElements;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,6 +32,7 @@ public class Domain {
 	public Action disjunctionAction = new Action();
 	public String ProblemInstance;
 	private Integer counter = 0;
+	public HashSet<String> _Observable = new HashSet<String>();
 	public ArrayList<Axiom> _Axioms = new ArrayList<Axiom>();
 	//public Hashtable<String, ArrayList<String>> relevance = new Hashtable<String, ArrayList<String>>();
 	
@@ -45,6 +47,16 @@ public class Domain {
 	
 	public void addActions(Action a){
 		action_list.add(a);
+		if(a.IsObservation){
+			System.out.println("Observable effect: " + a._Effects.get(0)._Effects.toString());
+			for(String w : a._Effects.get(0)._Effects){
+				_Observable.add(w);
+			}
+		}
+	}
+	
+	public boolean isObservable(String o){
+		return _Observable.contains(o);
 	}
 	
 	@SuppressWarnings("unchecked")

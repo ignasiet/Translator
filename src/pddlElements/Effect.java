@@ -3,8 +3,6 @@ import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.sun.org.apache.xalan.internal.xsltc.compiler.Parser;
-
 import parser.ParserHelper;
 import readers.Atom;
 import readers.ExprList;

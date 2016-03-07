@@ -18,6 +18,7 @@ import parser.Parser;
 import parser.ParserHelper;
 import pddlElements.Domain;
 import pddlElements.Printer;
+import tester.searcher;
 import translating.LinearTranslation;
 import translating.TranslateDeadEnd;
 import translating.Translation;
@@ -71,9 +72,11 @@ public class Planner {
 		domain_translated = tr.getDomainTranslated();
 		domain_translated.hidden_state = domain.hidden_state;
 		
+		//searcher s = new searcher();
+		//s.searchPlan(domain_translated);
+		
 		//BDDSearcher b = new BDDSearcher(tr.getDomainTranslated());
 		//System.out.println("Regression complete");
-		
 		//LANDMARKS
 		//@SuppressWarnings("unused")
 		//Landmarker l = new Landmarker(tr.domain_translated.state, tr.domain_translated.list_actions, tr.domain_translated.goalState);

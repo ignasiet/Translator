@@ -2,7 +2,9 @@ package planner;
 
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.Set;
 
 import pddlElements.Action;
 import pddlElements.Domain;
@@ -21,7 +23,7 @@ public class CausalGraph {
 		e = antecessor.keys();
 		while(e.hasMoreElements()){
 			String key = e.nextElement().toString();
-			ArrayList<String> list = antecessor.get(key);
+			ArrayList<String> list = (ArrayList<String>) antecessor.get(key).clone();
 			construct(key, list);
 		}
 	}
@@ -32,7 +34,13 @@ public class CausalGraph {
 				ArrayList<String> list = new ArrayList<String>(a._precond);
 				list.addAll(e._Condition);
 				if(antecessor.containsKey(effect)){
-					list.addAll(antecessor.get(effect));
+					//list.addAll(antecessor.get(effect));
+					//Remove duplicates
+					Set<String> hs = new HashSet<>();
+					hs.addAll(list);
+					hs.addAll(antecessor.get(effect));
+					list.clear();
+					list.addAll(hs);
 					antecessor.put(effect, list);
 				}else{
 					antecessor.put(effect, list);
@@ -44,8 +52,12 @@ public class CausalGraph {
 	private void construct(String key, ArrayList<String> list){
 		for(String s : list){
 			if(sucessors.containsKey(s)){
-				ArrayList<String> sucList = new ArrayList<String>(sucessors.get(s));
-				sucList.add(key);
+				//Remove duplicates
+				Set<String> hs = new HashSet<>();
+				hs.addAll(sucessors.get(s));
+				ArrayList<String> sucList = new ArrayList<String>();
+				hs.add(key);
+				sucList.addAll(hs);
 				sucessors.put(s, sucList);
 			}else{
 				ArrayList<String> sucList = new ArrayList<String>();

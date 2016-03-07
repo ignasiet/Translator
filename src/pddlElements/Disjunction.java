@@ -35,6 +35,12 @@ public class Disjunction {
 		}
 	}
 	
+	public ArrayList<String> getOpposites(String predicate){
+		ArrayList<String> listReturn = new ArrayList<String>(listNodes);
+		listReturn.remove(predicate);
+		return listReturn;
+	}
+	
 	public boolean hasInside(String predicate){
 		return predicate.equals(fluent);
 	}
