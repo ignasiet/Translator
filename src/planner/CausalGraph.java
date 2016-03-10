@@ -7,6 +7,7 @@ import java.util.Hashtable;
 import java.util.Set;
 
 import pddlElements.Action;
+import pddlElements.Axiom;
 import pddlElements.Domain;
 import pddlElements.Effect;
 
@@ -26,7 +27,33 @@ public class CausalGraph {
 			ArrayList<String> list = (ArrayList<String>) antecessor.get(key).clone();
 			construct(key, list);
 		}
+        extractAxioms(d);
 	}
+
+    private void extractAxioms(Domain d){
+        for(Axiom ax : d._Axioms){
+            ArrayList<String> ant = new ArrayList<String>(ax._Body);
+            for(String p : ax._Head)
+            if(antecessor.containsKey(p)){
+                Set<String> hs = new HashSet<>();
+                hs.addAll(ant);
+                hs.addAll(antecessor.get(p));
+                ant.clear();
+                ant.addAll(hs);
+                antecessor.put(p, ant);
+            }else{
+                antecessor.put(p, ant);
+            }
+        }
+    }
+
+    private void construct(Domain d){
+        for(Axiom ax : d._Axioms){
+            for(String p : ax._Head){
+
+            }
+        }
+    }
 
 	private void extract(Action a) {
 		for(Effect e : a._Effects){

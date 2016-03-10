@@ -159,7 +159,7 @@ public class LinearTranslation extends Translation{
 						kEffect._Effects.add("K" + cEffect);
 					}
 				}
-				createActionObsAxiom(predicate);
+				//createActionObsAxiom(predicate);
                 //createDeductCollapsePositiveAxioms(predicate);
 
 				kEffect._Effects.add("K" + predicate);
@@ -271,6 +271,7 @@ public class LinearTranslation extends Translation{
             }
 		}
 		Effect effCompiled = new Effect();
+        ArrayList<String> listNegatedObs = new ArrayList<String>();
 		for(Effect eff : a._Effects){
 			if(eff._Condition.size()>1){
 				//trick done to get the action progression and compiled effects...
@@ -281,11 +282,24 @@ public class LinearTranslation extends Translation{
 				if(!lista.contains(c)){
 					System.out.println("Action: " + a.Name + " compiled effect: " + c);
 					list1.add(c);
-					effCompiled._Effects.add("K~" + c);
+                    effCompiled._Effects.add("K~" + c);
                     effCompiled._Effects.add("~K" + c);
+                    if(listNegatedObs.isEmpty()){
+                        listNegatedObs.addAll(causal.antecessor.get(c));
+                    }else{
+                        listNegatedObs.retainAll(causal.antecessor.get(c));
+                    }
 				}
 			}
 		}
+        if(!listNegatedObs.isEmpty()){
+            for(String o : listNegatedObs){
+                if (_Domain.isObservable(o)){
+                    effCompiled._Effects.add("K" + o);
+                    effCompiled._Effects.add("~K" + ParserHelper.complement(o));
+                }
+            }
+        }
 		if(effCompiled._Effects.size()>0){
 			returnList.add(effCompiled);
 		}else{
@@ -733,42 +747,61 @@ public class LinearTranslation extends Translation{
 			//Branch2: negative
 			Branch branch1 = new Branch();
 			Branch branch2 = new Branch();
-			for(String effect_result : e_action._Effects){
-				a_translated._precond.add("~K" + ParserHelper.complement(effect_result));
-				a_translated._precond.add("~K" + effect_result);
-				e._Effects.add("K" + effect_result);
-				addPredicate("K" + effect_result);
-				addPredicate("K" + ParserHelper.complement(effect_result));
-				e._Effects.add("K" + ParserHelper.complement(effect_result));				
-				branch1._Branches.add("K" + effect_result);
+			for(String effect_result : e_action._Effects) {
+                a_translated._precond.add("~K" + ParserHelper.complement(effect_result));
+                a_translated._precond.add("~K" + effect_result);
+                e._Effects.add("K" + effect_result);
+                addPredicate("K" + effect_result);
+                addPredicate("K" + ParserHelper.complement(effect_result));
+                e._Effects.add("K" + ParserHelper.complement(effect_result));
+                branch1._Branches.add("K" + effect_result);
                 //branch1._Branches.add("ready");
-				branch1._Branches.add("~K" + ParserHelper.complement(effect_result));
-				branch2._Branches.add("~K" + effect_result);
+                branch1._Branches.add("~K" + ParserHelper.complement(effect_result));
+                branch2._Branches.add("~K" + effect_result);
                 //branch2._Branches.add("ready");
-				branch2._Branches.add("K" + ParserHelper.complement(effect_result));
-				//Revisar
-				ArrayList<String> op1 = new ArrayList<String>();
-				ArrayList<String> op2 = new ArrayList<String>();
-				for(String cEffect: causal.antecessor.get(effect_result)){
-					if(_Domain.isUncertainPredicate(cEffect)){
-						op1.add(cEffect);
-						//branch1._Branches.add("~K" + ParserHelper.complement(cEffect));
-						branch2._Branches.add("K" + ParserHelper.complement(cEffect));
-						branch2._Branches.add("~K" + cEffect);
+                branch2._Branches.add("K" + ParserHelper.complement(effect_result));
+                //Revisar
+                /*Action cutObservation1 = new Action();
+                cutObservation1._precond.add("K" + effect_result);
+                cutObservation1._precond.add("~K" + ParserHelper.complement(effect_result));
+                cutObservation1.Name = "Closure_cut_observations_" + effect_result.replace("~", "not-");
+                Action cutObservation2 = new Action();
+                cutObservation2._precond.add("~K" + effect_result);
+                cutObservation2._precond.add("K" + ParserHelper.complement(effect_result));
+                cutObservation2.Name = "Closure_cut_observations_" + ParserHelper.complement(effect_result).replace("~", "not-");
+                Effect e1 = new Effect();
+                Effect e2 = new Effect();*/
+                //
+				if(!causal.antecessor.containsKey(effect_result) ||
+						!causal.antecessor.containsKey(ParserHelper.complement(effect_result))){
+					continue;
+				}
+                for (String cEffect : causal.antecessor.get(effect_result)) {
+                    if (_Domain.isUncertainPredicate(cEffect)) {
+                        //branch1._Branches.add("~K" + ParserHelper.complement(cEffect));
+                        branch2._Branches.add("K" + ParserHelper.complement(cEffect));
+                        branch2._Branches.add("~K" + cEffect);
+                        //e2._Effects.add("K" + ParserHelper.complement(cEffect));
+                        //e2._Effects.add("~K" + cEffect);
                         observationEffects.put("K" + ParserHelper.complement(effect_result), branch2._Branches);
-					}
-				}
-				for(String cEffect: causal.antecessor.get(ParserHelper.complement(effect_result))){
-					if(_Domain.isUncertainPredicate(cEffect)){
-						op2.add(cEffect);
-						//branch2._Branches.add("~K" + ParserHelper.complement(cEffect));
-						branch1._Branches.add("K" + ParserHelper.complement(cEffect));
-						branch1._Branches.add("~K" + cEffect);
+                    }
+                }
+                for (String cEffect : causal.antecessor.get(ParserHelper.complement(effect_result))) {
+                    if (_Domain.isUncertainPredicate(cEffect)) {
+                        //branch2._Branches.add("~K" + ParserHelper.complement(cEffect));
+                        branch1._Branches.add("K" + ParserHelper.complement(cEffect));
+                        branch1._Branches.add("~K" + cEffect);
+                        //e1._Effects.add("K" + ParserHelper.complement(cEffect));
+                        //e1._Effects.add("~K" + cEffect);
                         observationEffects.put("K" + effect_result, branch1._Branches);
-					}
-				}
-				//Revisar
-			}
+                    }
+                }
+                //Revisar
+                /*cutObservation1._Effects.add(e1);
+                cutObservation2._Effects.add(e2);
+                domain_translated.list_actions.put(cutObservation1.Name, cutObservation1);
+                domain_translated.list_actions.put(cutObservation2.Name, cutObservation2);*/
+            }
 			a_translated._Effects.add(e);
 			a_translated._Branches.add(branch1);
 			a_translated._Branches.add(branch2);
