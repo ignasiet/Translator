@@ -20,7 +20,7 @@ public class PDDLTokenizer implements Iterator<Token>{
 	 * @throws IOException 
 	 * 
 	 */
-	// Instance variables have default access to allow unit tests access.
+	// Instance context have default access to allow unit tests access.
 	String strLine;
 	StreamTokenizer tokenizedStream;
 	IOException m_ioexn;

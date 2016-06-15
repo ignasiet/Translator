@@ -7,10 +7,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="db3a2619-04bd-4daa-a1d9-beab902941fd" name="Default" comment="">
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/planner/RelevanceAnalyser.java" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/plan.txt" afterPath="$PROJECT_DIR$/plan.txt" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/planner/CausalGraph.java" afterPath="$PROJECT_DIR$/src/planner/CausalGraph.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/translating/LinearTranslation.java" afterPath="$PROJECT_DIR$/src/translating/LinearTranslation.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/bdd/BDDUtils.java" afterPath="$PROJECT_DIR$/src/bdd/BDDUtils.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/Main.java" afterPath="$PROJECT_DIR$/src/main/Main.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/planner/Planner.java" afterPath="$PROJECT_DIR$/src/planner/Planner.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/readers/PDDLTokenizer.java" afterPath="$PROJECT_DIR$/src/readers/PDDLTokenizer.java" />
     </list>
     <ignored path="Translator.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -32,11 +34,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="LinearTranslation.java" pinned="false" current-in-tab="true">
+      <file leaf-file-name="LinearTranslation.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/translating/LinearTranslation.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.14611872">
-              <caret line="775" column="25" selection-start-line="775" selection-start-column="25" selection-end-line="775" selection-end-column="25" />
+            <state vertical-scroll-proportion="0.0">
+              <caret line="778" column="0" selection-start-line="778" selection-start-column="0" selection-end-line="778" selection-end-column="0" />
               <folding>
                 <element signature="imports" expanded="true" />
                 <element signature="docComment;class#LinearTranslation#0" expanded="false" />
@@ -68,7 +70,6 @@
                 <element signature="e#22785#22828#0" expanded="false" />
                 <element signature="e#23119#23141#0" expanded="false" />
                 <element signature="method#translateActionCollectGoal#0;class#LinearTranslation#0" expanded="false" />
-                <element signature="method#translateDeadAction#0;class#LinearTranslation#0" expanded="false" />
                 <element signature="method#needsEffectsTagMaximal#0;class#LinearTranslation#0" expanded="false" />
                 <element signature="method#translateEffects#0;class#LinearTranslation#0" expanded="false" />
                 <element signature="e#26644#26665#0" expanded="false" />
@@ -82,14 +83,12 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Parser.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/parser/Parser.java">
+      <file leaf-file-name="CausalGraph.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/planner/CausalGraph.java">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
-              <caret line="240" column="45" selection-start-line="240" selection-start-column="45" selection-end-line="240" selection-end-column="45" />
-              <folding>
-                <element signature="method#parseDomain#0;class#Parser#0" expanded="false" />
-              </folding>
+              <caret line="9" column="0" selection-start-line="9" selection-start-column="0" selection-end-line="9" selection-end-column="26" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -98,64 +97,55 @@
         <entry file="file://$PROJECT_DIR$/src/planner/Planner.java">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
-              <caret line="66" column="23" selection-start-line="66" selection-start-column="23" selection-end-line="66" selection-end-column="23" />
+              <caret line="45" column="59" selection-start-line="45" selection-start-column="59" selection-end-line="45" selection-end-column="59" />
               <folding>
-                <element signature="e#1905#1958#0" expanded="false" />
+                <element signature="e#1874#1927#0" expanded="false" />
                 <element signature="method#translate#0;class#Planner#0" expanded="false" />
                 <element signature="method#printDomain#0;class#Planner#0" expanded="false" />
                 <element signature="method#replan#0;class#Planner#0" expanded="false" />
-                <element signature="e#3954#3967#0" expanded="false" />
-                <element signature="e#4014#4059#0" expanded="false" />
+                <element signature="e#3923#3936#0" expanded="false" />
+                <element signature="e#3983#4028#0" expanded="false" />
                 <element signature="method#randInt#0;class#Planner#0" expanded="false" />
-                <element signature="e#4262#4322#0" expanded="false" />
-                <element signature="e#4418#4468#0" expanded="false" />
+                <element signature="e#4231#4291#0" expanded="false" />
+                <element signature="e#4387#4437#0" expanded="false" />
                 <element signature="method#parseHidden#0;class#Planner#0" expanded="false" />
-                <element signature="e#5149#5195#0" expanded="false" />
-                <element signature="e#6663#6728#0" expanded="false" />
-                <element signature="e#6964#6981#0" expanded="false" />
+                <element signature="e#5118#5164#0" expanded="false" />
+                <element signature="e#6632#6697#0" expanded="false" />
+                <element signature="e#6933#6950#0" expanded="false" />
                 <element signature="method#readFile#0;class#Planner#0" expanded="false" />
                 <element signature="method#ReadStats#0;class#Planner#0" expanded="false" />
                 <element signature="method#Readplan#0;class#Planner#0" expanded="false" />
-                <element signature="e#7914#7955#0" expanded="false" />
-                <element signature="e#8204#8233#0" expanded="false" />
-                <element signature="e#8529#8595#0" expanded="false" />
+                <element signature="e#7883#7924#0" expanded="false" />
+                <element signature="e#8173#8202#0" expanded="false" />
+                <element signature="e#8498#8564#0" expanded="false" />
                 <element signature="method#setObservationSelected#0;class#Planner#0" expanded="false" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="CausalGraph.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/planner/CausalGraph.java">
+      <file leaf-file-name="RelevanceAnalyser.java" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/planner/RelevanceAnalyser.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="52" column="0" selection-start-line="52" selection-start-column="0" selection-end-line="52" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="Main.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/main/Main.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="13" column="13" selection-start-line="13" selection-start-column="13" selection-end-line="13" selection-end-column="13" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="Domain.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/pddlElements/Domain.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="33" column="32" selection-start-line="33" selection-start-column="32" selection-end-line="33" selection-end-column="32" />
-              <folding />
+            <state vertical-scroll-proportion="0.6757991">
+              <caret line="27" column="36" selection-start-line="27" selection-start-column="36" selection-end-line="27" selection-end-column="36" />
+              <folding>
+                <element signature="imports" expanded="true" />
+                <element signature="method#stripChain#0;class#RelevanceAnalyser#0" expanded="false" />
+                <element signature="method#calculateContext#0;class#RelevanceAnalyser#0" expanded="false" />
+              </folding>
             </state>
           </provider>
         </entry>
       </file>
     </leaf>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -168,10 +158,13 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/src/planner/Planner.java" />
         <option value="$PROJECT_DIR$/Kdomain.pddl" />
         <option value="$PROJECT_DIR$/src/planner/CausalGraph.java" />
         <option value="$PROJECT_DIR$/src/translating/LinearTranslation.java" />
+        <option value="$PROJECT_DIR$/src/main/Main.java" />
+        <option value="$PROJECT_DIR$/src/planner/RelevanceAnaliser.java" />
+        <option value="$PROJECT_DIR$/src/planner/Planner.java" />
+        <option value="$PROJECT_DIR$/src/planner/RelevanceAnalyser.java" />
       </list>
     </option>
   </component>
@@ -205,9 +198,9 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scratches" />
-      <pane id="PackagesPane" />
       <pane id="Scope" />
+      <pane id="PackagesPane" />
+      <pane id="Scratches" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -223,24 +216,6 @@
             </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="Translator" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="Translator" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="Translator" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="translating" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -290,7 +265,43 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
+              <option name="myItemId" value="pddlElements" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="Translator" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="Translator" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
               <option name="myItemId" value="main" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="Translator" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="Translator" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="bdd" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -608,7 +619,7 @@
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="true" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3991228" sideWeight="0.5046875" order="10" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
@@ -645,18 +656,18 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/translating/LinearTranslation.java</url>
-          <line>778</line>
+          <line>666</line>
           <properties />
-          <option name="timeStamp" value="52" />
+          <option name="timeStamp" value="60" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/translating/LinearTranslation.java</url>
-          <line>788</line>
+          <url>file://$PROJECT_DIR$/src/planner/Planner.java</url>
+          <line>46</line>
           <properties />
-          <option name="timeStamp" value="53" />
+          <option name="timeStamp" value="71" />
         </line-breakpoint>
       </breakpoints>
-      <option name="time" value="60" />
+      <option name="time" value="73" />
     </breakpoint-manager>
     <watches-manager>
       <configuration name="Application">
@@ -671,61 +682,10 @@
     <option name="FILTER_TARGETS" value="false" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/src/translating/LinearTranslation.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="imports" expanded="true" />
-            <element signature="docComment;class#LinearTranslation#0" expanded="false" />
-            <element signature="docComment;field#list_disjunctions#0;class#LinearTranslation#0" expanded="false" />
-            <element signature="e#1615#1643#0" expanded="false" />
-            <element signature="e#1979#2023#0" expanded="false" />
-            <element signature="method#isComplex#0;class#LinearTranslation#0" expanded="false" />
-            <element signature="method#isDeadEndEffect#0;class#LinearTranslation#0" expanded="false" />
-            <element signature="method#translateInvariants#0;class#LinearTranslation#0" expanded="false" />
-            <element signature="method#addAxiomsActions#0;class#LinearTranslation#0" expanded="false" />
-            <element signature="method#newEffect#0;class#LinearTranslation#0" expanded="false" />
-            <element signature="method#addDeductiveActions#0;class#LinearTranslation#0" expanded="false" />
-            <element signature="e#5804#5839#0" expanded="false" />
-            <element signature="e#6161#6199#0" expanded="false" />
-            <element signature="method#createContradictionAction#0;class#LinearTranslation#0" expanded="false" />
-            <element signature="method#translateActions#0;class#LinearTranslation#0" expanded="false" />
-            <element signature="e#7214#7233#0" expanded="false" />
-            <element signature="e#10393#10499#0" expanded="false" />
-            <element signature="method#testEquality#0;class#LinearTranslation#0" expanded="false" />
-            <element signature="method#createActionObsAxiom#0;class#LinearTranslation#0" expanded="false" />
-            <element signature="e#12767#12817#0" expanded="false" />
-            <element signature="method#createDeductCollapsePositiveAxioms#0;class#LinearTranslation#0" expanded="false" />
-            <element signature="method#createDeductCollapseNegativeAxioms#0;class#LinearTranslation#0" expanded="false" />
-            <element signature="method#createProductAxioms#0;class#LinearTranslation#0" expanded="false" />
-            <element signature="method#addTagEffects#0;class#LinearTranslation#0" expanded="false" />
-            <element signature="e#17421#17499#0" expanded="false" />
-            <element signature="method#createTagAction#0;class#LinearTranslation#0" expanded="false" />
-            <element signature="method#translateTags#0;class#LinearTranslation#0" expanded="false" />
-            <element signature="e#22785#22828#0" expanded="false" />
-            <element signature="e#23119#23141#0" expanded="false" />
-            <element signature="method#translateActionCollectGoal#0;class#LinearTranslation#0" expanded="false" />
-            <element signature="method#translateDeadAction#0;class#LinearTranslation#0" expanded="false" />
-            <element signature="method#needsEffectsTagMaximal#0;class#LinearTranslation#0" expanded="false" />
-            <element signature="method#translateEffects#0;class#LinearTranslation#0" expanded="false" />
-            <element signature="e#26644#26665#0" expanded="false" />
-            <element signature="method#translateGoal#0;class#LinearTranslation#0" expanded="false" />
-            <element signature="method#translatePredicates#0;class#LinearTranslation#0" expanded="false" />
-            <element signature="e#30974#30983#0" expanded="false" />
-            <element signature="method#addPredicate#0;class#LinearTranslation#0" expanded="false" />
-            <element signature="method#translateInitialState#0;class#LinearTranslation#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/parser/Parser.java">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="240" column="45" selection-start-line="240" selection-start-column="45" selection-end-line="240" selection-end-column="45" />
-          <folding>
-            <element signature="method#parseDomain#0;class#Parser#0" expanded="false" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -734,25 +694,25 @@
         <state vertical-scroll-proportion="0.0">
           <caret line="66" column="23" selection-start-line="66" selection-start-column="23" selection-end-line="66" selection-end-column="23" />
           <folding>
-            <element signature="e#1905#1958#0" expanded="false" />
+            <element signature="e#1874#1927#0" expanded="false" />
             <element signature="method#translate#0;class#Planner#0" expanded="false" />
             <element signature="method#printDomain#0;class#Planner#0" expanded="false" />
             <element signature="method#replan#0;class#Planner#0" expanded="false" />
-            <element signature="e#3954#3967#0" expanded="false" />
-            <element signature="e#4014#4059#0" expanded="false" />
+            <element signature="e#3923#3936#0" expanded="false" />
+            <element signature="e#3983#4028#0" expanded="false" />
             <element signature="method#randInt#0;class#Planner#0" expanded="false" />
-            <element signature="e#4262#4322#0" expanded="false" />
-            <element signature="e#4418#4468#0" expanded="false" />
+            <element signature="e#4231#4291#0" expanded="false" />
+            <element signature="e#4387#4437#0" expanded="false" />
             <element signature="method#parseHidden#0;class#Planner#0" expanded="false" />
-            <element signature="e#5149#5195#0" expanded="false" />
-            <element signature="e#6663#6728#0" expanded="false" />
-            <element signature="e#6964#6981#0" expanded="false" />
+            <element signature="e#5118#5164#0" expanded="false" />
+            <element signature="e#6632#6697#0" expanded="false" />
+            <element signature="e#6933#6950#0" expanded="false" />
             <element signature="method#readFile#0;class#Planner#0" expanded="false" />
             <element signature="method#ReadStats#0;class#Planner#0" expanded="false" />
             <element signature="method#Readplan#0;class#Planner#0" expanded="false" />
-            <element signature="e#7914#7955#0" expanded="false" />
-            <element signature="e#8204#8233#0" expanded="false" />
-            <element signature="e#8529#8595#0" expanded="false" />
+            <element signature="e#7883#7924#0" expanded="false" />
+            <element signature="e#8173#8202#0" expanded="false" />
+            <element signature="e#8498#8564#0" expanded="false" />
             <element signature="method#setObservationSelected#0;class#Planner#0" expanded="false" />
           </folding>
         </state>
@@ -817,7 +777,113 @@
             <element signature="e#22785#22828#0" expanded="false" />
             <element signature="e#23119#23141#0" expanded="false" />
             <element signature="method#translateActionCollectGoal#0;class#LinearTranslation#0" expanded="false" />
-            <element signature="method#translateDeadAction#0;class#LinearTranslation#0" expanded="false" />
+            <element signature="method#needsEffectsTagMaximal#0;class#LinearTranslation#0" expanded="false" />
+            <element signature="method#translateEffects#0;class#LinearTranslation#0" expanded="false" />
+            <element signature="e#26644#26665#0" expanded="false" />
+            <element signature="method#translateGoal#0;class#LinearTranslation#0" expanded="false" />
+            <element signature="method#translatePredicates#0;class#LinearTranslation#0" expanded="false" />
+            <element signature="e#30974#30983#0" expanded="false" />
+            <element signature="method#addPredicate#0;class#LinearTranslation#0" expanded="false" />
+            <element signature="method#translateInitialState#0;class#LinearTranslation#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/parser/Parser.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="240" column="45" selection-start-line="240" selection-start-column="45" selection-end-line="240" selection-end-column="45" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/planner/Planner.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="66" column="23" selection-start-line="66" selection-start-column="23" selection-end-line="66" selection-end-column="23" />
+          <folding>
+            <element signature="e#1874#1927#0" expanded="false" />
+            <element signature="method#translate#0;class#Planner#0" expanded="false" />
+            <element signature="method#printDomain#0;class#Planner#0" expanded="false" />
+            <element signature="method#replan#0;class#Planner#0" expanded="false" />
+            <element signature="e#3923#3936#0" expanded="false" />
+            <element signature="e#3983#4028#0" expanded="false" />
+            <element signature="method#randInt#0;class#Planner#0" expanded="false" />
+            <element signature="e#4231#4291#0" expanded="false" />
+            <element signature="e#4387#4437#0" expanded="false" />
+            <element signature="method#parseHidden#0;class#Planner#0" expanded="false" />
+            <element signature="e#5118#5164#0" expanded="false" />
+            <element signature="e#6632#6697#0" expanded="false" />
+            <element signature="e#6933#6950#0" expanded="false" />
+            <element signature="method#readFile#0;class#Planner#0" expanded="false" />
+            <element signature="method#ReadStats#0;class#Planner#0" expanded="false" />
+            <element signature="method#Readplan#0;class#Planner#0" expanded="false" />
+            <element signature="e#7883#7924#0" expanded="false" />
+            <element signature="e#8173#8202#0" expanded="false" />
+            <element signature="e#8498#8564#0" expanded="false" />
+            <element signature="method#setObservationSelected#0;class#Planner#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/planner/CausalGraph.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="52" column="0" selection-start-line="52" selection-start-column="0" selection-end-line="52" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/Main.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="13" column="13" selection-start-line="13" selection-start-column="13" selection-end-line="13" selection-end-column="13" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/pddlElements/Domain.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="33" column="32" selection-start-line="33" selection-start-column="32" selection-end-line="33" selection-end-column="32" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/translating/LinearTranslation.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="docComment;class#LinearTranslation#0" expanded="false" />
+            <element signature="docComment;field#list_disjunctions#0;class#LinearTranslation#0" expanded="false" />
+            <element signature="e#1615#1643#0" expanded="false" />
+            <element signature="e#1979#2023#0" expanded="false" />
+            <element signature="method#isComplex#0;class#LinearTranslation#0" expanded="false" />
+            <element signature="method#isDeadEndEffect#0;class#LinearTranslation#0" expanded="false" />
+            <element signature="method#translateInvariants#0;class#LinearTranslation#0" expanded="false" />
+            <element signature="method#addAxiomsActions#0;class#LinearTranslation#0" expanded="false" />
+            <element signature="method#newEffect#0;class#LinearTranslation#0" expanded="false" />
+            <element signature="method#addDeductiveActions#0;class#LinearTranslation#0" expanded="false" />
+            <element signature="e#5804#5839#0" expanded="false" />
+            <element signature="e#6161#6199#0" expanded="false" />
+            <element signature="method#createContradictionAction#0;class#LinearTranslation#0" expanded="false" />
+            <element signature="method#translateActions#0;class#LinearTranslation#0" expanded="false" />
+            <element signature="e#7214#7233#0" expanded="false" />
+            <element signature="e#10393#10499#0" expanded="false" />
+            <element signature="method#testEquality#0;class#LinearTranslation#0" expanded="false" />
+            <element signature="method#createActionObsAxiom#0;class#LinearTranslation#0" expanded="false" />
+            <element signature="e#12767#12817#0" expanded="false" />
+            <element signature="method#createDeductCollapsePositiveAxioms#0;class#LinearTranslation#0" expanded="false" />
+            <element signature="method#createDeductCollapseNegativeAxioms#0;class#LinearTranslation#0" expanded="false" />
+            <element signature="method#createProductAxioms#0;class#LinearTranslation#0" expanded="false" />
+            <element signature="method#addTagEffects#0;class#LinearTranslation#0" expanded="false" />
+            <element signature="e#17421#17499#0" expanded="false" />
+            <element signature="method#createTagAction#0;class#LinearTranslation#0" expanded="false" />
+            <element signature="method#translateTags#0;class#LinearTranslation#0" expanded="false" />
+            <element signature="e#22785#22828#0" expanded="false" />
+            <element signature="e#23119#23141#0" expanded="false" />
+            <element signature="method#translateActionCollectGoal#0;class#LinearTranslation#0" expanded="false" />
             <element signature="method#needsEffectsTagMaximal#0;class#LinearTranslation#0" expanded="false" />
             <element signature="method#translateEffects#0;class#LinearTranslation#0" expanded="false" />
             <element signature="e#26644#26665#0" expanded="false" />
@@ -849,25 +915,25 @@
         <state vertical-scroll-proportion="0.0">
           <caret line="75" column="10" selection-start-line="75" selection-start-column="10" selection-end-line="75" selection-end-column="10" />
           <folding>
-            <element signature="e#1905#1958#0" expanded="false" />
+            <element signature="e#1874#1927#0" expanded="false" />
             <element signature="method#translate#0;class#Planner#0" expanded="false" />
             <element signature="method#printDomain#0;class#Planner#0" expanded="false" />
             <element signature="method#replan#0;class#Planner#0" expanded="false" />
-            <element signature="e#3954#3967#0" expanded="false" />
-            <element signature="e#4014#4059#0" expanded="false" />
+            <element signature="e#3923#3936#0" expanded="false" />
+            <element signature="e#3983#4028#0" expanded="false" />
             <element signature="method#randInt#0;class#Planner#0" expanded="false" />
-            <element signature="e#4262#4322#0" expanded="false" />
-            <element signature="e#4418#4468#0" expanded="false" />
+            <element signature="e#4231#4291#0" expanded="false" />
+            <element signature="e#4387#4437#0" expanded="false" />
             <element signature="method#parseHidden#0;class#Planner#0" expanded="false" />
-            <element signature="e#5149#5195#0" expanded="false" />
-            <element signature="e#6663#6728#0" expanded="false" />
-            <element signature="e#6964#6981#0" expanded="false" />
+            <element signature="e#5118#5164#0" expanded="false" />
+            <element signature="e#6632#6697#0" expanded="false" />
+            <element signature="e#6933#6950#0" expanded="false" />
             <element signature="method#readFile#0;class#Planner#0" expanded="false" />
             <element signature="method#ReadStats#0;class#Planner#0" expanded="false" />
             <element signature="method#Readplan#0;class#Planner#0" expanded="false" />
-            <element signature="e#7914#7955#0" expanded="false" />
-            <element signature="e#8204#8233#0" expanded="false" />
-            <element signature="e#8529#8595#0" expanded="false" />
+            <element signature="e#7883#7924#0" expanded="false" />
+            <element signature="e#8173#8202#0" expanded="false" />
+            <element signature="e#8498#8564#0" expanded="false" />
             <element signature="method#setObservationSelected#0;class#Planner#0" expanded="false" />
           </folding>
         </state>
@@ -916,7 +982,6 @@
             <element signature="e#22785#22828#0" expanded="false" />
             <element signature="e#23119#23141#0" expanded="false" />
             <element signature="method#translateActionCollectGoal#0;class#LinearTranslation#0" expanded="false" />
-            <element signature="method#translateDeadAction#0;class#LinearTranslation#0" expanded="false" />
             <element signature="method#needsEffectsTagMaximal#0;class#LinearTranslation#0" expanded="false" />
             <element signature="method#translateEffects#0;class#LinearTranslation#0" expanded="false" />
             <element signature="e#26644#26665#0" expanded="false" />
@@ -971,7 +1036,6 @@
             <element signature="e#22785#22828#0" expanded="false" />
             <element signature="e#23119#23141#0" expanded="false" />
             <element signature="method#translateActionCollectGoal#0;class#LinearTranslation#0" expanded="false" />
-            <element signature="method#translateDeadAction#0;class#LinearTranslation#0" expanded="false" />
             <element signature="method#needsEffectsTagMaximal#0;class#LinearTranslation#0" expanded="false" />
             <element signature="method#translateEffects#0;class#LinearTranslation#0" expanded="false" />
             <element signature="e#26644#26665#0" expanded="false" />
@@ -1026,7 +1090,6 @@
             <element signature="e#22785#22828#0" expanded="false" />
             <element signature="e#23119#23141#0" expanded="false" />
             <element signature="method#translateActionCollectGoal#0;class#LinearTranslation#0" expanded="false" />
-            <element signature="method#translateDeadAction#0;class#LinearTranslation#0" expanded="false" />
             <element signature="method#needsEffectsTagMaximal#0;class#LinearTranslation#0" expanded="false" />
             <element signature="method#translateEffects#0;class#LinearTranslation#0" expanded="false" />
             <element signature="e#26644#26665#0" expanded="false" />
@@ -1065,25 +1128,25 @@
         <state vertical-scroll-proportion="0.0">
           <caret line="183" column="51" selection-start-line="183" selection-start-column="45" selection-end-line="183" selection-end-column="51" />
           <folding>
-            <element signature="e#1905#1958#0" expanded="false" />
+            <element signature="e#1874#1927#0" expanded="false" />
             <element signature="method#translate#0;class#Planner#0" expanded="false" />
             <element signature="method#printDomain#0;class#Planner#0" expanded="false" />
             <element signature="method#replan#0;class#Planner#0" expanded="false" />
-            <element signature="e#3954#3967#0" expanded="false" />
-            <element signature="e#4014#4059#0" expanded="false" />
+            <element signature="e#3923#3936#0" expanded="false" />
+            <element signature="e#3983#4028#0" expanded="false" />
             <element signature="method#randInt#0;class#Planner#0" expanded="false" />
-            <element signature="e#4262#4322#0" expanded="false" />
-            <element signature="e#4418#4468#0" expanded="false" />
+            <element signature="e#4231#4291#0" expanded="false" />
+            <element signature="e#4387#4437#0" expanded="false" />
             <element signature="method#parseHidden#0;class#Planner#0" expanded="false" />
-            <element signature="e#5149#5195#0" expanded="false" />
-            <element signature="e#6663#6728#0" expanded="false" />
-            <element signature="e#6964#6981#0" expanded="false" />
+            <element signature="e#5118#5164#0" expanded="false" />
+            <element signature="e#6632#6697#0" expanded="false" />
+            <element signature="e#6933#6950#0" expanded="false" />
             <element signature="method#readFile#0;class#Planner#0" expanded="false" />
             <element signature="method#ReadStats#0;class#Planner#0" expanded="false" />
             <element signature="method#Readplan#0;class#Planner#0" expanded="false" />
-            <element signature="e#7914#7955#0" expanded="false" />
-            <element signature="e#8204#8233#0" expanded="false" />
-            <element signature="e#8529#8595#0" expanded="false" />
+            <element signature="e#7883#7924#0" expanded="false" />
+            <element signature="e#8173#8202#0" expanded="false" />
+            <element signature="e#8498#8564#0" expanded="false" />
             <element signature="method#setObservationSelected#0;class#Planner#0" expanded="false" />
           </folding>
         </state>
@@ -1132,7 +1195,6 @@
             <element signature="e#22785#22828#0" expanded="false" />
             <element signature="e#23119#23141#0" expanded="false" />
             <element signature="method#translateActionCollectGoal#0;class#LinearTranslation#0" expanded="false" />
-            <element signature="method#translateDeadAction#0;class#LinearTranslation#0" expanded="false" />
             <element signature="method#needsEffectsTagMaximal#0;class#LinearTranslation#0" expanded="false" />
             <element signature="method#translateEffects#0;class#LinearTranslation#0" expanded="false" />
             <element signature="e#26644#26665#0" expanded="false" />
@@ -1171,25 +1233,25 @@
         <state vertical-scroll-proportion="0.0">
           <caret line="183" column="51" selection-start-line="183" selection-start-column="45" selection-end-line="183" selection-end-column="51" />
           <folding>
-            <element signature="e#1905#1958#0" expanded="false" />
+            <element signature="e#1874#1927#0" expanded="false" />
             <element signature="method#translate#0;class#Planner#0" expanded="false" />
             <element signature="method#printDomain#0;class#Planner#0" expanded="false" />
             <element signature="method#replan#0;class#Planner#0" expanded="false" />
-            <element signature="e#3954#3967#0" expanded="false" />
-            <element signature="e#4014#4059#0" expanded="false" />
+            <element signature="e#3923#3936#0" expanded="false" />
+            <element signature="e#3983#4028#0" expanded="false" />
             <element signature="method#randInt#0;class#Planner#0" expanded="false" />
-            <element signature="e#4262#4322#0" expanded="false" />
-            <element signature="e#4418#4468#0" expanded="false" />
+            <element signature="e#4231#4291#0" expanded="false" />
+            <element signature="e#4387#4437#0" expanded="false" />
             <element signature="method#parseHidden#0;class#Planner#0" expanded="false" />
-            <element signature="e#5149#5195#0" expanded="false" />
-            <element signature="e#6663#6728#0" expanded="false" />
-            <element signature="e#6964#6981#0" expanded="false" />
+            <element signature="e#5118#5164#0" expanded="false" />
+            <element signature="e#6632#6697#0" expanded="false" />
+            <element signature="e#6933#6950#0" expanded="false" />
             <element signature="method#readFile#0;class#Planner#0" expanded="false" />
             <element signature="method#ReadStats#0;class#Planner#0" expanded="false" />
             <element signature="method#Readplan#0;class#Planner#0" expanded="false" />
-            <element signature="e#7914#7955#0" expanded="false" />
-            <element signature="e#8204#8233#0" expanded="false" />
-            <element signature="e#8529#8595#0" expanded="false" />
+            <element signature="e#7883#7924#0" expanded="false" />
+            <element signature="e#8173#8202#0" expanded="false" />
+            <element signature="e#8498#8564#0" expanded="false" />
             <element signature="method#setObservationSelected#0;class#Planner#0" expanded="false" />
           </folding>
         </state>
@@ -1238,7 +1300,6 @@
             <element signature="e#22785#22828#0" expanded="false" />
             <element signature="e#23119#23141#0" expanded="false" />
             <element signature="method#translateActionCollectGoal#0;class#LinearTranslation#0" expanded="false" />
-            <element signature="method#translateDeadAction#0;class#LinearTranslation#0" expanded="false" />
             <element signature="method#needsEffectsTagMaximal#0;class#LinearTranslation#0" expanded="false" />
             <element signature="method#translateEffects#0;class#LinearTranslation#0" expanded="false" />
             <element signature="e#26644#26665#0" expanded="false" />
@@ -1300,7 +1361,6 @@
             <element signature="e#22785#22828#0" expanded="false" />
             <element signature="e#23119#23141#0" expanded="false" />
             <element signature="method#translateActionCollectGoal#0;class#LinearTranslation#0" expanded="false" />
-            <element signature="method#translateDeadAction#0;class#LinearTranslation#0" expanded="false" />
             <element signature="method#needsEffectsTagMaximal#0;class#LinearTranslation#0" expanded="false" />
             <element signature="method#translateEffects#0;class#LinearTranslation#0" expanded="false" />
             <element signature="e#26644#26665#0" expanded="false" />
@@ -1339,25 +1399,25 @@
         <state vertical-scroll-proportion="0.0">
           <caret line="183" column="51" selection-start-line="183" selection-start-column="45" selection-end-line="183" selection-end-column="51" />
           <folding>
-            <element signature="e#1905#1958#0" expanded="false" />
+            <element signature="e#1874#1927#0" expanded="false" />
             <element signature="method#translate#0;class#Planner#0" expanded="false" />
             <element signature="method#printDomain#0;class#Planner#0" expanded="false" />
             <element signature="method#replan#0;class#Planner#0" expanded="false" />
-            <element signature="e#3954#3967#0" expanded="false" />
-            <element signature="e#4014#4059#0" expanded="false" />
+            <element signature="e#3923#3936#0" expanded="false" />
+            <element signature="e#3983#4028#0" expanded="false" />
             <element signature="method#randInt#0;class#Planner#0" expanded="false" />
-            <element signature="e#4262#4322#0" expanded="false" />
-            <element signature="e#4418#4468#0" expanded="false" />
+            <element signature="e#4231#4291#0" expanded="false" />
+            <element signature="e#4387#4437#0" expanded="false" />
             <element signature="method#parseHidden#0;class#Planner#0" expanded="false" />
-            <element signature="e#5149#5195#0" expanded="false" />
-            <element signature="e#6663#6728#0" expanded="false" />
-            <element signature="e#6964#6981#0" expanded="false" />
+            <element signature="e#5118#5164#0" expanded="false" />
+            <element signature="e#6632#6697#0" expanded="false" />
+            <element signature="e#6933#6950#0" expanded="false" />
             <element signature="method#readFile#0;class#Planner#0" expanded="false" />
             <element signature="method#ReadStats#0;class#Planner#0" expanded="false" />
             <element signature="method#Readplan#0;class#Planner#0" expanded="false" />
-            <element signature="e#7914#7955#0" expanded="false" />
-            <element signature="e#8204#8233#0" expanded="false" />
-            <element signature="e#8529#8595#0" expanded="false" />
+            <element signature="e#7883#7924#0" expanded="false" />
+            <element signature="e#8173#8202#0" expanded="false" />
+            <element signature="e#8498#8564#0" expanded="false" />
             <element signature="method#setObservationSelected#0;class#Planner#0" expanded="false" />
           </folding>
         </state>
@@ -1396,16 +1456,13 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="240" column="45" selection-start-line="240" selection-start-column="45" selection-end-line="240" selection-end-column="45" />
-          <folding>
-            <element signature="method#parseDomain#0;class#Parser#0" expanded="false" />
-          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/Main.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="13" column="13" selection-start-line="13" selection-start-column="13" selection-end-line="13" selection-end-column="13" />
+        <state vertical-scroll-proportion="-0.24657534">
+          <caret line="15" column="39" selection-start-line="15" selection-start-column="39" selection-end-line="15" selection-end-column="39" />
           <folding />
         </state>
       </provider>
@@ -1418,47 +1475,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/planner/Planner.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="66" column="23" selection-start-line="66" selection-start-column="23" selection-end-line="66" selection-end-column="23" />
-          <folding>
-            <element signature="e#1905#1958#0" expanded="false" />
-            <element signature="method#translate#0;class#Planner#0" expanded="false" />
-            <element signature="method#printDomain#0;class#Planner#0" expanded="false" />
-            <element signature="method#replan#0;class#Planner#0" expanded="false" />
-            <element signature="e#3954#3967#0" expanded="false" />
-            <element signature="e#4014#4059#0" expanded="false" />
-            <element signature="method#randInt#0;class#Planner#0" expanded="false" />
-            <element signature="e#4262#4322#0" expanded="false" />
-            <element signature="e#4418#4468#0" expanded="false" />
-            <element signature="method#parseHidden#0;class#Planner#0" expanded="false" />
-            <element signature="e#5149#5195#0" expanded="false" />
-            <element signature="e#6663#6728#0" expanded="false" />
-            <element signature="e#6964#6981#0" expanded="false" />
-            <element signature="method#readFile#0;class#Planner#0" expanded="false" />
-            <element signature="method#ReadStats#0;class#Planner#0" expanded="false" />
-            <element signature="method#Readplan#0;class#Planner#0" expanded="false" />
-            <element signature="e#7914#7955#0" expanded="false" />
-            <element signature="e#8204#8233#0" expanded="false" />
-            <element signature="e#8529#8595#0" expanded="false" />
-            <element signature="method#setObservationSelected#0;class#Planner#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/planner/CausalGraph.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="52" column="0" selection-start-line="52" selection-start-column="0" selection-end-line="52" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/translating/LinearTranslation.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.14611872">
-          <caret line="775" column="25" selection-start-line="775" selection-start-column="25" selection-end-line="775" selection-end-column="25" />
+        <state vertical-scroll-proportion="0.0">
+          <caret line="778" column="0" selection-start-line="778" selection-start-column="0" selection-end-line="778" selection-end-column="0" />
           <folding>
             <element signature="imports" expanded="true" />
             <element signature="docComment;class#LinearTranslation#0" expanded="false" />
@@ -1490,7 +1510,6 @@
             <element signature="e#22785#22828#0" expanded="false" />
             <element signature="e#23119#23141#0" expanded="false" />
             <element signature="method#translateActionCollectGoal#0;class#LinearTranslation#0" expanded="false" />
-            <element signature="method#translateDeadAction#0;class#LinearTranslation#0" expanded="false" />
             <element signature="method#needsEffectsTagMaximal#0;class#LinearTranslation#0" expanded="false" />
             <element signature="method#translateEffects#0;class#LinearTranslation#0" expanded="false" />
             <element signature="e#26644#26665#0" expanded="false" />
@@ -1499,6 +1518,55 @@
             <element signature="e#30974#30983#0" expanded="false" />
             <element signature="method#addPredicate#0;class#LinearTranslation#0" expanded="false" />
             <element signature="method#translateInitialState#0;class#LinearTranslation#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/planner/CausalGraph.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="9" column="0" selection-start-line="9" selection-start-column="0" selection-end-line="9" selection-end-column="26" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/planner/Planner.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="45" column="59" selection-start-line="45" selection-start-column="59" selection-end-line="45" selection-end-column="59" />
+          <folding>
+            <element signature="e#1874#1927#0" expanded="false" />
+            <element signature="method#translate#0;class#Planner#0" expanded="false" />
+            <element signature="method#printDomain#0;class#Planner#0" expanded="false" />
+            <element signature="method#replan#0;class#Planner#0" expanded="false" />
+            <element signature="e#3923#3936#0" expanded="false" />
+            <element signature="e#3983#4028#0" expanded="false" />
+            <element signature="method#randInt#0;class#Planner#0" expanded="false" />
+            <element signature="e#4231#4291#0" expanded="false" />
+            <element signature="e#4387#4437#0" expanded="false" />
+            <element signature="method#parseHidden#0;class#Planner#0" expanded="false" />
+            <element signature="e#5118#5164#0" expanded="false" />
+            <element signature="e#6632#6697#0" expanded="false" />
+            <element signature="e#6933#6950#0" expanded="false" />
+            <element signature="method#readFile#0;class#Planner#0" expanded="false" />
+            <element signature="method#ReadStats#0;class#Planner#0" expanded="false" />
+            <element signature="method#Readplan#0;class#Planner#0" expanded="false" />
+            <element signature="e#7883#7924#0" expanded="false" />
+            <element signature="e#8173#8202#0" expanded="false" />
+            <element signature="e#8498#8564#0" expanded="false" />
+            <element signature="method#setObservationSelected#0;class#Planner#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/planner/RelevanceAnalyser.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.6757991">
+          <caret line="27" column="36" selection-start-line="27" selection-start-column="36" selection-end-line="27" selection-end-column="36" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="method#stripChain#0;class#RelevanceAnalyser#0" expanded="false" />
+            <element signature="method#calculateContext#0;class#RelevanceAnalyser#0" expanded="false" />
           </folding>
         </state>
       </provider>

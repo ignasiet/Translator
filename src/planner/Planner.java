@@ -7,7 +7,6 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Random;
 import java.util.Scanner;
@@ -18,9 +17,7 @@ import parser.Parser;
 import parser.ParserHelper;
 import pddlElements.Domain;
 import pddlElements.Printer;
-import tester.searcher;
 import translating.LinearTranslation;
-import translating.TranslateDeadEnd;
 import translating.Translation;
 import translating.TranslatorTag;
 import translating.Translator_Kt;
@@ -46,6 +43,7 @@ public class Planner {
 		domain = initParsing(domain_file_path, problem_file_path);
 		//init();
 		/*Ground conditional effects*/
+		RelevanceAnalyser rA = new RelevanceAnalyser(domain);
 		domain.ground_all_actions();
 		if(!(hidden_file == null)){
 			parseHidden(hidden_file);

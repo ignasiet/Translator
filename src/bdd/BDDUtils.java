@@ -17,7 +17,7 @@ public class BDDUtils {
 
 	public BDDUtils(){
 		bddFactory = JFactory.init(nodenum, cachesize);
-		bddFactory.setVarNum(numberVariables); // Set the number of used BDD variables.
+		bddFactory.setVarNum(numberVariables); // Set the number of used BDD context.
 	}
 	
 	public BDD createTrueBDD(int label){

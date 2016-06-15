@@ -72,7 +72,7 @@ public class Main {
 				//Time for the planner:
 				for(int i = 0; i<10; i++){
 					long startTime = System.currentTimeMillis();
-					Planner.callClgPlanner();
+					//Planner.callClgPlanner();
 					long endTime = System.currentTimeMillis();
 					long time = endTime - startTime;
 					System.out.println("FF processing time-" + i + ": " + time + " milliseconds");
