@@ -169,7 +169,6 @@ public class Domain {
 				if(predicates_invariants.containsKey(predicate_name)){
 					if(!isUncertain(precond) && !state.containsKey(precond)){
 						System.out.println("Illegal action?: " + precond);
-						continue;
 					}
 					predicates_invariants_grounded.put(precond, 1);
 					predicates_grounded.remove(precond);
@@ -178,13 +177,17 @@ public class Domain {
 					 * 1 - Does it happens in initial state?
 					 * 2 - Is it an uncertainty predicate?
 					 */
-					if(!state.containsKey(precond)){
+					/*if(!state.containsKey(precond)){
 						for(Disjunction elems : list_disjunctions){
 							if(!elems.contains(precond)){
 								actions_to_be_removed.add(action_name);
 								break;
 							}
 						}
+					}*/
+					if(!isUncertain(precond) && !state.containsKey(precond)){
+						System.out.println("Illegal action?: " + precond);
+						actions_to_be_removed.add(action_name);
 					}
 				}
 			}
