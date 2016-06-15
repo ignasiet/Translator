@@ -110,17 +110,19 @@ public class Domain {
 			//No single effects: now all are cond effects
 			for(Effect effect : a._Effects){
 				for(String eff : effect._Effects){
-					eff = eff.replace("~", "");
-					if(eff.contains("_")){
-						predicates_variants.put(eff.substring(0, eff.indexOf("_")), 1);
-					}else{
-						predicates_variants.put(eff, 1);
+					if(!eff.startsWith("~")){
+						eff = eff.replace("~", "");
+						if(eff.contains("_")){
+							predicates_variants.put(eff.substring(0, eff.indexOf("_")), 1);
+						}else{
+							predicates_variants.put(eff, 1);
+						}
 					}
 				}				
 			}
 		}
 		for(Action a : action_list){
-			for(String predicate : a._precond){
+			for(String predicate : a._precond){				
 				String auxPredicate = predicate;				
 				if(predicate.contains("_")){
 					auxPredicate = predicate.substring(0, predicate.indexOf("_"));
@@ -165,6 +167,10 @@ public class Domain {
 					predicate_name = precond.substring(0, precond.indexOf("_"));
 				}
 				if(predicates_invariants.containsKey(predicate_name)){
+					if(!isUncertain(precond) && !state.containsKey(precond)){
+						System.out.println("Illegal action?: " + precond);
+						continue;
+					}
 					predicates_invariants_grounded.put(precond, 1);
 					predicates_grounded.remove(precond);
 					/*
