@@ -1,8 +1,0 @@
-/**
- * 
- */
-/**
- * @author Ignasi
- *
- */
-package bdd;
