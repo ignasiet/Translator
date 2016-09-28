@@ -111,7 +111,7 @@ public class ParserHelper {
 		}		
 	}
 	
-	public static String negateString(String pred, String negateString){
+	public static String createStringPredicate(String pred, String negateString){
 		String auxStr = "";
 		if(pred.startsWith("~")){
 			auxStr = auxStr + "(not (" + pred.substring(1).replace("~", negateString) + ")) ";

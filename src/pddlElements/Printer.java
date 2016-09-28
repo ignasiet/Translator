@@ -48,7 +48,7 @@ public class Printer {
 			bw.write("(:init \n");
 			while(e.hasMoreElements()){
 				String pred = e.nextElement().toString();
-				bw.write("\t" + ParserHelper.negateString(pred, negateString) + "\n");
+				bw.write("\t" + ParserHelper.createStringPredicate(pred, negateString) + "\n");
 			}
 			bw.write(") \n");
 			bw.write(printGoalSituation(domain));
@@ -61,8 +61,7 @@ public class Printer {
 		}	
 	}
 
-	@SuppressWarnings("unused")
-	private static String printProblem(Domain domain) {
+	/*private static String printProblem(Domain domain) {
 		String auxStr = "";
 		auxStr = "(define (problem " + domain.ProblemInstance + ")\n";
 		auxStr = auxStr + "(:domain " + domain.Name + ")\n";
@@ -70,7 +69,7 @@ public class Printer {
 		auxStr = auxStr + printGoalSituation(domain);
 		auxStr = auxStr + "\n)\n";
 		return auxStr;
-	}
+	}*/
 
 	private static String printGoalSituation(Domain domain) {
 		String auxStr = "\n(:goal (and ";
@@ -85,7 +84,7 @@ public class Printer {
 		return auxStr;
 	}
 
-	private static String printInitSituation(Domain domain) {
+	/*private static String printInitSituation(Domain domain) {
 		String auxStr = "";
 		Enumeration<String> e = domain.state.keys();
 		auxStr = auxStr + "(:init \n";
@@ -100,7 +99,7 @@ public class Printer {
 		}
 		auxStr = auxStr + ") \n";
 		return auxStr;
-	}
+	}*/
 
 	private static void printDomain(String path, Domain domain){
 		try {
@@ -156,60 +155,94 @@ public class Printer {
 		while(e.hasMoreElements()){
 			Action action = domain.list_actions.get(e.nextElement().toString());
 			if(action.IsObservation){
-				auxStr = auxStr + "\n(:observation " + action.Name;
+				//auxStr = auxStr + "\n(:observation " + action.Name;
+				auxStr = auxStr + "\n(:action " + action.Name;
 			}else{
 				auxStr = auxStr + "\n(:action " + action.Name;
 			}
 			//Preconditions
-			if(action._precond.size()>0){
-				auxStr = auxStr + "\n:precondition ";
-				if(action._precond.size()>1){
-					auxStr = auxStr + "(and ";
-					for(String precond : action._precond){
-						auxStr = auxStr + ParserHelper.negateString(precond, negateString);
-					}
-					auxStr = auxStr + ")";
-				}
-				else{
-					for(String precond : action._precond){				
-						auxStr = auxStr + ParserHelper.negateString(precond, negateString);
-					}
-				}
-			}
+			auxStr = printPreconditions(action, auxStr);
 			//Close preconditions			
 			//Effects
-			if(!action._Effects.isEmpty()){
-				auxStr = auxStr + "\n:effect ";
-				auxStr = auxStr + "(and ";
-				for(Effect ef : action._Effects){
-					if(ef._Condition.isEmpty()){
-						for(String effect : ef._Effects){
-							auxStr = auxStr + ParserHelper.negateString(effect, negateString);
-						}
-					}else{
-						auxStr = auxStr + "\n(when (and ";
-						for(String effect : ef._Condition){
-							auxStr = auxStr + ParserHelper.negateString(effect, negateString);
-						}					
-						auxStr = auxStr + ") (and ";
-						for(String effect : ef._Effects){
-							auxStr = auxStr + ParserHelper.negateString(effect, negateString);
-						}
-						auxStr = auxStr + "))";
-					}
-				}
-				auxStr = auxStr + ")";
-			}
 			if(action.IsObservation){
-				auxStr = auxStr + "\n:branches (or \n";
-				for(Branch branch1 : action._Branches){
-					auxStr = auxStr + branch1.toString(negateString);
-					auxStr = auxStr + "\n";
-				}
-				auxStr = auxStr + ")\n";
+				printObservation(action, auxStr);
+			}else{
+				printEffects(action, auxStr);
 			}
 			auxStr = auxStr + ")\n";
 		}
+		return auxStr;
+	}
+	
+	private static String printPreconditions(Action action, String auxStr){
+		//Preconditions
+		if(action._precond.size()>0){
+			auxStr = auxStr + "\n:precondition ";
+			if(action._precond.size()>1){
+				auxStr = auxStr + "(and ";
+				for(String precond : action._precond){
+					auxStr = auxStr + ParserHelper.createStringPredicate(precond, negateString);
+				}
+				auxStr = auxStr + ")";
+			}
+			else{
+				for(String precond : action._precond){				
+					auxStr = auxStr + ParserHelper.createStringPredicate(precond, negateString);
+				}
+			}
+		}
+		return auxStr;
+	}
+	
+	private static String printEffects(Action action, String auxStr){
+		//Effects
+		if(!action._Effects.isEmpty()){
+			auxStr = auxStr + "\n:effect ";
+			auxStr = auxStr + "(and ";
+			for(Effect ef : action._Effects){
+				if(ef._Condition.isEmpty()){
+					for(String effect : ef._Effects){
+						auxStr = auxStr + ParserHelper.createStringPredicate(effect, negateString);
+					}
+				}else{
+					auxStr = auxStr + "\n(when (and ";
+					for(String effect : ef._Condition){
+						auxStr = auxStr + ParserHelper.createStringPredicate(effect, negateString);
+					}					
+					auxStr = auxStr + ") (and ";
+					for(String effect : ef._Effects){
+						auxStr = auxStr + ParserHelper.createStringPredicate(effect, negateString);
+					}
+					auxStr = auxStr + "))";
+				}
+			}
+			auxStr = auxStr + ")";
+		}
+		/*if(action.IsObservation){
+			auxStr = auxStr + "\n:branches (or \n";
+			for(Branch branch1 : action._Branches){
+				auxStr = auxStr + branch1.toString(negateString);
+				auxStr = auxStr + "\n";
+			}
+			auxStr = auxStr + ")\n";
+		}*/
+		auxStr = auxStr + ")\n";
+		return auxStr;
+	}
+	
+	private static String printObservation(Action action, String auxStr){
+		if(!action._Effects.isEmpty()){
+			auxStr = auxStr + "\n:effect ";
+			auxStr = auxStr + "(and ";
+		}
+		
+		/*auxStr = auxStr + "\n:branches (or \n";
+		for(Branch branch1 : action._Branches){
+			auxStr = auxStr + branch1.toString(negateString);
+			auxStr = auxStr + "\n";
+		}*/
+		auxStr = auxStr + ")\n";
+		auxStr = auxStr + ")\n";
 		return auxStr;
 	}
 

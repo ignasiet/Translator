@@ -177,6 +177,7 @@ public class LinearTranslation extends Translation{
 				Action a_translated = new Action();
 				a_translated.IsObservation = false;
 				a_translated.Name = a.Name;
+				a_translated._precond.add("Knormal-execution");
 				for(String precondition : a._precond){
 					//Preconditions now are conditions of conditionals effects
 					//TODO: add M-predicates
@@ -276,7 +277,7 @@ public class LinearTranslation extends Translation{
 				supportRule._Effects.add("~K" + effect.substring(1));
 			}else{
 				supportRule._Effects.add("~K~" + effect);
-				addPredicate("K~" + ParserHelper.complement(effect));
+				addPredicate("K" + ParserHelper.complement(effect));
 			}
 			addPredicate("K" + effect);
 			cancelRule._Effects.add("~K" + ParserHelper.complement(effect));
@@ -288,7 +289,9 @@ public class LinearTranslation extends Translation{
 	}
 
 	private void translateObservations(Action a) {
-		//TODO: Add branches
+		addPredicate("K_need-post-for-" + a.Name);
+		domain_translated.state.put("K_not_need-post-for-" + a.Name, 1);
+		addPredicate("K_not_need-post-for-" + a.Name);
 		Action a_translated = new Action();
 		a_translated.IsObservation = true;
 		a_translated.Name = a.Name;
@@ -296,6 +299,7 @@ public class LinearTranslation extends Translation{
 		Branch b = new Branch();
 		for(String precondition : a._precond){
 			a_translated._precond.add("K" + precondition);
+			a_translated._precond.add("Knormal-execution");
 			e._Condition.add("K" + precondition);
 			e._Condition.add("~K" + ParserHelper.complement(precondition));
 		}
@@ -330,6 +334,8 @@ public class LinearTranslation extends Translation{
 
 	protected void translatePredicates(ArrayList<String> predicates_grounded, Hashtable<String, Integer> predicates_invariants_grounded) {
 		//1- predicates without tags
+		addPredicate("Knormal-execution");
+		addPredicate("Kn_normal-execution");
 		for(String predicate : predicates_grounded){
 			if(!predicates_invariants_grounded.containsKey(predicate)){
 				//KL
@@ -350,6 +356,7 @@ public class LinearTranslation extends Translation{
 	protected void translateInitialState(Hashtable<String, Integer> state) {
 		Enumeration<String> e = state.keys();
 		//1-Add state 
+		domain_translated.state.put("Knormal-execution", 1);
 		while(e.hasMoreElements()){
 			String key_state = e.nextElement().toString();
 			domain_translated.state.put("K" + key_state, 1);

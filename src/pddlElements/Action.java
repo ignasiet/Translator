@@ -86,26 +86,74 @@ public class Action{
 	public String ToString(String negateString){
 		String auxStr = "";
 		if(IsObservation){
-			auxStr =  "\n(:observation " + Name;
+			auxStr =  printObservations(auxStr, negateString);
+			return auxStr;
 		}else{
 			auxStr = "\n(:action " + Name;
+			//Preconditions
+			auxStr = printPreconditions(auxStr, negateString);
+			auxStr = printEffects(auxStr, negateString);
+			auxStr = auxStr + ")\n";
+			return auxStr;
 		}
+	}
+	
+	private String printObservations(String auxStr, String negateString) {
+		auxStr =  "\n(:action sensor-" + Name + "-obs0_DETDUP_0";
+		String act = "\n(:action " + Name;
+		String auxStr2 = "\n(:action sensor-" + Name + "-obs0_DETDUP_1";
 		//Preconditions
-		if(_precond.size()>0){
-			auxStr = auxStr + "\n:precondition ";
-			if(_precond.size()>1){
-				auxStr = auxStr + "(and ";
-				for(String precond : _precond){
-					auxStr = auxStr + ParserHelper.negateString(precond, negateString);
-				}
-				auxStr = auxStr + ")";
-			}
-			else{
-				for(String precond : _precond){				
-					auxStr = auxStr + ParserHelper.negateString(precond, negateString);
-				}
-			}
+		act = act + "\n:precondition (and ";
+		//auxStr = printPreconditions(auxStr, negateString);
+		//auxStr = printObservations(auxStr, negateString);
+		auxStr = auxStr + "\n:effect " + "\n(when (and ";
+		auxStr2 = auxStr2 + "\n:effect " + "\n(when (and ";
+		for(String precond : _precond){
+			act = act + ParserHelper.createStringPredicate(precond, negateString);
+			auxStr = auxStr + ParserHelper.createStringPredicate(precond, negateString);
+			auxStr2 = auxStr2 + ParserHelper.createStringPredicate(precond, negateString);
 		}
+		act = act + ")";
+		act = printSpecialEffectsObs(act, negateString);
+		act = act + ")\n";
+		auxStr = auxStr + ")";
+		auxStr = auxStr + _Branches.get(0).toString(negateString);
+		auxStr = auxStr + "))\n";
+		auxStr2 = auxStr2 + ")";
+		auxStr2 = auxStr2 + _Branches.get(1).toString(negateString);
+		auxStr2 = auxStr2 + "))\n";
+		String postObs = printSpecialPostObservation(negateString);
+		return act + auxStr + auxStr2 + postObs;
+	}
+	
+	private String printSpecialEffectsObs(String act, String negateString) {
+		act = act + "\n:effect (and ";
+		//addPredicate("Knormal-execution");
+		//addPredicate("Kn_normal-execution");
+		//addPredicate("K_need-post-for-" + a.Name);
+		//addPredicate("K_not_need-post-for-" + a.Name);
+		act = act + ParserHelper.createStringPredicate("~Knormal-execution", negateString);
+		act = act + ParserHelper.createStringPredicate("Kn_normal-execution", negateString);
+		act = act + ParserHelper.createStringPredicate("~K_not_need-post-for-" + Name, negateString);
+		act = act + ParserHelper.createStringPredicate("K_need-post-for-" + Name, negateString);
+		act = act + ")";
+		return act;
+	}
+
+	private String printSpecialPostObservation(String negateString){
+		String aux = "\n(:action " + Name + "__post__";
+		aux = aux + "\n:precondition (and " + ParserHelper.createStringPredicate("K_need-post-for-" + Name, negateString);
+		aux = aux + ")";
+		aux = aux + "\n:effect (and ";
+		aux = aux + ParserHelper.createStringPredicate("~K_need-post-for-" + Name, negateString);
+		aux = aux + ParserHelper.createStringPredicate("~Kn_normal-execution", negateString);
+		aux = aux + ParserHelper.createStringPredicate("Knormal-execution", negateString);
+		aux = aux + ParserHelper.createStringPredicate("K_not_need-post-for-" + Name, negateString);
+		aux = aux + "))\n";
+		return aux;
+	}
+
+	private String printEffects(String auxStr, String negateString){
 		//Effects
 		if(!_Effects.isEmpty()){
 			auxStr = auxStr + "\n:effect ";
@@ -115,16 +163,16 @@ public class Action{
 			for(Effect ef : _Effects){
 				if(ef._Condition.isEmpty()){					
 					for(String effect : ef._Effects){
-						auxStrEffects = auxStrEffects + ParserHelper.negateString(effect, negateString);
+						auxStrEffects = auxStrEffects + ParserHelper.createStringPredicate(effect, negateString);
 					}
 				}else{
 					condEffects = condEffects + "\n(when (and ";
 					for(String effect : ef._Condition){
-						condEffects = condEffects + ParserHelper.negateString(effect, negateString);
+						condEffects = condEffects + ParserHelper.createStringPredicate(effect, negateString);
 					}					
 					condEffects = condEffects + ") (and ";
 					for(String effect : ef._Effects){
-						condEffects = condEffects + ParserHelper.negateString(effect, negateString);
+						condEffects = condEffects + ParserHelper.createStringPredicate(effect, negateString);
 					}
 					condEffects = condEffects + "))";
 				}
@@ -136,15 +184,26 @@ public class Action{
 			}			
 			auxStr = auxStr + ")";
 		}
-		if(IsObservation){
-			auxStr = auxStr + "\n:branches (or \n";
-			for(Branch branch1 : _Branches){
-				auxStr = auxStr + branch1.toString(negateString);
-				auxStr = auxStr + "\n";
+		return auxStr;
+	}
+	
+	private String printPreconditions(String auxStr, String negateString){
+		//Preconditions
+		if(_precond.size()>0){
+			auxStr = auxStr + "\n:precondition ";
+			if(_precond.size()>1){
+				auxStr = auxStr + "(and ";
+				for(String precond : _precond){
+					auxStr = auxStr + ParserHelper.createStringPredicate(precond, negateString);
+				}
+				auxStr = auxStr + ")";
 			}
-			auxStr = auxStr + ")\n";
+			else{
+				for(String precond : _precond){				
+					auxStr = auxStr + ParserHelper.createStringPredicate(precond, negateString);
+				}
+			}
 		}
-		auxStr = auxStr + ")\n";
 		return auxStr;
 	}
 }

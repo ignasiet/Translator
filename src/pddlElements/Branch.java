@@ -16,7 +16,7 @@ public class Branch {
 		if(!_Branches.isEmpty()){
 			String return_string = "(and ";
 			for(String branch : _Branches){
-				return_string = return_string + ParserHelper.negateString(branch, negateString);
+				return_string = return_string + ParserHelper.createStringPredicate(branch, negateString);
 			}
 			return return_string + ")";
 		}else{
