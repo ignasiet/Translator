@@ -3,10 +3,84 @@ ff: parsing domain file
 domain 'WUMPUS' defined
  ... done.
 ff: parsing problem file
-problem 'WUMPUS-3' defined
+problem 'WUMPUS-5' defined
  ... done.
 
-STATS quality of hash table of predicates: max_bucket_size = 2, ave_bucket_size = 0.316062
+STATS quality of hash table of predicates: max_bucket_size = 4, ave_bucket_size = 0.979434
+ff-cond: no description file
+fact T0_FAIL_K0 tagged as -1  
 
-ff: goal can be simplified to FALSE. No plan will solve it
+
+Skipping All searches!
+Starting K procedure.
+
+          h:                        12            [1]
+          h:                        12  , h_  :   11       
+::::::::::::::::::::::::current action:::MOVE_P1-1_P1-2
+
+          h:                        11            [1]
+          h:                        11  , h_  :   10       
+::::::::::::::::::::::::current action:::MOVE_P1-2_P1-3
+
+          h:                        10            [1]
+          h:                        10  , h_  :    9       
+::::::::::::::::::::::::current action:::MOVE_P1-3_P1-4
+
+          h:                         9            [1]
+          h:                         9  , h_  :    8       
+::::::::::::::::::::::::current action:::MOVE_P1-4_P1-5
+
+          h:                         8            [1]
+          h:                         8  , h_  :    7       
+::::::::::::::::::::::::current action:::MOVE_P1-5_P2-5
+
+          h:                         7            [1]
+          h:                         7  , h_  :    6       
+::::::::::::::::::::::::current action:::MOVE_P2-5_P3-5
+
+          h:                         6            [1]
+          h:                         6  , h_  :    5       
+::::::::::::::::::::::::current action:::SENSOR-SMELL_WUMPUS_P3-5-OBS0_DETDUP_1
+
+          h:                         5            [1]
+          h:                         5  , h_  :    4       
+::::::::::::::::::::::::current action:::SENSOR-FEEL-BREEZE_P3-5-OBS0_DETDUP_1
+
+          h:                         4            [1]
+          h:                         4  , h_  :    3       
+::::::::::::::::::::::::current action:::MOVE_P3-5_P4-5
+
+          h:                         3            [1]
+          h:                         3  , h_  :    2       
+::::::::::::::::::::::::current action:::MOVE_P4-5_P5-5
+
+          h:                         2            [1]
+          h:                         2  , h_  :    1       
+::::::::::::::::::::::::current action:::GRAB_P5-5
+
+          h:                         1            [1]
+          h:                         1  , h_  :    0       
+::::::::::::::::::::::::current action:::COLLECT_GOAL
+
+Goal reached in a branch 
+root
+
+
+ff: found legal plan as follows
+
+Total branches in this plan: 1 
+Longest branch: 12
+Total spurious branches in this plan: 0
+Total number of actions: 12
+
+
+time spent:    0.02 seconds instantiating 494 easy, 0 hard action templates
+               0.00 seconds reachability analysis, yielding 395 facts and 494 actions
+               0.00 seconds creating final representation with 394 relevant facts
+               0.00 seconds building connectivity graph
+               0.00 seconds computing closures operations
+               0.00 seconds searching, evaluating 37 states, expanding 12 nodes, to a max depth of 1
+               0.02 seconds total time
+
+
 

@@ -106,8 +106,8 @@ public class Action{
 		act = act + "\n:precondition (and ";
 		//auxStr = printPreconditions(auxStr, negateString);
 		//auxStr = printObservations(auxStr, negateString);
-		auxStr = auxStr + "\n:effect " + "\n(when (and ";
-		auxStr2 = auxStr2 + "\n:effect " + "\n(when (and ";
+		auxStr = auxStr + "\n:effect " + "(when (and ";
+		auxStr2 = auxStr2 + "\n:effect " + "(when (and ";
 		for(String precond : _precond){
 			act = act + ParserHelper.createStringPredicate(precond, negateString);
 			auxStr = auxStr + ParserHelper.createStringPredicate(precond, negateString);
@@ -156,8 +156,7 @@ public class Action{
 	private String printEffects(String auxStr, String negateString){
 		//Effects
 		if(!_Effects.isEmpty()){
-			auxStr = auxStr + "\n:effect ";
-			auxStr = auxStr + "(and ";
+			auxStr = auxStr + "\n:effect (and ";
 			String condEffects = "";
 			String auxStrEffects = "";
 			for(Effect ef : _Effects){
@@ -166,7 +165,7 @@ public class Action{
 						auxStrEffects = auxStrEffects + ParserHelper.createStringPredicate(effect, negateString);
 					}
 				}else{
-					condEffects = condEffects + "\n(when (and ";
+					condEffects = condEffects + "(when (and ";
 					for(String effect : ef._Condition){
 						condEffects = condEffects + ParserHelper.createStringPredicate(effect, negateString);
 					}					

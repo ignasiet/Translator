@@ -110,13 +110,14 @@ public class Domain {
 			//No single effects: now all are cond effects
 			for(Effect effect : a._Effects){
 				for(String eff : effect._Effects){
-					if(!eff.startsWith("~")){
-						eff = eff.replace("~", "");
-						if(eff.contains("_")){
-							predicates_variants.put(eff.substring(0, eff.indexOf("_")), 1);
-						}else{
-							predicates_variants.put(eff, 1);
-						}
+					/*if(!eff.startsWith("~")){
+						
+					}*/
+					eff = eff.replace("~", "");
+					if(eff.contains("_")){
+						predicates_variants.put(eff.substring(0, eff.indexOf("_")), 1);
+					}else{
+						predicates_variants.put(eff, 1);
 					}
 				}				
 			}

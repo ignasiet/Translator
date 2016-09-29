@@ -132,9 +132,9 @@ public class LinearTranslation extends Translation{
 				Action aInverted = new Action();
 				Axiom kAx1 = new Axiom();
 				Axiom kAx2 = new Axiom();
-				a.Name = "Closure_merge_oneof-" + predicate;
+				a.Name = "invariant-oneof-" + predicate;
 				kAx1._Name = a.Name;
-				aInverted.Name = "Closure_merge_negate-oneof-" + predicate;
+				aInverted.Name = "invariant-negate-oneof-" + predicate;
 				kAx2._Name = aInverted.Name;
 				Effect kEffect = new Effect();
 				Effect kEffectInverted = new Effect();
@@ -257,6 +257,44 @@ public class LinearTranslation extends Translation{
 	
 	private ArrayList<Effect> translateEffects(Effect eff, ArrayList<String> _precond){
 		ArrayList<Effect> returnList = new ArrayList<Effect>();
+		if(eff._Condition.isEmpty()){
+			Effect generalEffect = new Effect();
+			for(String effect : eff._Effects){
+				generalEffect._Effects.add("K" + effect);
+				if(effect.startsWith("~")){
+					generalEffect._Effects.add("~K" + effect.substring(1));
+				}else{
+					generalEffect._Effects.add("~K~" + effect);
+					addPredicate("K" + ParserHelper.complement(effect));
+				}
+			}
+			returnList.add(generalEffect);
+		}else{
+			Effect supportRule = new Effect();
+			Effect cancelRule = new Effect();
+			for(String condition : eff._Condition){			
+				supportRule._Condition.add("K" + condition);
+				addPredicate("K" + condition);
+				cancelRule._Condition.add("~K" + ParserHelper.complement(condition));
+				addPredicate("K" + ParserHelper.complement(condition));
+			}
+			for(String effect : eff._Effects){
+				supportRule._Effects.add("K" + effect);
+				//TODO: eliminate effects starting with ~:
+				if(effect.startsWith("~")){
+					supportRule._Effects.add("~K" + effect.substring(1));
+				}else{
+					supportRule._Effects.add("~K~" + effect);
+					addPredicate("K" + ParserHelper.complement(effect));
+				}
+				addPredicate("K" + effect);
+				cancelRule._Effects.add("~K" + ParserHelper.complement(effect));
+				addPredicate("K" + ParserHelper.complement(effect));
+			}
+			returnList.add(supportRule);
+			returnList.add(cancelRule);
+		}
+		/*
 		Effect supportRule = new Effect();
 		Effect cancelRule = new Effect();
 		for(String prec : _precond){
@@ -264,27 +302,7 @@ public class LinearTranslation extends Translation{
 			cancelRule._Condition.add("~K" + ParserHelper.complement(prec));
 			addPredicate("K" + ParserHelper.complement(prec));
 		}
-		for(String condition : eff._Condition){			
-			supportRule._Condition.add("K" + condition);
-			addPredicate("K" + condition);
-			cancelRule._Condition.add("~K" + ParserHelper.complement(condition));
-			addPredicate("K" + ParserHelper.complement(condition));
-		}
-		for(String effect : eff._Effects){
-			supportRule._Effects.add("K" + effect);
-			//TODO: eliminate effects starting with ~:
-			if(effect.startsWith("~")){
-				supportRule._Effects.add("~K" + effect.substring(1));
-			}else{
-				supportRule._Effects.add("~K~" + effect);
-				addPredicate("K" + ParserHelper.complement(effect));
-			}
-			addPredicate("K" + effect);
-			cancelRule._Effects.add("~K" + ParserHelper.complement(effect));
-			addPredicate("K" + ParserHelper.complement(effect));
-		}
-		returnList.add(supportRule);
-		returnList.add(cancelRule);
+		*/
 		return returnList;
 	}
 
