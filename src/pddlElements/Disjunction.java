@@ -35,6 +35,10 @@ public class Disjunction {
 		}
 	}
 	
+	public String getFluent(){
+		return fluent;
+	}
+	
 	public boolean hasInside(String predicate){
 		return predicate.equals(fluent);
 	}

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package planner;
+package trapper;
 
 import org.jgrapht.ext.VertexNameProvider;
 

@@ -23,6 +23,8 @@ import translating.TranslateDeadEnd;
 import translating.Translation;
 import translating.TranslatorTag;
 import translating.Translator_Kt;
+import trapper.CausalGraph;
+import trapper.Trapper;
 
 
 public class Planner {
@@ -53,6 +55,8 @@ public class Planner {
 		/*Process entry*/
 		domain.getInvariantPredicates();
 		domain.eliminateInvalidActions();
+		//domain.eliminateInvalidObservations();
+		domain.eliminateUselessEffects();
 		long endTime = System.currentTimeMillis();
 		System.out.println("Preprocessing time: " + (endTime - startTime) + " milliseconds");
 		
@@ -64,6 +68,8 @@ public class Planner {
 		domain = ParserHelper.cleanProblem(domain);
 		startTime = System.currentTimeMillis();
 		cg = new CausalGraph(domain);
+		/*Set size of the ksets to 2*/
+		Trapper tp = new Trapper(cg.getLiterals(), domain, cg, 2);
 		Translation tr = translate(type, domain);
 		//LinearTranslation tr = new LinearTranslation(domain);
 		endTime = System.currentTimeMillis();
@@ -103,7 +109,8 @@ public class Planner {
 	private static void printDomain(Translation tr) {
 		tr.getDomainTranslated().hidden_state = domain.hidden_state;
 		long startTime = System.currentTimeMillis();
-		Printer.print(outputPath + "Kdomain.pddl", outputPath + "Kproblem.pddl", tr.getDomainTranslated());
+		Printer.print(outputPath + "Kdomain.pddl", outputPath + "Kproblem.pddl", 
+				tr.getDomainTranslated(), tr.getListAxioms());
 		long endTime = System.currentTimeMillis();
 		System.out.println("Printing time: " + (endTime - startTime) + " Milliseconds");
 	}
@@ -114,7 +121,7 @@ public class Planner {
 		_Plan.clear();
 		//2- translate again! (updated initial state)
 		//Translator_Kt tr = new Translator_Kt(domain);
-		Printer.print(outputPath + "Kdomain.pddl", outputPath + "Kproblem.pddl", domain_translated);
+		//Printer.print(outputPath + "Kdomain.pddl", outputPath + "Kproblem.pddl", domain_translated);
 	}
 	
 	public static int randInt(int min, int max) {

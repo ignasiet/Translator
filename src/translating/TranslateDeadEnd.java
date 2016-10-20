@@ -10,7 +10,7 @@ import pddlElements.Branch;
 import pddlElements.Disjunction;
 import pddlElements.Domain;
 import pddlElements.Effect;
-import planner.CausalGraph;
+import trapper.CausalGraph;
 
 /**
  * @author ignasi
@@ -473,5 +473,11 @@ public class TranslateDeadEnd extends Translation{
 
 	public Domain getDomainTranslated() {
 		return domain_translated;
+	}
+
+	@Override
+	public ArrayList<Action> getListAxioms() {
+		// TODO Auto-generated method stub
+		return null;
 	}	
 }

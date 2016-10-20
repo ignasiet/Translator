@@ -94,6 +94,14 @@ public class ParserHelper {
 		return a;
 	}
 	
+	public static boolean isComplement(String a, String b){
+		if(complement(a).equals(b)){
+			return true;
+		}else{
+			return false;
+		}
+	}
+	
 	public static String complement(String a){
 		if(a.startsWith("~")){
 			return a.substring(1);

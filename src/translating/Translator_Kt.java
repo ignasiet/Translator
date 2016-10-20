@@ -404,5 +404,11 @@ public class Translator_Kt extends Translation{
 
 	public Domain getDomainTranslated() {
 		return domain_translated;
+	}
+
+	@Override
+	public ArrayList<Action> getListAxioms() {
+		// TODO Auto-generated method stub
+		return null;
 	}	
 }

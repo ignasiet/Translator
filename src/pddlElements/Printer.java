@@ -7,6 +7,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Enumeration;
 
 import parser.ParserHelper;
@@ -19,10 +20,11 @@ public class Printer {
 	
 	private static String negateString = "n_";
 	//private static Hashtable<String, Integer> predicates_initial = new Hashtable<String, Integer>();
-	/**Print domain*/
-	public static void print(String path1, String path2, Domain domain){
+	/**Print domain
+	 * @param arrayList */
+	public static void print(String path1, String path2, Domain domain, ArrayList<Action> axioms){
 		long startTime = System.currentTimeMillis();
-		printDomain(path1, domain);
+		printDomain(path1, domain, axioms);
 		long endTime = System.currentTimeMillis();
 		//System.out.println("Time printing domain file: " + (endTime - startTime) + " milliseconds");
 		startTime = System.currentTimeMillis();		
@@ -101,7 +103,7 @@ public class Printer {
 		return auxStr;
 	}*/
 
-	private static void printDomain(String path, Domain domain){
+	private static void printDomain(String path, Domain domain, ArrayList<Action> axioms){
 		try {
 			File file = new File(path);
 			// if file doesnt exists, then create it
@@ -122,10 +124,15 @@ public class Printer {
 			long endTime = System.currentTimeMillis();
 			//System.out.println("Time printing predicates in domain file: " + (endTime - startTime) + " milliseconds");
 			//System.out.println("Predicates printed");
+			/*Print actions*/
 			startTime = System.currentTimeMillis();
 			Enumeration<String> e = domain.list_actions.keys();
 			while(e.hasMoreElements()){
 				Action action = domain.list_actions.get(e.nextElement().toString());
+				bw.write(action.ToString(negateString));
+			}
+			/*Print axioms*/
+			for(Action action : axioms){
 				bw.write(action.ToString(negateString));
 			}
 			//auxStr = auxStr + printActions(domain);

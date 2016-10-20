@@ -2,6 +2,7 @@ package pddlElements;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -9,6 +10,7 @@ import java.util.regex.Pattern;
 import parser.ParserHelper;
 import readers.ExprList;
 import readers.PDDLParser.Expr;
+import trapper.Solver;
 
 
 public class Domain {
@@ -24,8 +26,13 @@ public class Domain {
 	public Hashtable<String, Action> list_actions = new Hashtable<String, Action>();
 	public Hashtable<String, Integer> state = new Hashtable<String, Integer>();
 	public Hashtable<String, Integer> hidden_state = new Hashtable<String, Integer>();
+	public Hashtable<String, Integer> count = new Hashtable<String, Integer>();
 	public Hashtable<String, Integer> predicates_count = new Hashtable<String, Integer>();
 	public Hashtable<String, Integer> predicates_invariants = new Hashtable<String, Integer>();
+	public HashSet<String> predicates_uncertain = new HashSet<String>();
+	public Hashtable<String, Integer> predicates_negat = new Hashtable<String, Integer>();
+	public Hashtable<String, Integer> predicates_posit = new Hashtable<String, Integer>();
+	public Hashtable<String, Integer> predicates_never = new Hashtable<String, Integer>();
 	public Hashtable<String, Integer> predicates_invariants_grounded = new Hashtable<String, Integer>();
 	public ArrayList<String> goalState = new ArrayList<String>();
 	public Action disjunctionAction = new Action();
@@ -45,6 +52,46 @@ public class Domain {
 	
 	public void addActions(Action a){
 		action_list.add(a);
+	}
+	
+	private void countPredicates(){
+		//Refazer!!!!
+		int val = 0;
+		for(Action a : action_list){
+			Hashtable<String, Integer> countV = new Hashtable<String, Integer>();
+			for(Effect e : a._Effects){
+				String cleanS ="";
+				for(String s : e._Effects){
+					val = (s.startsWith("~")) ? -1 : 1;
+					cleanS = s.replace("~", "");
+					cleanS = (cleanS.contains("_")) ? cleanS.substring(0, cleanS.indexOf("_")) : cleanS;
+					if(!countV.containsKey(cleanS)){
+						countV.put(cleanS, val);
+					}else{
+						int v = countV.get(cleanS) + val;
+						countV.put(cleanS, v);
+					}
+				}
+				for(String key : countV.keySet()){
+					updateValue(key, countV.get(key));
+				}
+				/*if(count.containsKey(cleanS)){
+					int maxval = Math.max(count.get(cleanS), val);
+					count.put(cleanS, maxval);
+				}else{
+					count.put(cleanS, val);
+				}*/
+			}
+		}
+	}
+	
+	private void updateValue(String key, int value){
+		if(!count.containsKey(key)){
+			count.put(key, value);
+		}else{
+			int maxval = Math.max(count.get(key), value);
+			count.put(key, maxval);
+		}
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -92,6 +139,7 @@ public class Domain {
 	}
 
 	public void ground_all_actions() {
+		countPredicates();
 		for(Action a : action_list){
 			if(!a._parameters.isEmpty()){
 				ground_actions(a);
@@ -102,7 +150,25 @@ public class Domain {
 		}
 	}
 	
-	public void getInvariantPredicates(){
+	private void getNeverHappen() {
+		Hashtable<String, Integer> variant_predicates = new Hashtable<String, Integer>(predicates_negat);		
+		variant_predicates.keySet().retainAll(predicates_posit.keySet());
+		//System.out.println(inersect);
+		System.out.println("Variable fluents: " + variant_predicates.keySet().toString());
+		variant_predicates = new Hashtable<String, Integer>(predicates_negat);
+		variant_predicates.keySet().removeAll(predicates_posit.keySet());
+		Enumeration<String> e = variant_predicates.keys();
+		while(e.hasMoreElements()){
+			String p = e.nextElement().toString();
+			if(state.containsKey(p)){
+				variant_predicates.remove(p);
+			}
+		}
+		System.out.println("Not used fluent: " + variant_predicates.keySet().toString());
+		predicates_never = new Hashtable<String, Integer>(variant_predicates);
+	}
+	
+	/*public void getInvariantPredicates(){
 		Hashtable<String, Integer> predicates_variants = new Hashtable<String, Integer>();
 		Enumeration<String> e = list_actions.keys();
 		while(e.hasMoreElements()){
@@ -110,9 +176,9 @@ public class Domain {
 			//No single effects: now all are cond effects
 			for(Effect effect : a._Effects){
 				for(String eff : effect._Effects){
-					/*if(!eff.startsWith("~")){
+					if(!eff.startsWith("~")){
 						
-					}*/
+					}
 					eff = eff.replace("~", "");
 					if(eff.contains("_")){
 						predicates_variants.put(eff.substring(0, eff.indexOf("_")), 1);
@@ -144,6 +210,44 @@ public class Domain {
 				}
 			}
 		}
+	}*/
+	
+	public void getInvariantPredicates(){
+		Hashtable<String, Integer> predicates_variants = new Hashtable<String, Integer>();
+		for(String p : predicates){
+			int aux = p.indexOf(" ");
+			if(aux > 0){
+				predicates_invariants.put(p.substring(0, aux), 1);
+			}else{
+				predicates_invariants.put(p, 1);
+			}
+		}
+		Enumeration<String> e = list_actions.keys();
+		while(e.hasMoreElements()){
+			Action a = list_actions.get(e.nextElement().toString());
+			//No single effects: now all are cond effects
+			for(Disjunction disj : list_disjunctions){
+				//predicates_variants.put(disj.getFluent(), 1);
+				predicates_uncertain.add(disj.getFluent());
+			}
+			for(Effect effect : a._Effects){
+				for(String eff : effect._Effects){
+					if(!eff.startsWith("~")){
+						predicates_posit.put(eff, 1);
+					}else{						
+						eff = eff.replace("~", "");
+						predicates_negat.put(eff, 1);
+					}
+					eff = eff.replace("~", "");
+					if(eff.contains("_")){
+						predicates_variants.put(eff.substring(0, eff.indexOf("_")), 1);
+					}else{
+						predicates_variants.put(eff, 1);
+					}
+				}				
+			}
+		}		
+		predicates_invariants.keySet().removeAll(predicates_variants.keySet());
 	}
 	
 	private boolean isUncertain(String predicate){
@@ -156,7 +260,80 @@ public class Domain {
 		return false;
 	}
 	
+	private boolean isInstantiatedUncertain(String predicate){
+		predicate = predicate.replace("~", "");
+		for(Disjunction disj: list_disjunctions){
+			if(disj.contains(predicate)){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public boolean isInvariant(String predicate){
+		if(predicate.contains("_")){
+			predicate = predicate.substring(0, predicate.indexOf("_"));
+		}
+		//Consider also negated literals
+		if(predicates_invariants.containsKey(predicate.replace("~", ""))){
+			return true;
+		}else{
+			return false;
+		}
+	}
+	
 	public void eliminateInvalidActions(){
+		getNeverHappen();
+		Enumeration<String> e = list_actions.keys();
+		ArrayList<String> actions_to_be_removed = new ArrayList<String>();
+		while(e.hasMoreElements()){
+			String action_name = e.nextElement().toString();
+			Action a = list_actions.get(action_name);
+			for(String precond : a._precond){
+				if(isInvariant(precond) && !isUncertain(precond)){
+					predicates_grounded.remove(precond);
+					/*
+					 * Verify 2 things:
+					 * 1 - Does it happens in initial state?
+					 * 2 - Is it an uncertainty predicate?
+					 */
+					if(!isUncertain(precond) && !state.containsKey(precond)){
+						actions_to_be_removed.add(action_name);
+					}
+				}
+				if(predicates_never.containsKey(precond) ){
+					System.out.println("Imposible predicate?: " + precond + " " + action_name);
+					actions_to_be_removed.add(action_name);
+				}
+			}
+		}
+		list_actions.keySet().removeAll(actions_to_be_removed);
+	}
+	
+	public void eliminateUselessEffects(){
+		Enumeration<String> e = list_actions.keys();
+		while(e.hasMoreElements()){
+			String action_name = e.nextElement().toString();
+			Action a = list_actions.get(action_name);
+			ArrayList<Integer> effectsToEliminate = new ArrayList<Integer>();
+			int i = 0;
+			for(Effect effect : a._Effects){
+				for(String cond : effect._Condition){
+					if(isUseless(cond)){
+						System.out.println("Eliminating effect in action " + a.Name);
+						effectsToEliminate.add(i);
+					}
+				}
+				i++;
+			}
+			for(Integer in : effectsToEliminate){
+				Effect uselessEffect = a._Effects.get(in);
+				a._Effects.remove(uselessEffect);
+			}			
+		}
+	}
+	
+	/*public void eliminateInvalidActions(){
 		Enumeration<String> e = list_actions.keys();
 		ArrayList<String> actions_to_be_removed = new ArrayList<String>();
 		while(e.hasMoreElements()){
@@ -173,19 +350,19 @@ public class Domain {
 					}
 					predicates_invariants_grounded.put(precond, 1);
 					predicates_grounded.remove(precond);
-					/*
+					
 					 * Verify 2 things:
 					 * 1 - Does it happens in initial state?
 					 * 2 - Is it an uncertainty predicate?
-					 */
-					/*if(!state.containsKey(precond)){
+					 
+					if(!state.containsKey(precond)){
 						for(Disjunction elems : list_disjunctions){
 							if(!elems.contains(precond)){
 								actions_to_be_removed.add(action_name);
 								break;
 							}
 						}
-					}*/
+					}
 					if(!isUncertain(precond) && !state.containsKey(precond)){
 						System.out.println("Illegal action?: " + precond);
 						actions_to_be_removed.add(action_name);
@@ -214,12 +391,12 @@ public class Domain {
 			}
 		}
 		for(String deleteAction : actions_to_be_removed){
-			/*if(deleteAction.contains("move_p5-3_")){
+			if(deleteAction.contains("move_p5-3_")){
 				System.out.println(deleteAction);
-			}*/
+			}
 			list_actions.remove(deleteAction);
 		}
-	}
+	}*/
 	
 	@SuppressWarnings({ "unchecked", "unused" })
 	public void ground_actions(Action action){
@@ -301,7 +478,7 @@ public class Domain {
 		Effect e = new Effect();
 		ArrayList<String> lista_objetos = new ArrayList<String>(Arrays.asList(act_grounded.combination.split(";")));
 		ArrayList<String> list_cond = new ArrayList<String>();
-		ArrayList<String> list_effects = new ArrayList<String>();
+		ArrayList<String> list_effects = new ArrayList<String>();		
 		String cond_eff = eff._Condition.toString().replace("[", "").replace("]", "");
 		String eff_effect = eff._Effects.toString().replace("[", "").replace("]", "");
 		int i = 0;
@@ -321,6 +498,15 @@ public class Domain {
 		}		
 		e._Effects = list_effects;
 		return e;
+	}
+	
+	private boolean isUseless(String pred){
+		if(isInvariant(pred) && !state.containsKey(pred) && !isInstantiatedUncertain(pred)){
+			System.out.println("Useless predicate found: " + pred);
+			return true;
+		}else{
+			return false;
+		}
 	}
 	
 	/*private void groundEffects(Action act_grounded){
@@ -473,5 +659,14 @@ public class Domain {
 			hidden_state.put(observation, 1);
 		}		
 		return observation;
+	}
+
+	public void eliminateInvalidObservations() {
+		Solver solver = new Solver(state, _Axioms, list_disjunctions);
+		for(String name :list_actions.keySet()){
+			if(list_actions.get(name).IsObservation){
+				Action action = list_actions.get(name);
+			}
+		}
 	}
 }

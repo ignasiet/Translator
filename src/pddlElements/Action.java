@@ -99,31 +99,36 @@ public class Action{
 	}
 	
 	private String printObservations(String auxStr, String negateString) {
-		auxStr =  "\n(:action sensor-" + Name + "-obs0_DETDUP_0";
 		String act = "\n(:action " + Name;
-		String auxStr2 = "\n(:action sensor-" + Name + "-obs0_DETDUP_1";
+		//auxStr =  "\n(:action sensor-" + Name + "-obs0_DETDUP_0";
+		//String auxStr2 = "\n(:action sensor-" + Name + "-obs0_DETDUP_1";
 		//Preconditions
 		act = act + "\n:precondition (and ";
 		//auxStr = printPreconditions(auxStr, negateString);
 		//auxStr = printObservations(auxStr, negateString);
-		auxStr = auxStr + "\n:effect " + "(when (and ";
+		/*auxStr = auxStr + "\n:effect " + "(when (and ";
 		auxStr2 = auxStr2 + "\n:effect " + "(when (and ";
+		auxStr = auxStr + ParserHelper.createStringPredicate("K_need-post-for-" + Name, negateString);
+		auxStr2 = auxStr2 + ParserHelper.createStringPredicate("K_need-post-for-" + Name, negateString);*/
 		for(String precond : _precond){
 			act = act + ParserHelper.createStringPredicate(precond, negateString);
+		}/*
+		for(Branch b : _Branches){
 			auxStr = auxStr + ParserHelper.createStringPredicate(precond, negateString);
 			auxStr2 = auxStr2 + ParserHelper.createStringPredicate(precond, negateString);
-		}
+		}*/
 		act = act + ")";
 		act = printSpecialEffectsObs(act, negateString);
 		act = act + ")\n";
-		auxStr = auxStr + ")";
+		/*auxStr = auxStr + ")";
 		auxStr = auxStr + _Branches.get(0).toString(negateString);
 		auxStr = auxStr + "))\n";
 		auxStr2 = auxStr2 + ")";
 		auxStr2 = auxStr2 + _Branches.get(1).toString(negateString);
-		auxStr2 = auxStr2 + "))\n";
+		auxStr2 = auxStr2 + "))\n";*/
 		String postObs = printSpecialPostObservation(negateString);
-		return act + auxStr + auxStr2 + postObs;
+		//return act + auxStr + auxStr2 + postObs;
+		return act + postObs;
 	}
 	
 	private String printSpecialEffectsObs(String act, String negateString) {
@@ -165,7 +170,7 @@ public class Action{
 						auxStrEffects = auxStrEffects + ParserHelper.createStringPredicate(effect, negateString);
 					}
 				}else{
-					condEffects = condEffects + "(when (and ";
+					condEffects = condEffects + "\n(when (and ";
 					for(String effect : ef._Condition){
 						condEffects = condEffects + ParserHelper.createStringPredicate(effect, negateString);
 					}					
@@ -177,7 +182,7 @@ public class Action{
 				}
 			}
 			if(auxStrEffects.length() > 1){
-				auxStr = auxStr + auxStrEffects + "\n" + condEffects;
+				auxStr = auxStr + auxStrEffects + condEffects;
 			}else{
 				auxStr = auxStr + condEffects;
 			}			

@@ -70,25 +70,30 @@ public class Main {
 				String hiddenfile = cmd.getOptionValue("r");
 				Planner.startPlanner(domainfile, problemfile, hiddenfile, outputfile, translationType);
 				//Time for the planner:
-				for(int i = 0; i<10; i++){
-					long startTime = System.currentTimeMillis();
-					Planner.callClgPlanner();
-					long endTime = System.currentTimeMillis();
-					long time = endTime - startTime;
-					System.out.println("FF processing time-" + i + ": " + time + " milliseconds");
-					times.add(time);
-				}
-				long time =0;
-				for(int i = 0; i<10;i++){
-					time += times.get(i);
-				}
-				System.out.println("Average time FF: " + time/10);
+				//callPlanner();
 			}
 	    }catch (ParseException e) {
 	    	// oops, something went wrong
 	        System.err.println( "Parsing failed.  Reason: " + e.getMessage() );
 			e.printStackTrace();
 		}		
+	}
+	
+	private static void callPlanner(){
+		//Time for the planner:
+		for(int i = 0; i<10; i++){
+			long startTime = System.currentTimeMillis();
+			Planner.callClgPlanner();
+			long endTime = System.currentTimeMillis();
+			long time = endTime - startTime;
+			System.out.println("FF processing time-" + i + ": " + time + " milliseconds");
+			times.add(time);
+		}
+		long time =0;
+		for(int i = 0; i<10;i++){
+			time += times.get(i);
+		}
+		System.out.println("Average time FF: " + time/10);
 	}
 	
 	private static void help() {
