@@ -76,7 +76,7 @@ public class Trapper {
 	
 	private void exportGraph() {
 		try{
-			File file = new File("./Graph.dot");
+			File file = new File("./Ktrap.dot");
 			// if file doesnt exists, then create it
 			if (!file.exists()) {
 				file.createNewFile();
@@ -86,7 +86,7 @@ public class Trapper {
 			bw.write(printGraph());
 			bw.close();
 			//System.out.println(graph.toString());
-			System.out.println("Dot file saved in Graph.dot.\n Using graphviz: dot -Tpdf Graph.dot -o Graph.pdf");
+			System.out.println("Ktrap saved in Graph.dot.\n Using graphviz: dot -Tpdf Graph.dot -o Graph.pdf");
 		}catch (IOException e1) {
 			e1.printStackTrace();
 		}
@@ -207,7 +207,7 @@ public class Trapper {
 				if(!(calc.size() == 1) && !nodes.equals(new HashSet<String>(calc))) {
 					Set<Set<String>> auxSet = sucessors(calc, nodes);
 					if(auxSet.isEmpty()){
-						System.out.println(nodes + " effect : " + e._Condition + e._Effects );
+						//System.out.println(nodes + " effect : " + e._Condition + e._Effects );
 						ret.clear();
 						return ret;
 					}
@@ -410,7 +410,7 @@ public class Trapper {
 				String vertex = kTrapGraph.getEdgeSource(edge);
 				if(markedVertex.contains(vertex)) continue;
 				if(canMarkNode(markedVertex, edge, vertex)){
-					System.out.println("Added(" + vertex + "): " + decode(Integer.parseInt(vertex)) + " from action: " + edge.toString());
+					//System.out.println("Added(" + vertex + "): " + decode(Integer.parseInt(vertex)) + " from action: " + edge.toString());
 					markedVertex.add(vertex);
 					fringe.push(vertex);
 				}
