@@ -48,12 +48,18 @@ public class Printer {
 			//Init
 			Enumeration<String> e = domain.state.keys();
 			bw.write("(:init \n");
+			if(domain.costFunction){
+				bw.write("(= (total-cost) 0)\n");
+			}
 			while(e.hasMoreElements()){
 				String pred = e.nextElement().toString();
 				bw.write("\t" + ParserHelper.createStringPredicate(pred, negateString) + "\n");
 			}
-			bw.write(") \n");
+			bw.write(") \n");						
 			bw.write(printGoalSituation(domain));
+			if(domain.costFunction){
+				bw.write("(:metric minimize (total-cost)) \n");
+			}
 			bw.write("\n)\n");
 			bw.close();
 
@@ -121,6 +127,9 @@ public class Printer {
 				bw.write("\n\t(" + pred.replaceAll("~", negateString) + ")");
 			}
 			bw.write(")\n");
+			if(domain.costFunction){
+				bw.write("(:functions (total-cost) ) \n");
+			}
 			long endTime = System.currentTimeMillis();
 			//System.out.println("Time printing predicates in domain file: " + (endTime - startTime) + " milliseconds");
 			//System.out.println("Predicates printed");

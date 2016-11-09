@@ -6,6 +6,8 @@ package parser;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import pddlElements.Action;
 import pddlElements.Domain;
@@ -75,6 +77,23 @@ public class ParserHelper {
 			//e.printStackTrace();
 			return null;
 		}
+	}
+	
+	public static int ParseCost(String s){
+		// increase (total-cost) 10
+		String pattern = "\\(total-cost\\)\\s*(\\d+)";		
+		// Create a Pattern object
+	    Pattern r = Pattern.compile(pattern, Pattern.DOTALL);
+	    // Now create matcher object.
+	    Matcher m = r.matcher(s);
+	    if(m.find()) {
+	    	int cost = Integer.parseInt(m.group(1).trim());
+	    	return cost;
+	    }else {
+	    	System.out.println("NO MATCH");
+	    	return (Integer) null;
+	    }
+		//String[] aux = s.replaceAll("\\s+", " ").split(" ");		
 	}
 	
 	public static String cleanString(String a){

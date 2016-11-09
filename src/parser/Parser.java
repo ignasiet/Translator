@@ -68,6 +68,9 @@ public class Parser {
 			cleanedElement = cleanedElement.substring(2, cleanedElement.length()).trim().replace("\n", "");
 			_Domain.parsePredicates(cleanedElement);
 			break;
+		case "functions":
+			_Domain.costFunction = true;
+			break;
 		case "constants":
 		case "objects":
 			cleanedElement = element.trim().replace("\n", "");
@@ -135,6 +138,11 @@ public class Parser {
 			/*Tirar parentesis*/
 			predicate = cleanParentesis(predicate);
 			a.IsObservation = true;
+			if(predicate.contains("(total-cost)")){
+		    	int c = ParserHelper.ParseCost(predicate);
+				System.out.println("Observation " + a.Name + " has cost: " + c);
+				a.cost = c;
+			}
 			a.parseEffects(predicate);
 			break;
 		case "effect":
@@ -146,7 +154,11 @@ public class Parser {
 			if(predicate.contains("and")){
 				while(it.hasNext()){
 					String s = it.next().toString().trim();
-					if(!s.equals("and")){
+					if(s.contains("(total-cost)")){
+						int cost = ParserHelper.ParseCost(s);
+						System.out.println("Action " + a.Name + " has cost: " + cost);
+						a.cost = cost;
+					}else if(!s.equals("and")){
 						if(s.contains("when")){
 							a._IsConditionalEffect = true;
 							Effect effect = new Effect(s);

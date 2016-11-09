@@ -62,7 +62,6 @@ public class Planner {
 		
 		//TODO: Print domain, to test for errors: show Thiago
 		// to create a domain generator
-		//Printer.print(path_print + "d-balls.pddl", domain);
 		
 		/*Time measure: translation*/
 		domain = ParserHelper.cleanProblem(domain);

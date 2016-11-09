@@ -23,6 +23,7 @@ public class Action{
 	public boolean deductive_action = false;
 	public String combination;
 	public String Name;
+	public int cost;
 
 	public Action(){
 		_precond = new ArrayList<String>();
@@ -70,8 +71,11 @@ public class Action{
 		Matcher m = Pattern.compile("\\(([^)]+)\\)").matcher(effect_List);
 		Effect e = new Effect();
 		while(m.find()) {
-	    	String effect = ParserHelper.cleanString(m.group(1));	    	
+	    	String effect = ParserHelper.cleanString(m.group(1));
 	    	//e._Effects.add(effect);
+	    	if(effect.contains("total-cost")){
+	    		continue;
+	    	}
 	    	if(effect.startsWith("~")){
 	    		e._Effects.add(effect);
 	    		//_Negative_effects.add(effect);
@@ -141,6 +145,9 @@ public class Action{
 		act = act + ParserHelper.createStringPredicate("Kn_normal-execution", negateString);
 		act = act + ParserHelper.createStringPredicate("~K_not_need-post-for-" + Name, negateString);
 		act = act + ParserHelper.createStringPredicate("K_need-post-for-" + Name, negateString);
+		if(cost != 0){
+			act = act + "\n(increase (total-cost) " + cost + ")\n";
+		}
 		act = act + ")";
 		return act;
 	}
@@ -185,7 +192,10 @@ public class Action{
 				auxStr = auxStr + auxStrEffects + condEffects;
 			}else{
 				auxStr = auxStr + condEffects;
-			}			
+			}
+			if(cost != 0){
+				auxStr = auxStr + "(increase (total-cost) " + cost + ")";
+			}
 			auxStr = auxStr + ")";
 		}
 		return auxStr;

@@ -39,6 +39,7 @@ public class Domain {
 	public String ProblemInstance;
 	private Integer counter = 0;
 	public ArrayList<Axiom> _Axioms = new ArrayList<Axiom>();
+	public boolean costFunction = false;
 	//public Hashtable<String, ArrayList<String>> relevance = new Hashtable<String, ArrayList<String>>();
 	
 	
@@ -416,6 +417,7 @@ public class Domain {
 		for(String combination : result){
 			boolean validAction = true;
 			Action act_grounded = new Action();
+			act_grounded.cost = action.cost;
 			if(action.IsObservation){
 				act_grounded.IsObservation = true;
 			}
@@ -591,6 +593,8 @@ public class Domain {
 		}else if(initial_state.contains("(unknown")){
 			//TODO: consider unknown predicates?
 			System.out.println("Predicate with initial uncertainty: " + initial_state);
+		}else if(initial_state.contains("total-cost")){
+			System.out.println("Domain with costs");
 		}else if(initial_state.contains("(or")){
 			addAxioms(initial_state);
 		}else{

@@ -35,6 +35,7 @@ public class LinearTranslation extends Translation{
 		list_disjunctions = domain_to_translate.list_disjunctions;
 		domain_translated.Name = domain_to_translate.Name;
 		domain_translated.ProblemInstance = domain_to_translate.ProblemInstance;
+		domain_translated.costFunction = domain_to_translate.costFunction;
 		// 1 - Translate predicates (all)
 		translatePredicates(domain_to_translate.predicates_grounded, domain_to_translate.predicates_invariants_grounded);
 		// 2-Translate initial state
@@ -192,6 +193,8 @@ public class LinearTranslation extends Translation{
 				translateObservations(a);
 			}else{
 				Action a_translated = new Action();
+				//Copying costs
+				a_translated.cost = a.cost;
 				a_translated.IsObservation = false;
 				a_translated.Name = a.Name;
 				a_translated._precond.add("Knormal-execution");
@@ -340,6 +343,7 @@ public class LinearTranslation extends Translation{
 		Action a_translated = new Action();
 		a_translated.IsObservation = true;
 		a_translated.Name = a.Name;
+		a_translated.cost = a.cost;
 		Effect e = new Effect();
 		Branch b = new Branch();
 		a_translated._precond.add("Knormal-execution");

@@ -63,9 +63,13 @@ public class Trapper {
 		Axioms = domain._Axioms;
 		//Dummy node
 		addVertex(0);
-		decoder.add(new HashSet<String>());
+		decoder.add(new HashSet<String>());		
+		/*if(domain.goalState.size()>1){
+			createDummyGoalAction(domain);
+			literals.add("completed");
+			literals.add("~completed");
+		}*/
 		buildGraph(literals, i);
-		//createDummyGoalAction(domain);
 		createGraph(nodes, domain.list_actions);
 		exportGraph();
 		System.out.println("Beggining extraction");
@@ -74,6 +78,17 @@ public class Trapper {
 		//eliminateDummyAction(domain);
 	}
 	
+	private void createDummyGoalAction(Domain domain) {
+		Action a = new Action();
+		a.Name = "Goal-Action";
+		a._precond.addAll(domain.goalState);
+		Effect e = new Effect();
+		e._Effects.add("completed");		
+		a._Effects.add(e);
+		domain.goalState.clear();
+		domain.goalState.add("completed");
+	}
+
 	private void exportGraph() {
 		try{
 			File file = new File("./Ktrap.dot");
