@@ -63,6 +63,8 @@ public class Main {
 						translationType = "ktype";
 						break;
 					}					
+				}else{
+					translationType = "linear";
 				}
 				String domainfile = cmd.getOptionValue("d");
 				String problemfile = cmd.getOptionValue("p");

@@ -68,7 +68,7 @@ public class Planner {
 		startTime = System.currentTimeMillis();
 		cg = new CausalGraph(domain);
 		/*Set size of the ksets to 2*/
-		Trapper tp = new Trapper(cg.getLiterals(), domain, cg, 2);
+		//Trapper tp = new Trapper(cg.getLiterals(), domain, cg, 2);
 		Translation tr = translate(type, domain);
 		//LinearTranslation tr = new LinearTranslation(domain);
 		endTime = System.currentTimeMillis();
@@ -173,10 +173,6 @@ public class Planner {
 			String domainPathFile = "Kdomain.pddl";
 			String factFile = "-f";
 			String problemPathFile = "Kproblem.pddl";
-			//Pipe Grep commands: | grep '[0-9][0-9]*:\s'
-			/*String pipe = "|";
-			String grepCommand = "grep";
-			String regexString = "'[0-9][0-9]*:'";*/
 			
 			String[] CMD_ARRAY = { programName, commandA, valueTrue , commandC, 
 					valueTrue, commandV, valueTrue, commandK, valueFalse, 
@@ -191,9 +187,7 @@ public class Planner {
 			InputStream in = p.getInputStream();
 			InputStream err = p.getErrorStream();
 		    p.waitFor();
-		    //here as there is some snipped code that was causing a different
-		    // exception which stopped it from getting processed
-		    //missing these was causing the mass amounts of open 'files'
+		    
 		    p.getInputStream().close();
 		    p.getOutputStream().close();
 		    p.getErrorStream().close();
@@ -205,16 +199,11 @@ public class Planner {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-	}	
-
-	private static String readFile(String path, Charset encoding) throws IOException{
-		byte[] encoded = Files.readAllBytes(Paths.get(path));
-		return new String(encoded, encoding);
 	}
 
 	private static void ReadStats() {
 		try{
-			String content1 = readFile("plan.txt", Charset.defaultCharset());
+			String content1 = new String(Files.readAllBytes(Paths.get("plan.txt")), Charset.defaultCharset());
 			Matcher m = Pattern.compile("Total number of actions: ([0-9][0-9]*)").matcher(content1);			
 		    while(m.find()) {
 		    	String aux = m.group(1).trim();
@@ -228,9 +217,10 @@ public class Planner {
 		}		
 	}
 
-	private static void Readplan() {
+	/*private static void Readplan() {
 		try {
-			String content1 = readFile("plan.txt", Charset.defaultCharset());
+			//String content1 = readFile("plan.txt", Charset.defaultCharset());
+			String content1 = new String(Files.readAllBytes(Paths.get("plan.txt")), Charset.defaultCharset());
 			//System.out.println("Actions in plan:");
 			//^(http|https|ftp)://.*$
 			Matcher m = Pattern.compile("(?m)^([0-9][0-9]*):(.*)$").matcher(content1);			
@@ -247,11 +237,11 @@ public class Planner {
 		    	String selected = obs.group(2).trim();
 		    	//System.out.println("Action: " + act + " observed: " + selected);
 		    	//TODO: using K-predicates beware of regex!
-		    	/*if(selected.startsWith("N_")){
+		    	if(selected.startsWith("N_")){
 		    		getObservationSelected().put(act.toLowerCase(), "~" + selected.substring(2).toLowerCase());
 		    	}else{
 		    		getObservationSelected().put(act.toLowerCase(), selected.toLowerCase());
-		    	}*/
+		    	}
 		    	getObservationSelected().put(act.toLowerCase(), selected.toLowerCase());
 		    }
 		} catch (FileNotFoundException e) {
@@ -259,7 +249,7 @@ public class Planner {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
+	}*/
 
 	public static ArrayList<String> getPlan() {
 		return _Plan;

@@ -97,7 +97,7 @@ public class ParserHelper {
 	}
 	
 	public static String cleanString(String a){
-		a = a.replace("and", "").replaceAll("\\n", "");
+		a = a.replace("and", "").replaceAll("\\n", "").replaceAll("\\s+", " ");;
 		if(a.startsWith("not")){
 			a = a.replaceAll("[()]", "").replace("not ", "").trim();
 			a = a.replace(" ", "_");
@@ -131,7 +131,7 @@ public class ParserHelper {
 	
 	public static boolean isInvariant(String p, Domain domain) {
 		String[] pSplitted = p.split("_");
-		if(domain.predicates_invariants.containsKey(pSplitted[0])){
+		if(domain.predicates_invariants.contains(pSplitted[0])){
 			return true;
 		}else{
 			return false;

@@ -105,11 +105,22 @@ public class TranslateDeadEnd extends Translation{
 		}
 	}
 
-	private void translateInvariants(Domain domain_to_translate) {
+	/*private void translateInvariants(Domain domain_to_translate) {
 		Enumeration<String> e = domain_to_translate.predicates_invariants.keys();
 		while(e.hasMoreElements()){
 			String invariant_pred = e.nextElement().toString();
 			domain_translated.predicates_invariants.put("K" + invariant_pred, 1);
+		}
+	}*/
+	
+	private void translateInvariants(Domain domain_to_translate) {
+		/*Enumeration<String> e = domain_to_translate.predicates_invariants
+		while(e.hasMoreElements()){
+			String invariant_pred = e.nextElement().toString();
+			domain_translated.predicates_invariants.put("K" + invariant_pred, 1);
+		}*/
+		for(String invariant_pred : domain_to_translate.predicates_invariants){
+			domain_translated.predicates_invariants.add("K" + invariant_pred);
 		}
 	}
 

@@ -28,7 +28,7 @@ public class Domain {
 	public Hashtable<String, Integer> hidden_state = new Hashtable<String, Integer>();
 	public Hashtable<String, Integer> count = new Hashtable<String, Integer>();
 	public Hashtable<String, Integer> predicates_count = new Hashtable<String, Integer>();
-	public Hashtable<String, Integer> predicates_invariants = new Hashtable<String, Integer>();
+	public HashSet<String> predicates_invariants = new HashSet<String>();
 	public HashSet<String> predicates_uncertain = new HashSet<String>();
 	public Hashtable<String, Integer> predicates_negat = new Hashtable<String, Integer>();
 	public Hashtable<String, Integer> predicates_posit = new Hashtable<String, Integer>();
@@ -214,13 +214,13 @@ public class Domain {
 	}*/
 	
 	public void getInvariantPredicates(){
-		Hashtable<String, Integer> predicates_variants = new Hashtable<String, Integer>();
+		HashSet<String> predicates_variants = new HashSet<String>();
 		for(String p : predicates){
 			int aux = p.indexOf(" ");
 			if(aux > 0){
-				predicates_invariants.put(p.substring(0, aux), 1);
+				predicates_invariants.add(p.substring(0, aux));
 			}else{
-				predicates_invariants.put(p, 1);
+				predicates_invariants.add(p);
 			}
 		}
 		Enumeration<String> e = list_actions.keys();
@@ -241,14 +241,15 @@ public class Domain {
 					}
 					eff = eff.replace("~", "");
 					if(eff.contains("_")){
-						predicates_variants.put(eff.substring(0, eff.indexOf("_")), 1);
+						predicates_variants.add(eff.substring(0, eff.indexOf("_")));
 					}else{
-						predicates_variants.put(eff, 1);
+						predicates_variants.add(eff);
 					}
-				}				
+				}
 			}
-		}		
-		predicates_invariants.keySet().removeAll(predicates_variants.keySet());
+		}
+		predicates_variants.addAll(predicates_uncertain);
+		predicates_invariants.removeAll(predicates_variants);
 	}
 	
 	private boolean isUncertain(String predicate){
@@ -276,7 +277,7 @@ public class Domain {
 			predicate = predicate.substring(0, predicate.indexOf("_"));
 		}
 		//Consider also negated literals
-		if(predicates_invariants.containsKey(predicate.replace("~", ""))){
+		if(predicates_invariants.contains(predicate.replace("~", ""))){
 			return true;
 		}else{
 			return false;

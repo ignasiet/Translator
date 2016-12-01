@@ -110,6 +110,7 @@ public class Printer {
 	}*/
 
 	private static void printDomain(String path, Domain domain, ArrayList<Action> axioms){
+		String actName = "";
 		try {
 			File file = new File(path);
 			// if file doesnt exists, then create it
@@ -138,19 +139,22 @@ public class Printer {
 			Enumeration<String> e = domain.list_actions.keys();
 			while(e.hasMoreElements()){
 				Action action = domain.list_actions.get(e.nextElement().toString());
+				actName = action.Name;
+				//System.out.println("Printing action: " + action.Name);
 				bw.write(action.ToString(negateString));
 			}
 			/*Print axioms*/
 			for(Action action : axioms){
+				//System.out.println("Printing axiom: " + action.Name);
 				bw.write(action.ToString(negateString));
 			}
 			//auxStr = auxStr + printActions(domain);
 			bw.write("\n)\n");
 			endTime = System.currentTimeMillis();
 			//System.out.println("Time printing actions in domain file: " + (endTime - startTime) + " milliseconds");
-			bw.close();
-			
+			bw.close();			
 		} catch (IOException e) {
+			System.out.println("Last action: " + actName);
 			e.printStackTrace();
 		}
 	}

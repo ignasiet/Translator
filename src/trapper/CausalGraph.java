@@ -2,6 +2,8 @@ package trapper;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -101,14 +103,14 @@ public class CausalGraph {
     		for(String pred : disj.getIterator()){
     			for(String pred2 : disj.getIterator()){
     				if(pred.equals(pred2)) continue;
-    				Edge<String> edge = new Edge<String>(pred, ParserHelper.complement(pred2), "Disjunction");
-    				graph.addVertex(pred);
-    				graph.addVertex(ParserHelper.complement(pred2));
-    				graph.addEdge(pred, ParserHelper.complement(pred2), edge);
-    				edge = new Edge<String>(ParserHelper.complement(pred), pred2, "Disjunction");
-    				graph.addVertex(ParserHelper.complement(pred));
-    				graph.addVertex(pred2);
-    				graph.addEdge(ParserHelper.complement(pred), pred2, edge);
+    				Edge<String> edge = new Edge<String>(cleanStringDot(pred), cleanStringDot(ParserHelper.complement(pred2)), "Disjunction");
+    				graph.addVertex(cleanStringDot(pred));
+    				graph.addVertex(cleanStringDot(ParserHelper.complement(pred2)));
+    				graph.addEdge(cleanStringDot(pred), cleanStringDot(ParserHelper.complement(pred2)), edge);
+    				edge = new Edge<String>(cleanStringDot(ParserHelper.complement(pred)), cleanStringDot(pred2), "Disjunction");
+    				graph.addVertex(cleanStringDot(ParserHelper.complement(pred)));
+    				graph.addVertex(cleanStringDot(pred2));
+    				graph.addEdge(cleanStringDot(ParserHelper.complement(pred)), cleanStringDot(pred2), edge);
     			}
     		}
     	}
@@ -124,16 +126,16 @@ public class CausalGraph {
 	
 	private void exportGraph() {
 		// note directed edges are printed as: (<v1>,<v2>)
-        /*System.out.println(graph.toString());
+        System.out.println(graph.toString());
         File file = new File("./Graph.dot");
     	try {
 			toDot(new FileOutputStream(file), graph);
 			System.out.println("Dot file saved in Graph.dot.\n Using graphviz: dot -Tpdf Graph.dot -o Graph.pdf");
 		} catch (FileNotFoundException e1) {
 			e1.printStackTrace();
-		}*/
+		}
 		
-		try{
+		/*try{
 			File file = new File("./Graph.dot");
 			// if file doesnt exists, then create it
 			if (!file.exists()) {
@@ -147,7 +149,7 @@ public class CausalGraph {
 			System.out.println("Dot file saved in Graph.dot.\n Using graphviz: dot -Tpdf Graph.dot -o Graph.pdf");
 		}catch (IOException e1) {
 			e1.printStackTrace();
-		}
+		}*/
 	}
 	
 	private String printGraph(){
@@ -218,17 +220,17 @@ public class CausalGraph {
 					addToVariablesList(variables, to);
 				}*/
 				//if(!d.isUncertain(to)) continue;
-				graph.addVertex(to);
+				graph.addVertex(cleanStringDot(to));
 				ArrayList<String> origins = new ArrayList<String>(e._Condition);
 				origins.addAll(a._precond);
 				for(String from : origins){
-					Edge<String> edge = new Edge<String>(from, to, a.Name);
-					graph.addVertex(from);
+					Edge<String> edge = new Edge<String>(cleanStringDot(from), cleanStringDot(to), a.Name);
+					graph.addVertex(cleanStringDot(from));
 					if(from.equals(to)){
 						//System.out.println("Loop: action " + a.Name + " " + from + " " + to);
 						continue;
 					}
-					graph.addEdge(from, to, edge);
+					graph.addEdge(cleanStringDot(from), cleanStringDot(to), edge);
 				}
 			}
 		}
@@ -236,7 +238,7 @@ public class CausalGraph {
 		
 	private String cleanStringDot(String s){
 		s = s.replace("~", "not_");
-		return s.replace("-", "");
+		return s.replace("-", "wtz");
 	}
 	
 	public static void toDot(OutputStream out, DirectedGraph<String, Edge> graph2) { 
@@ -250,14 +252,14 @@ public class CausalGraph {
 		for(Effect effect : a._Effects){
 			for(String observable : effect._Effects){
 				observables.add(observable);
-				graph.addVertex(observable);
-				graph.addVertex(ParserHelper.complement(observable));
+				graph.addVertex(cleanStringDot(observable));
+				graph.addVertex(cleanStringDot(ParserHelper.complement(observable)));
 				for(String precondition : a._precond){
-					graph.addVertex(precondition);
-					Edge<String> edge = new Edge<String>(precondition, observable, a.Name);
-					graph.addEdge(precondition, observable, edge);
-					Edge<String> edgeComplement = new Edge<String>(precondition, ParserHelper.complement(observable), a.Name);
-					graph.addEdge(precondition, ParserHelper.complement(observable), edgeComplement);
+					graph.addVertex(cleanStringDot(precondition));
+					Edge<String> edge = new Edge<String>(cleanStringDot(precondition), cleanStringDot(observable), a.Name);
+					graph.addEdge(cleanStringDot(precondition), cleanStringDot(observable), edge);
+					Edge<String> edgeComplement = new Edge<String>(cleanStringDot(precondition), cleanStringDot(ParserHelper.complement(observable)), a.Name);
+					graph.addEdge(cleanStringDot(precondition), cleanStringDot(ParserHelper.complement(observable)), edgeComplement);
 				}
 			}
 		}
@@ -292,10 +294,10 @@ public class CausalGraph {
     		//axiom.put(ax._Head, ant);
     		for(String to : ax._Head){
     			for(String from : body_list){
-    				Edge<String> edge = new Edge<String>(from, to, ax._Name);
-    				graph.addVertex(from);
-    				graph.addVertex(to);
-    				graph.addEdge(from, to, edge);
+    				Edge<String> edge = new Edge<String>(cleanStringDot(from), cleanStringDot(to), ax._Name);
+    				graph.addVertex(cleanStringDot(from));
+    				graph.addVertex(cleanStringDot(to));
+    				graph.addEdge(cleanStringDot(from), cleanStringDot(to), edge);
     			}				
     		}
     	}
@@ -341,8 +343,8 @@ public class CausalGraph {
 	}*/
     
     public ArrayList<String> enhancedObservation(String observed){
-    	List<String> causal = Graphs.predecessorListOf(graph, observed);
-    	List<String> inversed = Graphs.predecessorListOf(graph, ParserHelper.complement(observed));
+    	List<String> causal = Graphs.predecessorListOf(graph, cleanStringDot(observed));
+    	List<String> inversed = Graphs.predecessorListOf(graph, cleanStringDot(ParserHelper.complement(observed)));
     	inversed.removeAll(causal);
     	ArrayList<String> l = new ArrayList<String>();
     	if(inversed.size() == 1){
