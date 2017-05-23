@@ -10,6 +10,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import pddlElements.Action;
+import pddlElements.Branch;
 import pddlElements.Domain;
 import pddlElements.Effect;
 import readers.ExprList;
@@ -95,7 +96,24 @@ public class ParserHelper {
 	    }
 		//String[] aux = s.replaceAll("\\s+", " ").split(" ");		
 	}
-	
+
+	//TODO: Non deterministic actions
+	public static Branch[] extractNonDeterministicBranches(String s){
+		Branch b1 = new Branch();
+		Branch b2 = new Branch();
+		ExprList e = new ExprList();
+		if((e = ParserHelper.itemize(s)) != null){
+			String branch1 = cleanString(e.get(1).toString().trim());
+			b1._Branches.add(branch1);
+			String branch2 = cleanString(e.get(2).toString().trim());
+			b2._Branches.add(branch2);
+		}
+		Branch[] branches = new Branch[2];
+		branches[0] = b1;
+		branches[1] = b2;
+		return branches;
+	}
+
 	public static String cleanString(String a){
 		a = a.replace("and", "").replaceAll("\\n", "").replaceAll("\\s+", " ");;
 		if(a.startsWith("not")){
@@ -193,7 +211,7 @@ public class ParserHelper {
 				newCond.clear();
 			}			
 		}
-		//TODO: 4- Clean predicates 
+
 		return domain;
 	}
 

@@ -8,13 +8,6 @@ import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.Set;
 
-import org.sat4j.core.VecInt;
-import org.sat4j.minisat.SolverFactory;
-import org.sat4j.specs.ContradictionException;
-import org.sat4j.specs.IProblem;
-import org.sat4j.specs.ISolver;
-import org.sat4j.specs.TimeoutException;
-
 import parser.ParserHelper;
 import pddlElements.Axiom;
 import pddlElements.Disjunction;
@@ -32,7 +25,7 @@ public class Solver {
 	private Set<String> literals;
 	private Hashtable<String, Integer> encoder = new Hashtable<String, Integer>();
 	private ArrayList<String> decoder = new ArrayList<String>();
-	protected ISolver solver;
+	//protected ISolver solver;
 	private Integer index = 1;
 	
     public Solver(Set<String> l, ArrayList<Axiom> Axioms) {
@@ -45,7 +38,8 @@ public class Solver {
         }
         feedCNF(Axioms);*/
     }
-    
+
+	/*
     public Solver(Hashtable<String, Integer> state, ArrayList<Axiom> _Axioms,
 			ArrayList<Disjunction> list_disjunctions) {
     	ISolver solver = SolverFactory.newLight();
@@ -85,9 +79,8 @@ public class Solver {
     }
 
 	public boolean solve(){
-    	/*//ISolver solver = SolverFactory.newDefault();
+    	//ISolver solver = SolverFactory.newDefault();
         ISolver solver = SolverFactory.newLight();        
-        */
     	solver.setTimeout(3600); // 1 hour timeout
         try {
             IProblem problem = solver;
@@ -134,7 +127,7 @@ public class Solver {
         a[a.length - 1] = e;
         return a;
     }
-    
-    
+    */
+
 
 }

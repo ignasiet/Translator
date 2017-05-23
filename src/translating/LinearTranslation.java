@@ -32,10 +32,17 @@ public class LinearTranslation extends Translation{
 	public LinearTranslation(Domain domain_to_translate, CausalGraph cg) {
 		// 0 - Copy domain metadata
 		causal = cg;
+		//For tests: non-deterministic problems without uncertainty
+		if(domain_to_translate.list_disjunctions.isEmpty()){
+			domain_translated = domain_to_translate;
+			return;
+		}
 		list_disjunctions = domain_to_translate.list_disjunctions;
 		domain_translated.Name = domain_to_translate.Name;
 		domain_translated.ProblemInstance = domain_to_translate.ProblemInstance;
 		domain_translated.costFunction = domain_to_translate.costFunction;
+
+
 		// 1 - Translate predicates (all)
 		translatePredicates(domain_to_translate.predicates_grounded, domain_to_translate.predicates_invariants_grounded);
 		// 2-Translate initial state

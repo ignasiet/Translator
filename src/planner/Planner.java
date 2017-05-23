@@ -7,24 +7,23 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import HHCP.Problem;
+import HHCP.Searcher;
 import parser.Parser;
 import parser.ParserHelper;
 import pddlElements.Domain;
 import pddlElements.Printer;
 import translating.LinearTranslation;
-import translating.TranslateDeadEnd;
 import translating.Translation;
 import translating.TranslatorTag;
 import translating.Translator_Kt;
 import trapper.CausalGraph;
-import trapper.Trapper;
 
 
 public class Planner {
@@ -75,7 +74,27 @@ public class Planner {
 		System.out.println("Translation time: " + (endTime - startTime) + " Milliseconds");
 		domain_translated = tr.getDomainTranslated();
 		domain_translated.hidden_state = domain.hidden_state;
-		
+
+		/*Planner: review grounded literals*/
+		HHCP.Problem p;
+		if(domain_translated.predicates_grounded.isEmpty()){
+			p = new Problem(new ArrayList<String>(domain_translated.predicates_posit.keySet()));
+		}else{
+			p = new Problem(domain_translated.predicates_grounded);
+		}
+		p.setInitState(domain_translated.state);
+		p.setGoalState(domain_translated.goalState);
+		p.setActions(domain_translated.list_actions);
+		System.out.println("Transformation to vectors completed. ");
+		System.out.println("Init Search. ");
+
+		Searcher search = new Searcher(p);
+		//search.GenPlanPairs(p.getInitState());
+
+
+
+
+
 		//BDDSearcher b = new BDDSearcher(tr.getDomainTranslated());
 		//System.out.println("Regression complete");
 		
@@ -86,9 +105,7 @@ public class Planner {
 		/*Size measure*/
 		//System.out.println(domain.predicates_grounded.size() + " " + tr.domain_translated.predicates_grounded.size());
 		/*Print domain*/
-		if(!(file_out_path == null)){
-			printDomain(tr);
-		}
+		if(!(file_out_path == null)) printDomain(tr);
 	}
 	
 	private static Translation translate(String type, Domain domain){

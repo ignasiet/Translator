@@ -16,6 +16,7 @@ public class Printer {
 	 */
 	private static Domain domain;
 	private static String negateString = "n_";
+
 	public static void Printer(Domain dom) {
 		domain = dom;
 		printDomainFile();

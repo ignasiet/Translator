@@ -212,7 +212,10 @@ public class Domain {
 			}
 		}
 	}*/
-	
+
+	/*TODO: Non deterministic actions have effects in branches.
+	 * How to put observations/non-deterministc action effects?
+	  * */
 	public void getInvariantPredicates(){
 		HashSet<String> predicates_variants = new HashSet<String>();
 		for(String p : predicates){
@@ -231,6 +234,25 @@ public class Domain {
 				//predicates_variants.put(disj.getFluent(), 1);
 				predicates_uncertain.add(disj.getFluent());
 			}
+			if(a._IsNondeterministic){
+				for(Branch b : a._Branches){
+					for(String nFluent : b._Branches){
+						if(!nFluent.startsWith("~")){
+							predicates_posit.put(nFluent, 1);
+						}else{
+							nFluent = nFluent.replace("~", "");
+							predicates_negat.put(nFluent, 1);
+						}
+						nFluent = nFluent.replace("~", "");
+						if(nFluent.contains("_")){
+							predicates_variants.add(nFluent.substring(0, nFluent.indexOf("_")));
+						}else{
+							predicates_variants.add(nFluent);
+						}
+						if(a._parameters.isEmpty() && !predicates_grounded.contains(nFluent)) predicates_grounded.add(nFluent);
+					}
+				}
+			}
 			for(Effect effect : a._Effects){
 				for(String eff : effect._Effects){
 					if(!eff.startsWith("~")){
@@ -245,6 +267,7 @@ public class Domain {
 					}else{
 						predicates_variants.add(eff);
 					}
+					if(a._parameters.isEmpty() && !predicates_grounded.contains(eff)) predicates_grounded.add(eff);
 				}
 			}
 		}
@@ -666,12 +689,12 @@ public class Domain {
 		return observation;
 	}
 
-	public void eliminateInvalidObservations() {
+	/*public void eliminateInvalidObservations() {
 		Solver solver = new Solver(state, _Axioms, list_disjunctions);
 		for(String name :list_actions.keySet()){
 			if(list_actions.get(name).IsObservation){
 				Action action = list_actions.get(name);
 			}
 		}
-	}
+	}*/
 }

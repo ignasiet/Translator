@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.Scanner;
 
 import pddlElements.Action;
+import pddlElements.Branch;
 import pddlElements.Domain;
 import pddlElements.Effect;
 import readers.Atom;
@@ -158,7 +159,14 @@ public class Parser {
 						int cost = ParserHelper.ParseCost(s);
 						System.out.println("Action " + a.Name + " has cost: " + cost);
 						a.cost = cost;
-					}else if(!s.equals("and")){
+					}if(s.contains("(oneof")){
+						System.out.println("Non deterministic action");
+						Branch[] branches = ParserHelper.extractNonDeterministicBranches(s);
+						a._Branches.add(branches[0]);
+						a._Branches.add(branches[1]);
+						a._IsNondeterministic = true;
+					}
+					else if(!s.equals("and")){
 						if(s.contains("when")){
 							a._IsConditionalEffect = true;
 							Effect effect = new Effect(s);

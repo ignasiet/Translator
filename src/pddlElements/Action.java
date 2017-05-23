@@ -14,6 +14,7 @@ public class Action{
 	//public ArrayList<String> _Negative_effects = new ArrayList<String>();
 	public boolean IsObservation = false;
 	public boolean _IsConditionalEffect = false;
+	public boolean _IsNondeterministic = false;
 	public Hashtable<String, ArrayList<String>> action_parameters = new Hashtable<String, ArrayList<String>>();
 	public Hashtable<String, String> parameters_type = new Hashtable<String, String>();
 	public ArrayList<String> _parameters = new ArrayList<String>();
