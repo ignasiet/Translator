@@ -59,8 +59,11 @@ public class Main {
 					case "2":
 						translationType = "deadend";
 						break;
-					default:
+					case "3":
 						translationType = "ktype";
+						break;
+					default:
+						translationType = "internal";
 						break;
 					}					
 				}else{

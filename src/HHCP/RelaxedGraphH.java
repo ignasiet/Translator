@@ -131,8 +131,9 @@ public class RelaxedGraphH {
                 Integer minAct = addedBy.get(g)[0];
                 relaxedSolution.add(minAct);
                 //Add its preconditions to the goal of lower layers
-
-                for(int pr : problem.getAction(minAct).getPreconditions()){
+                VAction a = problem.getAction(minAct);
+                for (int pr = a.preconditions.nextSetBit(0); pr >= 0; pr = a.preconditions.nextSetBit(pr+1)) {
+                    //for(int pr : problem.getAction(minAct).getPreconditions()){
                     goalsLowerLayer.add(pr);
                 }
             }
@@ -152,7 +153,7 @@ public class RelaxedGraphH {
             actionCounter[actionIndex]++;
             difficultyLayer[actionIndex] += layer;
             //4 if size preconditions == action layer size, schedule action
-            if(problem.getVaList().get(actionIndex).getPreconditions().length == actionCounter[actionIndex]){
+            if(problem.getVaList().get(actionIndex).getPreconditions().cardinality() == actionCounter[actionIndex]){
                 actionLayer[actionIndex] = layer;
                 scheduledActions.set(actionIndex,true);
             }

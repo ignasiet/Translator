@@ -23,10 +23,11 @@ public class Node {
     }
 
     public boolean isApplicable(VAction a){
-        return holds(a.getPreconditions());
+        return holds(a.getPreconditionArray());
     }
     
     public boolean holds(int[] conditions){
+        if(conditions == null) return true;
         for(int precondition : conditions){
             if(!State.get(precondition)){
                 return false;

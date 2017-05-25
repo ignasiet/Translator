@@ -3,6 +3,7 @@ package HHCP;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import pddlElements.Action;
+import pddlElements.Axiom;
 import pddlElements.Branch;
 import pddlElements.Effect;
 
@@ -123,7 +124,6 @@ public class Problem {
                 addList.add(Predicates.inverse().get(effect));
             }
         }
-
         for(Branch b : a._Branches){
             VEffect v = new VEffect();
             v.setCondition(cond);
@@ -154,6 +154,7 @@ public class Problem {
             v.setDelList(del);
             listV.add(v);
         }
+
         return listV;
     }
 
@@ -164,30 +165,7 @@ public class Problem {
     public void setActions(Hashtable<String, Action> list_actions) {
         for(String name : new ArrayList<String>(list_actions.keySet())){
             Action a = list_actions.get(name);
-            VAction va = new VAction();
-            va.setName(name);
-            int[] prec = new int[a._precond.size()];
-            int i = 0;
-            for(String s : a._precond){
-                prec[i] = Predicates.inverse().get(s);
-                i++;
-            }
-            va.addPreconditions(prec);
-            for(Effect e : a._Effects){
-                /*Reading non deterministic branches.
-                * Limited to one nondeterministic effect per action!
-                * */
-                if(!a._Branches.isEmpty()){
-                    va.isNondeterministic = true;
-                    va.addEffects(createNondeterministicEffects(e,a));
-                }else{
-                    va.addEffect(createEffects(e));
-                }
-            }
-            vaList.add(va);
-            //Set prec2act:
-            va.index = vaList.indexOf(va);
-            setPrec2Act(va, prec);
+            insertAction(a);
         }
     }
 
@@ -220,5 +198,80 @@ public class Problem {
 
     public ArrayList<VAction> getVaList() {
         return vaList;
+    }
+
+    public void setAxioms(ArrayList<Action> axioms) {
+        for(Action a : axioms){
+            insertAction(a);
+        }
+    }
+
+    private void insertAction(Action a){
+        VAction va = new VAction();
+        va.setName(a.Name);
+        int[] prec = new int[a._precond.size()];
+        int i = 0;
+        for(String s : a._precond){
+            va.setBitPrecond(Predicates.inverse().get(s));
+            prec[i] = Predicates.inverse().get(s);
+            i++;
+        }
+        //va.addPreconditions(prec);
+        /*Reading non deterministic branches.
+        * Limited to one nondeterministic effect per action!
+        * NOTE: In fact one non-deterministic effect means maximum 2 branches per action
+        * Plus the conditional effects
+        * I.e. conditional effects + (one of) in the same action.
+        * */
+        // Non deterministic actions:
+        for(Effect e : a._Effects){
+            if(!a._Branches.isEmpty()){
+                va.isNondeterministic = true;
+                va.addEffects(createNondeterministicEffects(e,a));
+            }else{
+                va.addEffect(createEffects(e));
+            }
+        }
+        //Observations: No effects and 2 branches:
+        if(a._Effects.isEmpty() && !a._Branches.isEmpty()){
+            va.isNondeterministic = true;
+            va.addEffects(getBranches(a));
+        }
+        vaList.add(va);
+        //Set prec2act:
+        va.index = vaList.indexOf(va);
+        setPrec2Act(va, prec);
+    }
+
+    private ArrayList<VEffect> getBranches(Action a){
+        ArrayList<VEffect> listV = new ArrayList<VEffect>();
+        for(Branch b : a._Branches){
+            VEffect v = new VEffect();
+            ArrayList<Integer> addBranch = new ArrayList<Integer>();
+            ArrayList<Integer> delBranch = new ArrayList<Integer>();
+            for(String bnondet : b._Branches){
+                if(bnondet.startsWith("~")){
+                    delBranch.add(Predicates.inverse().get(bnondet.substring(1)));
+                }else{
+                    addBranch.add(Predicates.inverse().get(bnondet));
+                }
+            }
+            int[] add = new int[addBranch.size()];
+            int[] del = new int[delBranch.size()];
+            int i = 0;
+            for(Integer in : addBranch){
+                add[i] = in;
+                i++;
+            }
+            i = 0;
+            for(Integer in : delBranch){
+                del[i] = in;
+                i++;
+            }
+            v.setAddList(add);
+            v.setDelList(del);
+            listV.add(v);
+        }
+        return listV;
     }
 }

@@ -33,16 +33,16 @@ public class Solution {
                 continue;
             }*/
             if(s.holds(problem.getGoal())){
-                from = s.parentAction;
+                from = cleanStringDot(s.parentAction);
                 graph.addVertex("Goal");
                 addEdge(from, "Goal", "");
                 continue;
             }
             if(s.parentAction != null){
-                from = s.parentAction;
+                from = cleanStringDot(s.parentAction);
             }
-            VAction a = problem.getAction(policyP.find(s.getState()));
-            to = a.getName();
+            VAction a = problem.getAction(policyP.action(s.getState()));
+            to = cleanStringDot(a.getName());
             graph.addVertex(from);
             graph.addVertex(to);
             if(from.equals(to)) continue;
@@ -77,6 +77,11 @@ public class Solution {
         VertexNameProvider<String> p2 = new Vertex();
         DOTExporter<String, Edge> exporter = new DOTExporter<String, Edge>(p2, null, null);
         exporter.export(new OutputStreamWriter(out), graph2);
+    }
+
+    private String cleanStringDot(String s){
+        s = s.replace("-", "");
+        return s;
     }
 
     private void exportGraph() {

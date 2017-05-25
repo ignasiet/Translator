@@ -49,7 +49,7 @@ public class Searcher {
                     markStateActions();
                     int indexAction = policyP.find(s);
                     //New verification: verify that the new pair is not marked yet!
-                    if(indexAction>=0 && !policyP.marked.get(s)){
+                    if(indexAction>=0 && !policyP.valid(s)){
                         applyAction(indexAction, s, parentAction);
                         modified = false;
                     }
@@ -73,7 +73,8 @@ public class Searcher {
     private BitSet regressStateAction(BitSet s, Integer action) {
         BitSet ancestor = (BitSet) s.clone();
         VAction a = problem.getAction(action);
-        for(int p : a.getPreconditions()){
+        for (int p = a.preconditions.nextSetBit(0); p >= 0; p = a.preconditions.nextSetBit(p+1)) {
+            //for(int p : a.getPreconditions()){
             ancestor.set(p);
         }
         boolean appliedEffect = true;
@@ -121,7 +122,9 @@ public class Searcher {
                 If not children or goal nodes: remain marked true
                 */
                 for(BitSet successor : successors){
-                    if(!policyP.marked.containsKey(successor) || !policyP.marked.get(successor)){
+                    if(entails(successor, problem.getGoal())) continue;
+                    //if(!policyP.marked.containsKey(successor) || !policyP.marked.get(successor)){
+                    if(!policyP.valid(successor)){
                         policyP.marked.put(bs, false);
                         changed = true;
                     }
@@ -231,6 +234,7 @@ public class Searcher {
                 }else{
                     Node n = node.applyDeterministicAction(va);
                     if(!DeadEnds.contains(n.getState())){
+                        updateHeuristic(n, node, va);
                         fringe.add(n);
                     }else{
                         //Add this transition to the forbidden action state pair
@@ -257,9 +261,10 @@ public class Searcher {
         while(node.parent != null){
             //Regress the action here
             VAction a = problem.getAction(node.indexAction);
-            for(int p : a.getPreconditions()){
+            for (int p = a.preconditions.nextSetBit(0); p >= 0; p = a.preconditions.nextSetBit(p+1)) {
                 r.set(p);
             }
+            //for(int p : a.getPreconditions()){
             regressNode(a, node,r);
             policyP.put(r, node.indexAction);
             node = node.parent;
@@ -269,10 +274,12 @@ public class Searcher {
     private void regressNode(VAction a, Node node, BitSet r){
         if(a.isNondeterministic){
             VEffect e = a.getEffects().get(node.indexEffect);
-            for(int c : e.getCondition()) r.set(c);
-            for(int eff : e.getAddList()){
-                if(r.get(eff)){
-                    r.set(eff,false);
+            if(e.getCondition() != null) {
+                for (int c : e.getCondition()) r.set(c);
+            }
+            for (int eff : e.getAddList()) {
+                if (r.get(eff)) {
+                    r.set(eff, false);
                 }
             }
         }else{
@@ -311,7 +318,7 @@ public class Searcher {
         //System.out.println("Applicable actions in: " + problem.printState(node.getState()));
         ArrayList<VAction> retList = new ArrayList<VAction>();
         problem.getVaList().stream()
-                .filter(s -> node.holds(s.getPreconditions()))
+                .filter(s -> node.holds(s.getPreconditionArray()))
                 .forEach(retList::add);
 
         /*for(VAction va : problem.getVaList()){

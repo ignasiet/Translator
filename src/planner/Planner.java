@@ -19,10 +19,7 @@ import parser.Parser;
 import parser.ParserHelper;
 import pddlElements.Domain;
 import pddlElements.Printer;
-import translating.LinearTranslation;
-import translating.Translation;
-import translating.TranslatorTag;
-import translating.Translator_Kt;
+import translating.*;
 import trapper.CausalGraph;
 
 
@@ -85,6 +82,9 @@ public class Planner {
 		p.setInitState(domain_translated.state);
 		p.setGoalState(domain_translated.goalState);
 		p.setActions(domain_translated.list_actions);
+		/* TODO: add to the problem actions the axioms. How to use them? */
+		p.setAxioms(tr.getListAxioms());
+
 		System.out.println("Transformation to vectors completed. ");
 		System.out.println("Init Search. ");
 
@@ -109,6 +109,10 @@ public class Planner {
 	}
 	
 	private static Translation translate(String type, Domain domain){
+		if(type.equals("internal")){
+			InternalTranslation it = new InternalTranslation(domain, cg);
+			return it;
+		}
 		if(type.equals("linear")){
 			LinearTranslation lt = new LinearTranslation(domain, cg);
 			return lt;

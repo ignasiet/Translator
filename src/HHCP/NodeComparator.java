@@ -15,11 +15,11 @@ public class NodeComparator implements Comparator<Node>{
         // probably be more robust
         // You could also just return x.length() - y.length(),
         // which would be more efficient.
-        if (x.getFunction() > y.getFunction())
+        if (x.getFunction() < y.getFunction())
         {
             return -1;
         }
-        if (x.getFunction() < y.getFunction())
+        if (x.getFunction() > y.getFunction())
         {
             return 1;
         }

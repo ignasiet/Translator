@@ -240,6 +240,11 @@ public class CausalGraph {
 		s = s.replace("~", "not_");
 		return s.replace("-", "wtz");
 	}
+
+	private String cleanBackDot(String s){
+		s = s.replace("wtz", "-");
+		return s;
+	}
 	
 	public static void toDot(OutputStream out, DirectedGraph<String, Edge> graph2) { 
 		//VertexNameProvider<String> provider = new ActionNameProvider(); 
@@ -353,7 +358,7 @@ public class CausalGraph {
     	}
     	for(String obs : inversed){
     		if(obs.startsWith("~")) continue;
-    		l.add(ParserHelper.complement(obs));
+    		l.add(ParserHelper.complement(cleanBackDot(obs)));
     	}
     	return l;
     }
