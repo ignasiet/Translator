@@ -13,9 +13,10 @@ public class PartialPolicy {
 
     /**Returns action index or -1*/
     public int find(BitSet s){
-        TrieNode node = findNode(s);
-        if(node == null) return -1;
-        return node.action;
+        //TrieNode node = findNode(s);
+        //if(node == null) return -1;
+        //return node.action;
+    	return action(s);
     }
 
     public boolean exists(BitSet s){
@@ -94,6 +95,7 @@ public class PartialPolicy {
         return ret;
     }
 
+    /**Returns the index of the action or -1 if there is no state that entails s*/
     public int action(BitSet s){
         //BitSet[] li = (BitSet[]) marked.keySet().toArray();
         boolean found = false;

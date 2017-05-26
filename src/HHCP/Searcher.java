@@ -1,9 +1,5 @@
 package HHCP;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
-import com.sun.xml.internal.ws.policy.jaxws.SafePolicyReader;
-
-import java.lang.reflect.Array;
 import java.util.*;
 
 /**
@@ -99,6 +95,7 @@ public class Searcher {
             changed = false;
             for(BitSet bs : policyP.iteratorStatesActions()){
                 if(entails(bs, problem.getGoal()) || !policyP.marked.get(bs)) continue;
+                //TODO:correct find operation. Use tries?
                 int indexAction = policyP.find(bs);
                 VAction a = problem.getAction(indexAction);
                 //Verify for each effect 2 conditions:
