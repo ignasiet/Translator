@@ -25,6 +25,8 @@ public class InternalTranslation extends Translation{
 	private int i = 0;
 	private Domain domain_to_translate;
 	private ArrayList<Action> listAxioms = new ArrayList<Action>();
+	private HashSet<String> usedAxioms = new HashSet<String>();
+	private HashSet<String> uselessObs = new HashSet<String>();
 
 	public InternalTranslation(Domain d, CausalGraph cg) {
 		// 0 - Copy domain metadata
@@ -55,15 +57,64 @@ public class InternalTranslation extends Translation{
 		//addContingentMergeActions(domain_to_translate);
 		// 6 - Add tag refutation
 		//addTagRefutation(domain_to_translate);
-
 		// 8 - Add axioms
-		//addAxiomsActions(domain_to_translate);
+		addAxiomsActions(domain_to_translate);
 		// 9 - Translate invariants
 		translateInvariants(domain_to_translate);
 		// 10 - Add tag maximal effects: called when actions are translated
 		//addTagMaximalEffects(domain_to_translate);
 	}
-	
+
+	private void addAxiomsActions(Domain domain_to_translate) {
+		HashSet<Axiom> unusedAxioms = new HashSet<Axiom>();
+		HashSet<Axiom> useless = new HashSet<Axiom>();
+		for(Axiom a : domain_to_translate._Axioms){
+			if(!usedAxioms.contains(a._Name)){
+				unusedAxioms.add(a);
+				for(String predicate : a._Body){
+					if(uselessObs.contains(predicate)){
+						useless.add(a);
+						break;
+					}
+				}
+			}
+		}
+		unusedAxioms.removeAll(useless);
+		//Re group axioms with the same body!
+		Hashtable<ArrayList<String>, ArrayList<Axiom>> conditions = new Hashtable<>();
+		for(Axiom axiom : unusedAxioms){
+			if(conditions.containsKey(axiom._Body)){
+				ArrayList<Axiom> aux = new ArrayList<Axiom>(conditions.get(axiom._Body));
+				aux.add(axiom);
+				conditions.put(axiom._Body, aux);
+			}else{
+				ArrayList<Axiom> aux = new ArrayList<Axiom>();
+				aux.add(axiom);
+				conditions.put(axiom._Body, aux);
+			}
+		}
+		int i = 0;
+		for(ArrayList<String> key : conditions.keySet()){
+			Action a = new Action();
+			Effect e = new Effect();
+			for(String b : key){
+				a._precond.add("K" + b);
+				addPredicate("K" + b);
+			}
+			for(Axiom ax : conditions.get(key)){
+				for(String b : ax._Head){
+					e._Effects.add("K" + b);
+					addPredicate("K" + b);
+				}
+			}
+			a._Effects.add(e);
+			a.Name = "K-axiom-" + i;
+			listAxioms.add(a);
+			i++;
+		}
+		System.out.println("Done.");
+	}
+
 	private void translateInvariants(Domain domain_to_translate) {
 		/*Enumeration<String> e = domain_to_translate.predicates_invariants
 		while(e.hasMoreElements()){
@@ -248,39 +299,47 @@ public class InternalTranslation extends Translation{
 		* means a wumpus is near.
 		* 2- There is no information added: an observation in a cell where there is no wumpus near.*/
 		Hashtable<String, HashSet<String>> entailedBy = new Hashtable<String, HashSet<String>>();
+		HashSet<String> used = new HashSet<String>();
 		String predicate = a._Effects.get(0)._Effects.get(0);
 		String negPredicate = ParserHelper.complement(a._Effects.get(0)._Effects.get(0));
+		entailedBy.put(predicate, fixedPointIterationReasoning(predicate, used));
+		entailedBy.put(negPredicate, fixedPointIterationReasoning(negPredicate, used));
 
-		entailedBy.put(predicate, fixedPointIterationReasoning(predicate));
-		entailedBy.put(negPredicate, fixedPointIterationReasoning(negPredicate));
-		/*for(String observable : a._Effects.get(0)._Effects){
-			HashSet<String> inversedRel = new HashSet<String>(addEnhancedObs(observable));
-			entailedBy.put(observable, inversedRel);
-		}*/
 		if((entailedBy.get(predicate).size()==1) || (entailedBy.get(negPredicate).size()==1)){
 			System.out.println("Useless observation: " + a.Name);
+			uselessObs.add(predicate);
+			//used.clear();
 			return null;
 		}
+		//usedAxioms.addAll(used);
+		//System.out.println("Used axioms: " + used.toString());
 		return entailedBy;
 	}
 
-	private HashSet<String> fixedPointIterationReasoning(String predicate){
+	private HashSet<String> fixedPointIterationReasoning(String predicate, HashSet<String> used){
 		HashSet<String> lit = new HashSet<String>();
 		lit.add(predicate);
 		boolean fix = false;
 		while(!fix){
 			HashSet<String> litAdded = new HashSet<String>(lit);
-			domain_to_translate._Axioms.stream().filter(ax -> entailedBy(litAdded, ax._Body)).forEach(ax -> {
+			for(Axiom ax : domain_to_translate._Axioms){
+				if(entailedBy(litAdded, ax)){
+					litAdded.addAll(ax._Head);
+					usedAxioms.add(ax._Name);
+				}
+			}
+			/*domain_to_translate._Axioms.stream().filter(ax -> entailedBy(litAdded, ax._Body)).forEach(ax -> {
 				litAdded.addAll(ax._Head);
-			});
+				used.add(ax._Name);
+			});*/
 			if(lit.size() == litAdded.size()) fix = true;
 			lit = litAdded;
 		}
 		return lit;
 	}
 
-	private boolean entailedBy(HashSet<String> litAdded, ArrayList<String> body) {
-		for(String s : body){
+	private boolean entailedBy(HashSet<String> litAdded, Axiom ax) {
+		for(String s : ax._Body){
 			if(!litAdded.contains(s)){
 				return false;
 			}

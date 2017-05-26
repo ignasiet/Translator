@@ -11,6 +11,7 @@ public class VAction {
     public BitSet preconditions;
     private String Name;
     public boolean isNondeterministic = false;
+    public boolean isObservation = false;
     public int cost = 1;
     public int index;
 

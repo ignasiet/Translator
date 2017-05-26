@@ -237,6 +237,7 @@ public class Problem {
             va.isNondeterministic = true;
             va.addEffects(getBranches(a));
         }
+        if(a.IsObservation) va.isObservation = true;
         vaList.add(va);
         //Set prec2act:
         va.index = vaList.indexOf(va);

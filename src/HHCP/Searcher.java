@@ -144,12 +144,6 @@ public class Searcher {
         if(a.isNondeterministic){
             for(VEffect e : a.getEffects()){
                 BitSet s2 = (BitSet) s.clone();
-                /*for(int indexEffect : e.getDelList()){
-                    s2.set(indexEffect, false);
-                }
-                for(int indexEffect : e.getAddList()){
-                    s2.set(indexEffect);
-                }*/
                 applyEffect(s2, e);
                 parentAction.put(s2, indexAction);
                 open.push(s2);

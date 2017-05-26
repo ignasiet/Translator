@@ -328,6 +328,7 @@ public class Domain {
 				}
 				if(predicates_never.containsKey(precond) ){
 					System.out.println("Imposible predicate?: " + precond + " " + action_name);
+					predicates_grounded.remove(precond);
 					actions_to_be_removed.add(action_name);
 				}
 			}
@@ -634,7 +635,7 @@ public class Domain {
 			boolean isFirst = true;
 			//Clause with more than 2 predicates -> should be translated as a exhaustive combination
 			//Formula: F0 or...or Fi or ... or Fn should be translated as:
-			// not F0 and ... and not Fi-1 and not Fi+1 and ... and not Fn -> Fi			
+			// not F0 and ... and not Fi-1 and not Fi+1 and ... and not Fn -> Fi
 			ArrayList<String> clause = new ArrayList<String>();
 			for(Expr ex : eList){
 				if(!ex.toString().equals("or")){
