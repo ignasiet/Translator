@@ -24,6 +24,7 @@ public class Problem {
     private int[] goal;
     public Hashtable<Integer, Integer[]> prec2Act = new Hashtable<Integer, Integer[]>();
     private ArrayList<VAction> vaList = new ArrayList<VAction>();
+    public ArrayList<VAction> vAxioms = new ArrayList<VAction>();
     private int size;
 
     public Problem(ArrayList<String> predicates) {
@@ -165,7 +166,7 @@ public class Problem {
     public void setActions(Hashtable<String, Action> list_actions) {
         for(String name : new ArrayList<String>(list_actions.keySet())){
             Action a = list_actions.get(name);
-            insertAction(a);
+            insertAction(a, false);
         }
     }
 
@@ -202,11 +203,11 @@ public class Problem {
 
     public void setAxioms(ArrayList<Action> axioms) {
         for(Action a : axioms){
-            insertAction(a);
+            insertAction(a, true);
         }
     }
 
-    private void insertAction(Action a){
+    private void insertAction(Action a, boolean isAxiom){
         VAction va = new VAction();
         va.setName(a.Name);
         int[] prec = new int[a._precond.size()];
@@ -238,7 +239,8 @@ public class Problem {
             va.addEffects(getBranches(a));
         }
         if(a.IsObservation) va.isObservation = true;
-        vaList.add(va);
+        if(isAxiom) vAxioms.add(va);
+    	vaList.add(va);
         //Set prec2act:
         va.index = vaList.indexOf(va);
         setPrec2Act(va, prec);

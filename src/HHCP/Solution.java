@@ -1,7 +1,10 @@
 package HHCP;
 
 import org.jgrapht.DirectedGraph;
+import org.jgrapht.event.VertexSetListener;
 import org.jgrapht.ext.DOTExporter;
+import org.jgrapht.ext.EdgeNameProvider;
+import org.jgrapht.ext.StringEdgeNameProvider;
 import org.jgrapht.ext.VertexNameProvider;
 import org.jgrapht.graph.ClassBasedEdgeFactory;
 import org.jgrapht.graph.DirectedMultigraph;
@@ -32,23 +35,39 @@ public class Solution {
             /*if(solved.contains(s.getState())){
                 continue;
             }*/
+            
             if(s.holds(problem.getGoal())){
                 from = cleanStringDot(s.parentAction);
                 graph.addVertex("Goal");
                 addEdge(from, "Goal", "");
                 continue;
             }
+            String label = "";
             if(s.parentAction != null){
+            	if(problem.getAction(s.indexAction).isNondeterministic){
+                	label = problem.getPredicate(problem.getAction(s.indexAction).getEffects().get(s.indexEffect).getAddList()[0]);                	
+                }
                 from = cleanStringDot(s.parentAction);
             }
-            VAction a = problem.getAction(policyP.action(s.getState()));
+            int act = -1;
+            /*if(policyP.action(s.getState()) == -1){
+            	System.out.println("WTF??");
+            	System.out.println(problem.printState(s.getState()));
+            	exportGraph();
+            	return;
+            }else{
+            	act = policyP.action(s.getState());
+            }*/
+            act = policyP.action(s.getState());
+            VAction a = problem.getAction(act);
             to = cleanStringDot(a.getName());
             graph.addVertex(from);
             graph.addVertex(to);
-            if(from.equals(to)) continue;
-            addEdge(from, to, "");
+            //if(from.equals(to)) continue;
+            if(graph.getEdge(from, to) != null) continue;
+            addEdge(from, to, label);
             if(a.isNondeterministic){
-                for(Node succ : s.applyNonDeterministicAction(a)){
+                for(Node succ : s.applyNonDeterministicAction(a, problem.vAxioms)){
                     open.push(succ);
                 }
             }else{
@@ -59,6 +78,12 @@ public class Solution {
         }
         System.out.println("Graph created.");
         exportGraph();
+    }
+    
+    private void updateEdge(String from, String to, String label){
+    	Edge<String> edge = new Edge<String>(from, to, label);
+    	graph.removeEdge(edge);
+    	graph.addEdge(from, to, edge);
     }
 
     private void addEdge(String from, String to, String label){
@@ -74,8 +99,9 @@ public class Solution {
 
     public static void toDot(OutputStream out, DirectedGraph<String, Edge> graph2) {
         //VertexNameProvider<String> provider = new ActionNameProvider();
-        VertexNameProvider<String> p2 = new Vertex();
-        DOTExporter<String, Edge> exporter = new DOTExporter<String, Edge>(p2, null, null);
+        VertexNameProvider<String> p2 = new Vertex();        
+        EdgeNameProvider<Edge> edgeLabel = new StringEdgeNameProvider<Edge>();
+        DOTExporter<String, Edge> exporter = new DOTExporter<String, Edge>(p2, p2, edgeLabel);
         exporter.export(new OutputStreamWriter(out), graph2);
     }
 

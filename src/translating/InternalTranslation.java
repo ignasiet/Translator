@@ -2,12 +2,15 @@ package translating;
 
 import parser.ParserHelper;
 import pddlElements.*;
+import planner.SATSolver;
 import trapper.CausalGraph;
 
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Hashtable;
+
+import org.sat4j.specs.TimeoutException;
 
 /**
  * @author ignasi
@@ -41,8 +44,7 @@ public class InternalTranslation extends Translation{
 		domain_translated.Name = domain_to_translate.Name;
 		domain_translated.ProblemInstance = domain_to_translate.ProblemInstance;
 		domain_translated.costFunction = domain_to_translate.costFunction;
-
-
+		
 		// 1 - Translate predicates (all)
 		translatePredicates(domain_to_translate.predicates_grounded, domain_to_translate.predicates_invariants_grounded);
 		// 2-Translate initial state
@@ -110,6 +112,7 @@ public class InternalTranslation extends Translation{
 			a._Effects.add(e);
 			a.Name = "K-axiom-" + i;
 			listAxioms.add(a);
+			//System.out.println(a.ToString("not"));
 			i++;
 		}
 		System.out.println("Done.");
@@ -160,6 +163,7 @@ public class InternalTranslation extends Translation{
 				translateDeadAction(a, complexEff);
 			}*/
 			if(a.IsObservation){
+				@SuppressWarnings("unused")				
 				Hashtable<String, HashSet<String>> entailedBy = getReasonedPredicates(a);
 				if(entailedBy != null)	translateObservations(a, entailedBy);
 			}else{
@@ -230,15 +234,6 @@ public class InternalTranslation extends Translation{
 			returnList.add(supportRule);
 			returnList.add(cancelRule);
 		}
-		/*
-		Effect supportRule = new Effect();
-		Effect cancelRule = new Effect();
-		for(String prec : _precond){
-			supportRule._Condition.add("K" + prec);
-			cancelRule._Condition.add("~K" + ParserHelper.complement(prec));
-			addPredicate("K" + ParserHelper.complement(prec));
-		}
-		*/
 		return returnList;
 	}
 
@@ -251,6 +246,8 @@ public class InternalTranslation extends Translation{
 		Branch b = new Branch();
 		String newPrecond = "not-observed-" + a.Name;
 		addPredicate(newPrecond);
+		
+		String observable = a._Effects.get(0)._Effects.get(0);
 
 		domain_translated.state.put(newPrecond, 1);
 		for(String precondition : a._precond){
@@ -267,20 +264,26 @@ public class InternalTranslation extends Translation{
 
 		addPredicate("K" + obs);
 		addPredicate("K" + negObs);
+		
+		branch1._Branches.add("K" + observable);
+		branch1._Branches.add("~K" + ParserHelper.complement(observable));
+		branch2._Branches.add("K" + ParserHelper.complement(observable));
+		branch1._Branches.add("~K" + observable);
+		
 		//Get all deducted literals for obs 1
-		for(String deducted : deductions.get(obs)) {
+		/*for(String deducted : deductions.get(obs)) {
 			addPredicate("K" + deducted);
 			addPredicate("K" + ParserHelper.complement(deducted));
 			branch1._Branches.add("K" + deducted);
 			branch1._Branches.add("~K" + ParserHelper.complement(deducted));
-		}
+		}*/
 		//Same for obs 2
-		for(String deducted : deductions.get(negObs)){
+		/*for(String deducted : deductions.get(negObs)){
 			addPredicate("K" + deducted);
 			addPredicate("K" + ParserHelper.complement(deducted));
 			branch2._Branches.add("K" + deducted);
 			branch2._Branches.add("~K" + ParserHelper.complement(deducted));
-		}
+		}*/
 
 		branch1._Branches.add("~" + newPrecond);
 		branch2._Branches.add("~" + newPrecond);
@@ -293,6 +296,7 @@ public class InternalTranslation extends Translation{
 		//createObsDetupAction(a);
 	}
 
+	@SuppressWarnings("unchecked")
 	private Hashtable<String, HashSet<String>> getReasonedPredicates(Action a){
 		/*An observation is invalid if:
 		* 1- A branch of an observation entails an invalid state. Example, there are no wumpus when both outcomes
@@ -302,18 +306,33 @@ public class InternalTranslation extends Translation{
 		HashSet<String> used = new HashSet<String>();
 		String predicate = a._Effects.get(0)._Effects.get(0);
 		String negPredicate = ParserHelper.complement(a._Effects.get(0)._Effects.get(0));
+		HashSet<String> tempUsed = (HashSet<String>) usedAxioms.clone();		
 		entailedBy.put(predicate, fixedPointIterationReasoning(predicate, used));
-		entailedBy.put(negPredicate, fixedPointIterationReasoning(negPredicate, used));
-
-		if((entailedBy.get(predicate).size()==1) || (entailedBy.get(negPredicate).size()==1)){
+		entailedBy.put(negPredicate, fixedPointIterationReasoning(negPredicate, used));		
+		//Review conditions!  && validOutcome()
+		//TODO: I need to cut actions that take off more than one disjunction: i mean 
+		// eliminate actions that allow the agent to infer there is no wumpus anywere.
+		if(((entailedBy.get(predicate).size()==1) && (entailedBy.get(negPredicate).size()==1)) || !validOutcome(negPredicate)){
 			System.out.println("Useless observation: " + a.Name);
+			usedAxioms.clear();
 			uselessObs.add(predicate);
 			//used.clear();
 			return null;
 		}
+		usedAxioms.addAll(tempUsed);
 		//usedAxioms.addAll(used);
 		//System.out.println("Used axioms: " + used.toString());
 		return entailedBy;
+	}
+
+	private boolean validOutcome(String negPredicate) {
+		try {
+			boolean r = domain_to_translate.sat.isSolvable(negPredicate);
+			return r;
+		} catch (TimeoutException e) {
+			e.printStackTrace();
+			return false;
+		}
 	}
 
 	private HashSet<String> fixedPointIterationReasoning(String predicate, HashSet<String> used){
@@ -325,7 +344,7 @@ public class InternalTranslation extends Translation{
 			for(Axiom ax : domain_to_translate._Axioms){
 				if(entailedBy(litAdded, ax)){
 					litAdded.addAll(ax._Head);
-					usedAxioms.add(ax._Name);
+					//usedAxioms.add(ax._Name);
 				}
 			}
 			/*domain_to_translate._Axioms.stream().filter(ax -> entailedBy(litAdded, ax._Body)).forEach(ax -> {

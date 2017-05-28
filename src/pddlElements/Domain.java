@@ -8,6 +8,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import parser.ParserHelper;
+import planner.SATSolver;
 import readers.ExprList;
 import readers.PDDLParser.Expr;
 import trapper.Solver;
@@ -40,6 +41,7 @@ public class Domain {
 	private Integer counter = 0;
 	public ArrayList<Axiom> _Axioms = new ArrayList<Axiom>();
 	public boolean costFunction = false;
+	public SATSolver sat = new SATSolver();
 	//public Hashtable<String, ArrayList<String>> relevance = new Hashtable<String, ArrayList<String>>();
 	
 	
@@ -143,7 +145,7 @@ public class Domain {
 		countPredicates();
 		for(Action a : action_list){
 			if(!a._parameters.isEmpty()){
-				ground_actions(a);
+				ground_actions(a);			
 			}else{
 				System.out.println("Action already instantiated: " + a.Name);
 				list_actions.put(a.Name, a);
@@ -612,6 +614,7 @@ public class Domain {
 		    	String aux = ParserHelper.cleanString(m.group(1));
 		    	disj.add(aux);
 		    }
+		    sat.addXORClause(disj);
 		    list_disjunctions.add(disj);
 		    initial_state = initial_state.substring(0, index_oneof);
 		    //addDeductiveOneOfAction(disj);
@@ -643,7 +646,9 @@ public class Domain {
 					clause.add(pred);
 				}
 			}
-			for(String elem : clause){
+			//Prepare clauses for SAT SOLVER
+			sat.addClause(clause);
+			for(String elem : clause){				
 				Axiom a_1 = new Axiom();
 				a_1._Name = counter + "-" + elem;
 				//Body: condition

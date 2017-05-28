@@ -11,11 +11,11 @@ public class NodeComparator implements Comparator<Node>{
     @Override
     public int compare(Node x, Node y)
     {
-        // Assume neither string is null. Real code should
+        // Assume neither node is null. Real code should
         // probably be more robust
         // You could also just return x.length() - y.length(),
         // which would be more efficient.
-        if (x.getFunction() < y.getFunction())
+        /*if (x.getFunction() < y.getFunction())
         {
             return -1;
         }
@@ -23,7 +23,8 @@ public class NodeComparator implements Comparator<Node>{
         {
             return 1;
         }
-        return 0;
+        return 0;*/
+    	return Integer.compare(x.getFunction(), y.getFunction());
     }
 
 }

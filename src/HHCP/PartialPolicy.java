@@ -68,6 +68,10 @@ public class PartialPolicy {
     }
 
     public void put(BitSet r, int indexAction) {
+    	/*if(marked.containsKey(r) || partial.containsKey(r)){
+    		System.out.println("Conflict! between action " + partial.get(r) + " and " + indexAction);
+    		return;
+    	}*/
         marked.put((BitSet) r.clone(), true);
         partial.put((BitSet) r.clone(), indexAction);
         root.put(r, 0, indexAction);
@@ -82,7 +86,14 @@ public class PartialPolicy {
         //BitSet[] li = (BitSet[]) marked.keySet().toArray();
         boolean ret = false;
         for(BitSet li : marked.keySet()){
-            ret = true;
+        	BitSet A = (BitSet) li.clone();
+    		A.and(s);
+    		if(A.equals(li)){
+    			//Found the match!
+    			ret = true;
+    			return marked.get(li);
+    		}
+            /*ret = true;
             for (int i = li.nextSetBit(0); i >= 0; i = li.nextSetBit(i+1)) {
                 if (!s.get(li.nextSetBit(i))){
                     ret = false;
@@ -90,27 +101,33 @@ public class PartialPolicy {
                 }
             }
             //Found the match!
-            if(ret) return marked.get(li);
+            if(ret) return marked.get(li);*/
         }
         return ret;
     }
 
     /**Returns the index of the action or -1 if there is no state that entails s*/
     public int action(BitSet s){
-        //BitSet[] li = (BitSet[]) marked.keySet().toArray();
-        boolean found = false;
-        for(BitSet li : partial.keySet()){
-            found = true;
-            for (int i = li.nextSetBit(0); i >= 0; i = li.nextSetBit(i+1)) {
-                if (!s.get(li.nextSetBit(i))){
-                    found = false;
-                    break;
-                }
-            }
-            //Found the match!
-            if(found) return partial.get(li);
-        }
-        return -1;
+    	//BitSet[] li = (BitSet[]) marked.keySet().toArray();
+    	boolean found = false;
+    	int[] foundActions= new int[100];
+    	int i = 0;
+    	BitSet bestShot = new BitSet();
+    	for(BitSet li : partial.keySet()){
+    		BitSet A = (BitSet) li.clone();
+    		A.and(s);
+    		if(A.equals(li)){
+    			//Found the match!
+    			if(li.cardinality() > bestShot.cardinality()){
+    				bestShot = (BitSet) li.clone();
+    			}    			
+    			found = true;
+    			foundActions[i] = partial.get(li);
+    			i++;
+    		}
+    	}
+    	if(found) return partial.get(bestShot);
+    	return -1;
     }
 
     public Set<BitSet> iteratorStatesActions() {

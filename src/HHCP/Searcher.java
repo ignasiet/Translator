@@ -32,23 +32,30 @@ public class Searcher {
                 if(!entails(s, problem.getGoal()) && !seen.contains(s)){
                     seen.add(s);
                     if(policyP.find(s)<0){
-                        System.out.println("State with no solution found.");
+                        //System.out.println("State with no solution found.");
                         if(GenPlanPairs(s)){
                             modified = true;
+                            //Mark State-Action Pairs
+                            markStateActions();
                         }else {
                             System.out.println("Adding to Dead End Set the state: " + s.toString());
                             if(parentAction.containsKey(s)) forbiddenActions.put(regressStateAction(s, parentAction.get(s)), parentAction.get(s));
                             deadEndsFound=true;
                         }
                     }
-                    //Mark State-Action Pairs
-                    markStateActions();
                     int indexAction = policyP.find(s);
                     //New verification: verify that the new pair is not marked yet!
-                    if(indexAction>=0 && !policyP.valid(s)){
+                    if(!policyP.valid(s)){
+                    	//If it is not marked...put it on the open list
+                    	/*if(indexAction == 198){
+                    		System.out.println(problem.getAction(parentAction.get(s)).getName());
+                    		System.out.println("Fatal moment");
+                    	}*/
                         applyAction(indexAction, s, parentAction);
                         modified = false;
-                    }
+                    }/*else{
+                    	System.out.println("Solved Path: expanding new path from " + problem.getAction(indexAction).getName());
+                    }*/
                 }
             }
             //TODO: What to do with weak problems?
@@ -123,6 +130,7 @@ public class Searcher {
                     //if(!policyP.marked.containsKey(successor) || !policyP.marked.get(successor)){
                     if(!policyP.valid(successor)){
                         policyP.marked.put(bs, false);
+                        //policyP.partial.remove(bs);
                         changed = true;
                     }
                 }
@@ -146,18 +154,14 @@ public class Searcher {
                 BitSet s2 = (BitSet) s.clone();
                 applyEffect(s2, e);
                 parentAction.put(s2, indexAction);
-                open.push(s2);
+                Node n = new Node(s2);
+                n.fixedPoint(n, problem.vAxioms);
+                open.push(n.getState());
             }
         }else{
             BitSet s2 = (BitSet) s.clone();
             for(VEffect e : a.getEffects()){
                 applyEffect(s2, e);
-               /* for(int indexEffect : e.getDelList()){
-                    s2.set(indexEffect, false);
-                }
-                for(int indexEffect : e.getAddList()){
-                    s2.set(indexEffect);
-                }*/
             }
             parentAction.put(s2, indexAction);
             open.push(s2);
@@ -198,21 +202,26 @@ public class Searcher {
                 return false;
             }
             Node node = fringe.poll();
+            //if(node.indexAction != -1) System.out.println("Applied action: " + problem.getAction(node.indexAction).getName());
             if(visited(node)) continue;
             visited.add(node.getState());
-            if(node.holds(problem.getGoal())){
+            //TODO: isSolvedNode(node)?
+            if(node.holds(problem.getGoal()) ){
                 solution = true;
                 //printPlan(node);
-                System.out.println("Weak solution found.");
+                //System.out.println("Weak solution found.");
                 RegressPlan(node);
-                System.out.println("Regressed weak plan.");
-                solution=true;
+                //System.out.println("Regressed weak plan.");
+                //solution=true;
             }
             for(VAction va : getApplicableActions(node)){
                 if(forbiddenActions.containsKey(node.getState()) && forbiddenActions.get(node.getState()) == va.index)
                     continue;
                 if(va.isNondeterministic){
-                    for(Node n : node.applyNonDeterministicAction(va)){
+                	/*if(va.index==89){
+                		System.out.println("");
+                	}*/
+                    for(Node n : node.applyNonDeterministicAction(va, problem.vAxioms)){
                         //Review condition of adding the new state:
                         if(!DeadEnds.contains(n.getState())) {
                             updateHeuristic(n, node, va);
@@ -238,7 +247,11 @@ public class Searcher {
         return true;
     }
 
-    private void updateHeuristic(Node child, Node father, VAction va) {
+	private boolean isSolvedNode(Node node) {
+		return policyP.valid(node.getState());
+	}
+
+	private void updateHeuristic(Node child, Node father, VAction va) {
         child.setCost(father.getCost() + va.cost);
         //System.out.println("Expanding action: " + va.getName());
         //System.out.println("In state: " + problem.printState(father.getState()));
@@ -247,22 +260,40 @@ public class Searcher {
     }
 
     private void RegressPlan(Node node){
-        BitSet r = (BitSet) problem.getGoalSet().clone();
-        //Boolean[] r = new Boolean[problem.getSize()];
+        //BitSet r = (BitSet) problem.getGoalSet().clone();
+    	BitSet r = (BitSet) node.getState().clone();
         while(node.parent != null){
             //Regress the action here
+        	//System.out.println("Regressing action: " + problem.getAction(node.indexAction).getName());
             VAction a = problem.getAction(node.indexAction);
+            if(node.axioms != null) regressAxioms(node, r);
             for (int p = a.preconditions.nextSetBit(0); p >= 0; p = a.preconditions.nextSetBit(p+1)) {
                 r.set(p);
             }
-            //for(int p : a.getPreconditions()){
-            regressNode(a, node,r);
-            policyP.put(r, node.indexAction);
+            regressNode(a,node,r);
+            policyP.put((BitSet) r.clone(), node.indexAction);
             node = node.parent;
         }
     }
 
-    private void regressNode(VAction a, Node node, BitSet r){
+    private void regressAxioms(Node node, BitSet r) {
+    	for (int i=node.axioms.size()-1; i>=0;i--) {
+    		int index = node.axioms.get(i);
+    		VAction ax = problem.getAction(index);
+        	for (int p = ax.preconditions.nextSetBit(0); p >= 0; p = ax.preconditions.nextSetBit(p+1)) {
+                r.set(p);
+            }
+        	for(VEffect e : ax.getEffects()){
+                for(int eff : e.getAddList()){
+                    if(r.get(eff)){
+                    	r.set(eff,false);
+                    }
+                }
+            }
+    	}
+	}
+
+	private void regressNode(VAction a, Node node, BitSet r){
         if(a.isNondeterministic){
             VEffect e = a.getEffects().get(node.indexEffect);
             if(e.getCondition() != null) {
@@ -308,17 +339,17 @@ public class Searcher {
     private ArrayList<VAction> getApplicableActions(Node node) {
         //System.out.println("Applicable actions in: " + problem.printState(node.getState()));
         ArrayList<VAction> retList = new ArrayList<VAction>();
-        problem.getVaList().stream()
-                .filter(s -> node.holds(s.getPreconditionArray()))
-                .forEach(retList::add);
-
-        /*for(VAction va : problem.getVaList()){
-            if(node.holds(va.getPreconditions())){
+        /*problem.getVaList().stream()
+                .filter(s -> ((s.getName().s) && (node.holds(s.getPreconditionArray()))))
+                .forEach(retList::add);*/
+        for(VAction va : problem.getVaList()){
+        	if(va.getName().startsWith("K-axiom-")) continue;
+            if(node.holds(va.getPreconditionArray())){
                 retList.add(va);
                 //System.out.println(va.getName());
             }
 
-        }*/
+        }
         return retList;
     }
 }
