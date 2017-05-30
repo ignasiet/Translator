@@ -11,7 +11,6 @@ import parser.ParserHelper;
 import planner.SATSolver;
 import readers.ExprList;
 import readers.PDDLParser.Expr;
-import trapper.Solver;
 
 
 public class Domain {
