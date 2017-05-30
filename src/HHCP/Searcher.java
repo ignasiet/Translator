@@ -1,5 +1,7 @@
 package HHCP;
 
+import simulator.Simulator;
+
 import java.util.*;
 
 /**
@@ -71,6 +73,7 @@ public class Searcher {
         double endTime = System.currentTimeMillis();
         System.out.println("Planner time: " + (endTime - startTime) + " Milliseconds");
         printPolicy(p.getInitState());
+        //Simulator sim = new Simulator(policyP, p.getInitState(), problem);
     }
 
     private BitSet regressStateAction(BitSet s, Integer action) {

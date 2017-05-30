@@ -112,6 +112,20 @@ public class Node {
         return successors;
     }
 
+    public Node applyEffect(VEffect v){
+        BitSet successor = (BitSet) State.clone();
+        if(holds(v.getCondition())){
+            for(int e : v.getDelList()){
+                successor.set(e, false);
+            }
+            for(int e : v.getAddList()){
+                successor.set(e, true);
+            }
+        }
+        Node n = new Node(successor);
+        return n;
+    }
+
 	public void fixedPoint(Node n, ArrayList<VAction> vAxioms) {
 		n.axioms = new ArrayList<>();
 		BitSet oldState = (BitSet) n.getState().clone();

@@ -268,7 +268,7 @@ public class InternalTranslation extends Translation{
 		branch1._Branches.add("K" + observable);
 		branch1._Branches.add("~K" + ParserHelper.complement(observable));
 		branch2._Branches.add("K" + ParserHelper.complement(observable));
-		branch1._Branches.add("~K" + observable);
+		branch2._Branches.add("~K" + observable);
 		
 		//Get all deducted literals for obs 1
 		/*for(String deducted : deductions.get(obs)) {

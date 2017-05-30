@@ -68,10 +68,12 @@ public class PartialPolicy {
     }
 
     public void put(BitSet r, int indexAction) {
-    	/*if(marked.containsKey(r) || partial.containsKey(r)){
-    		System.out.println("Conflict! between action " + partial.get(r) + " and " + indexAction);
-    		return;
-    	}*/
+        if(marked.containsKey(r) || partial.containsKey(r)){
+            if(partial.get(r) != indexAction) {
+                System.out.println("Conflict! between action " + partial.get(r) + " and " + indexAction);
+                return;
+            }
+    	}
         marked.put((BitSet) r.clone(), true);
         partial.put((BitSet) r.clone(), indexAction);
         root.put(r, 0, indexAction);
@@ -79,18 +81,17 @@ public class PartialPolicy {
 
     public void clear() {
         root = new TrieNode();
+        partial.clear();
         marked.clear();
     }
 
     public boolean valid(BitSet s){
         //BitSet[] li = (BitSet[]) marked.keySet().toArray();
-        boolean ret = false;
         for(BitSet li : marked.keySet()){
         	BitSet A = (BitSet) li.clone();
     		A.and(s);
     		if(A.equals(li)){
     			//Found the match!
-    			ret = true;
     			return marked.get(li);
     		}
             /*ret = true;
@@ -103,14 +104,13 @@ public class PartialPolicy {
             //Found the match!
             if(ret) return marked.get(li);*/
         }
-        return ret;
+        return false;
     }
 
     /**Returns the index of the action or -1 if there is no state that entails s*/
     public int action(BitSet s){
     	//BitSet[] li = (BitSet[]) marked.keySet().toArray();
     	boolean found = false;
-    	int[] foundActions= new int[100];
     	int i = 0;
     	BitSet bestShot = new BitSet();
     	for(BitSet li : partial.keySet()){
@@ -120,9 +120,8 @@ public class PartialPolicy {
     			//Found the match!
     			if(li.cardinality() > bestShot.cardinality()){
     				bestShot = (BitSet) li.clone();
-    			}    			
+    			}
     			found = true;
-    			foundActions[i] = partial.get(li);
     			i++;
     		}
     	}
