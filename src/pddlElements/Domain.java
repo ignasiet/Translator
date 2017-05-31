@@ -39,8 +39,10 @@ public class Domain {
 	public String ProblemInstance;
 	private Integer counter = 0;
 	public ArrayList<Axiom> _Axioms = new ArrayList<Axiom>();
+	public ArrayList<ArrayList<String>> specialAxioms = new ArrayList<ArrayList<String>>();
 	public boolean costFunction = false;
 	public SATSolver sat = new SATSolver();
+	public HashSet<String> observables = new HashSet<String>();
 	//public Hashtable<String, ArrayList<String>> relevance = new Hashtable<String, ArrayList<String>>();
 	
 	
@@ -306,6 +308,10 @@ public class Domain {
 		}else{
 			return false;
 		}
+	}
+
+	public boolean isObservable(String obs){
+		return observables.contains(obs.substring(0, obs.indexOf("_")).replace("~", ""));
 	}
 	
 	public void eliminateInvalidActions(){
@@ -645,9 +651,12 @@ public class Domain {
 					clause.add(pred);
 				}
 			}
+			if(clause.size()>2){
+				specialAxioms.add(clause);
+			}
 			//Prepare clauses for SAT SOLVER
 			sat.addClause(clause);
-			for(String elem : clause){				
+			for(String elem : clause){
 				Axiom a_1 = new Axiom();
 				a_1._Name = counter + "-" + elem;
 				//Body: condition
@@ -675,7 +684,6 @@ public class Domain {
 	public String sensingAction(String action_name){
 		String observation = "";
 		Action a = list_actions.get(action_name.toLowerCase());
-		//TODO: Sensing actions yield only one predicate?
 		Effect e = a._Effects.get(0);
 		String predicate_observed = e._Effects.get(0);
 		//if not, correct lines above
@@ -694,12 +702,19 @@ public class Domain {
 		return observation;
 	}
 
-	/*public void eliminateInvalidObservations() {
-		Solver solver = new Solver(state, _Axioms, list_disjunctions);
-		for(String name :list_actions.keySet()){
-			if(list_actions.get(name).IsObservation){
-				Action action = list_actions.get(name);
+	public void addObservable(String predicate) {
+		observables.add(predicate.substring(0, predicate.indexOf(" ")).replace("(", ""));
+	}
+
+	public ArrayList<String> opositeObs(String predicate) {
+		String prefix = predicate.replace("~", "").substring(0, predicate.indexOf("_")-1);
+		String pos = predicate.substring(predicate.indexOf("_"));
+		ArrayList<String> r = new ArrayList<String>();
+		for(String o : observables){
+			if(!o.equals(prefix)){
+				r.add("~" + o + pos);
 			}
 		}
-	}*/
+		return r;
+	}
 }

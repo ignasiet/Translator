@@ -31,8 +31,8 @@ public class Simulator {
             VAction action = problem.getAction(act);
             if (action.isNondeterministic) {
                 System.out.println("Non-deterministic action " + action.getName() + ", choose effect: ");
-                System.out.println("0-" + problem.getPredicate(action.getEffects().get(0).getAddList()[0]));
-                System.out.println("1-" + problem.getPredicate(action.getEffects().get(1).getAddList()[0]));
+                System.out.println("0-" + action.getName());
+                System.out.println("1- not " + action.getName());
                 System.out.println("Enter a number: ");
                 int chosenEffect = reader.nextInt(); // Scans the next token of the input as an int.
                 while(!(chosenEffect>=0 && chosenEffect<2)){
@@ -40,6 +40,7 @@ public class Simulator {
                     chosenEffect = reader.nextInt();
                 }
                 n= n.applyEffect(action.getEffects().get(chosenEffect));
+                n.fixedPoint(problem);
 
             } else {
                 System.out.println("Deterministic action: " + action.getName());

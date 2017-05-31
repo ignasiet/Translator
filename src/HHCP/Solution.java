@@ -21,6 +21,7 @@ import java.util.Stack;
  */
 public class Solution {
     private DirectedMultigraph<String, Edge> graph;
+    private int numberNodes = 0;
 
     public Solution(PartialPolicy policyP, BitSet initState, Problem problem) {
         graph = createStringGraph();
@@ -30,6 +31,7 @@ public class Solution {
         String from = "root";
         String to = "";
         HashSet<BitSet> solved = new HashSet<BitSet>();
+
         while(!open.isEmpty()){
             Node s = open.pop();
             /*if(solved.contains(s.getState())){
@@ -88,6 +90,7 @@ public class Solution {
 
     private void addEdge(String from, String to, String label){
         Edge<String> edge = new Edge<String>(from, to, label);
+        numberNodes++;
         graph.addEdge(from, to, edge);
     }
 
@@ -113,10 +116,11 @@ public class Solution {
     private void exportGraph() {
         // note directed edges are printed as: (<v1>,<v2>)
         //System.out.println(graph.toString());
+        System.out.println("Nodes: " + numberNodes);
         File file = new File("./plan.dot");
         try {
             toDot(new FileOutputStream(file), graph);
-            System.out.println("Dot file saved in Graph.dot.\n Using graphviz: dot -Tpdf plan.dot -o plan.pdf");
+            System.out.println("Dot file saved in plan.dot.\n Using graphviz: dot -Tpdf plan.dot -o plan.pdf");
         } catch (FileNotFoundException e1) {
             e1.printStackTrace();
         }

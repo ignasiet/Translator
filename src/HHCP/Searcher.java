@@ -71,9 +71,14 @@ public class Searcher {
         }
         //GenPlanPairs(problem.getInitState());
         double endTime = System.currentTimeMillis();
+        System.out.println("==========================================================");
+        System.out.println("Results:");
         System.out.println("Planner time: " + (endTime - startTime) + " Milliseconds");
-        printPolicy(p.getInitState());
-        //Simulator sim = new Simulator(policyP, p.getInitState(), problem);
+        System.out.println("Number of nodes: " + policyP.partial.size());
+        System.out.println("Policy size: " + policyP.size());
+        System.out.println("Number of states solved: " + policyP.marked.size());
+        //printPolicy(p.getInitState());
+        Simulator sim = new Simulator(policyP, p.getInitState(), problem);
     }
 
     private BitSet regressStateAction(BitSet s, Integer action) {

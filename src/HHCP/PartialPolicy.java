@@ -85,6 +85,14 @@ public class PartialPolicy {
         marked.clear();
     }
 
+    public int size(){
+        int size = 0;
+        for(BitSet bs : marked.keySet()){
+            if(marked.get(bs)) size++;
+        }
+        return size;
+    }
+
     public boolean valid(BitSet s){
         //BitSet[] li = (BitSet[]) marked.keySet().toArray();
         for(BitSet li : marked.keySet()){

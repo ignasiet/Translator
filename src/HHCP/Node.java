@@ -126,6 +126,31 @@ public class Node {
         return n;
     }
 
+    public void fixedPoint(Problem p) {
+        axioms = new ArrayList<>();
+        BitSet oldState = (BitSet) getState().clone();
+        boolean fix = false;
+        while(!fix){
+            for(VAction ax : p.vAxioms){
+                BitSet prec = (BitSet) ax.preconditions.clone();
+                prec.and(getState());
+                if(prec.equals(ax.getPreconditions())){
+                    if(!axioms.contains(ax.index)) axioms.add(ax.index);
+                    for(int index : ax.getEffects().get(0).getAddList()){
+                        getState().set(index);
+                        //System.out.println("Adding: " + p.getPredicate(index));
+                    }
+                    for(int index : ax.getEffects().get(0).getDelList()){
+                        getState().set(index, false);
+                        //System.out.println("Deleting: " + p.getPredicate(index));
+                    }
+                }
+            }
+            if(oldState.equals(getState())) fix = true;
+            oldState = (BitSet) getState().clone();
+        }
+    }
+
 	public void fixedPoint(Node n, ArrayList<VAction> vAxioms) {
 		n.axioms = new ArrayList<>();
 		BitSet oldState = (BitSet) n.getState().clone();

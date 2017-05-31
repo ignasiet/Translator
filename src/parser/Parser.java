@@ -144,6 +144,7 @@ public class Parser {
 				System.out.println("Observation " + a.Name + " has cost: " + c);
 				a.cost = c;
 			}
+			_Domain.addObservable(predicate);
 			a.parseEffects(predicate);
 			break;
 		case "effect":
