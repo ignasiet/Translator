@@ -62,7 +62,7 @@ public class Planner {
 		/*Time measure: translation*/
 		domain = ParserHelper.cleanProblem(domain);
 		startTime = System.currentTimeMillis();
-		cg = new CausalGraph(domain);
+		//cg = new CausalGraph(domain);
 		/*Set size of the ksets to 2*/
 		//Trapper tp = new Trapper(cg.getLiterals(), domain, cg, 2);
 		Translation tr = translate(type, domain);

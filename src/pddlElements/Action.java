@@ -69,6 +69,7 @@ public class Action{
 	}
 	
 	public void parseEffects(String effect_List){
+		if(effect_List.length() == 0) return;
 		Matcher m = Pattern.compile("\\(([^)]+)\\)").matcher(effect_List);
 		Effect e = new Effect();
 		while(m.find()) {

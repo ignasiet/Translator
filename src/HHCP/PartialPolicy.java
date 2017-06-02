@@ -94,7 +94,6 @@ public class PartialPolicy {
     }
 
     public boolean valid(BitSet s){
-        //BitSet[] li = (BitSet[]) marked.keySet().toArray();
         for(BitSet li : marked.keySet()){
         	BitSet A = (BitSet) li.clone();
     		A.and(s);
@@ -102,15 +101,6 @@ public class PartialPolicy {
     			//Found the match!
     			return marked.get(li);
     		}
-            /*ret = true;
-            for (int i = li.nextSetBit(0); i >= 0; i = li.nextSetBit(i+1)) {
-                if (!s.get(li.nextSetBit(i))){
-                    ret = false;
-                    break;
-                }
-            }
-            //Found the match!
-            if(ret) return marked.get(li);*/
         }
         return false;
     }
@@ -119,7 +109,7 @@ public class PartialPolicy {
     public int action(BitSet s){
     	//BitSet[] li = (BitSet[]) marked.keySet().toArray();
     	boolean found = false;
-    	int i = 0;
+    	//int i = 0;
     	BitSet bestShot = new BitSet();
     	for(BitSet li : partial.keySet()){
     		BitSet A = (BitSet) li.clone();
@@ -130,7 +120,7 @@ public class PartialPolicy {
     				bestShot = (BitSet) li.clone();
     			}
     			found = true;
-    			i++;
+    			//i++;
     		}
     	}
     	if(found) return partial.get(bestShot);

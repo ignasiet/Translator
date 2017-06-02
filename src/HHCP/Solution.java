@@ -34,10 +34,6 @@ public class Solution {
 
         while(!open.isEmpty()){
             Node s = open.pop();
-            /*if(solved.contains(s.getState())){
-                continue;
-            }*/
-            
             if(s.holds(problem.getGoal())){
                 from = cleanStringDot(s.parentAction);
                 graph.addVertex("Goal");
@@ -47,7 +43,7 @@ public class Solution {
             String label = "";
             if(s.parentAction != null){
             	if(problem.getAction(s.indexAction).isNondeterministic){
-                	label = problem.getPredicate(problem.getAction(s.indexAction).getEffects().get(s.indexEffect).getAddList()[0]);                	
+                	label = problem.getPredicate(problem.getAction(s.indexAction).getEffects().get(s.indexEffect).getAddList().nextSetBit(0));
                 }
                 from = cleanStringDot(s.parentAction);
             }
@@ -79,6 +75,7 @@ public class Solution {
             solved.add(s.getState());
         }
         System.out.println("Graph created.");
+        System.out.println("Policy size: " + solved.size());
         exportGraph();
     }
     
@@ -102,9 +99,10 @@ public class Solution {
 
     public static void toDot(OutputStream out, DirectedGraph<String, Edge> graph2) {
         //VertexNameProvider<String> provider = new ActionNameProvider();
-        VertexNameProvider<String> p2 = new Vertex();        
+        VertexNameProvider<String> p2 = new Vertex();
+        VertexNameProvider<String> p1 = new Vertex();
         EdgeNameProvider<Edge> edgeLabel = new StringEdgeNameProvider<Edge>();
-        DOTExporter<String, Edge> exporter = new DOTExporter<String, Edge>(p2, p2, edgeLabel);
+        DOTExporter<String, Edge> exporter = new DOTExporter<String, Edge>(p1, p2, edgeLabel);
         exporter.export(new OutputStreamWriter(out), graph2);
     }
 

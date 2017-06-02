@@ -1,5 +1,6 @@
 package HHCP;
 
+import oracle.jrockit.jfr.events.Bits;
 import simulator.Simulator;
 
 import java.util.*;
@@ -55,11 +56,10 @@ public class Searcher {
                     	}*/
                         applyAction(indexAction, s, parentAction);
                         modified = false;
-                    }/*else{
-                    	System.out.println("Solved Path: expanding new path from " + problem.getAction(indexAction).getName());
-                    }*/
+                    }
                 }
             }
+            //markStateActions();
             //TODO: What to do with weak problems?
             if(deadEndsFound){
                 modified = true;
@@ -72,6 +72,7 @@ public class Searcher {
         //GenPlanPairs(problem.getInitState());
         double endTime = System.currentTimeMillis();
         System.out.println("==========================================================");
+        System.out.println("Initial state solved " + policyP.valid(p.getInitState()));
         System.out.println("Results:");
         System.out.println("Planner time: " + (endTime - startTime) + " Milliseconds");
         System.out.println("Number of nodes: " + policyP.partial.size());
@@ -90,21 +91,37 @@ public class Searcher {
         }
         boolean appliedEffect = true;
         for(VEffect e : a.getEffects()){
-            for(int eff : e.getAddList()){
+            //CAUTION HERE! verify the conditional effect has been applied before regressing it!
+            BitSet A = (BitSet) e.getAddList().clone();
+            A.and(ancestor);
+            if(A.equals(e.getAddList())){
+                for(int i = e.getAddList().nextSetBit(0); i>=0; i= e.getAddList().nextSetBit(i+1)){
+                    ancestor.set(i,false);
+                }
+                ancestor.or(e.getCondition());
+            }
+            /*else{
+                appliedEffect = false;
+            }*/
+            /*for(int eff : e.getAddList()){
                 if(ancestor.get(eff)){
                     ancestor.set(eff,false);
                 }else{
                     appliedEffect = false;
                 }
-            }
-            if(appliedEffect){
-                for(int c : e.getCondition()) ancestor.set(c);
-            }
+            }*/
+            /*if(appliedEffect){
+                //for(int c : e.getCondition()) ancestor.set(c);
+                ancestor.or(e.getCondition());
+            }*/
         }
         return ancestor;
     }
 
     private void markStateActions() {
+        for(BitSet bs : policyP.marked.keySet()){
+            policyP.marked.put(bs, true);
+        }
         boolean changed = true;
         while(changed){
             changed = false;
@@ -147,12 +164,20 @@ public class Searcher {
     }
 
     private void applyEffect(BitSet s, VEffect e){
-        for(int indexEffect : e.getDelList()){
+        /*for(int indexEffect : e.getDelList()){
             s.set(indexEffect, false);
+        }*/
+        //Add operation between bitsets:
+        s.or(e.getAddList());
+        /*BitSet x = (BitSet) s.clone();
+        x.xor(e.getDelList());*/
+        for(int i = e.getDelList().nextSetBit(0);i>=0;i=e.getDelList().nextSetBit(i+1)){
+            s.set(i, false);
         }
-        for(int indexEffect : e.getAddList()){
+        //s.xor(e.getDelList());
+        /*for(int indexEffect : e.getAddList()){
             s.set(indexEffect);
-        }
+        }*/
     }
 
     private void applyAction(int indexAction, BitSet s, HashMap<BitSet, Integer> parentAction){
@@ -188,12 +213,15 @@ public class Searcher {
         policyP.clear();
     }
 
-    private boolean entails(BitSet s, int[] goal) {
-        boolean ret = true;
+    private boolean entails(BitSet s, BitSet goal) {
+        BitSet A = (BitSet) goal.clone();
+        A.and(s);
+        return A.equals(goal);
+        /*boolean ret = true;
         for(int i : goal){
             if(!s.get(i)) return false;
         }
-        return ret;
+        return ret;*/
     }
 
     public boolean GenPlanPairs(BitSet initState){
@@ -213,14 +241,11 @@ public class Searcher {
             //if(node.indexAction != -1) System.out.println("Applied action: " + problem.getAction(node.indexAction).getName());
             if(visited(node)) continue;
             visited.add(node.getState());
-            //TODO: isSolvedNode(node)?
-            if(node.holds(problem.getGoal()) ){
-                solution = true;
-                //printPlan(node);
-                //System.out.println("Weak solution found.");
+            //TODO: isSolvedNode(node)? check
+            if(node.holds(problem.getGoal()) || policyP.valid(node.getState()) ){
+                //solution = true;
                 RegressPlan(node);
-                //System.out.println("Regressed weak plan.");
-                //solution=true;
+                break;
             }
             for(VAction va : getApplicableActions(node)){
                 if(forbiddenActions.containsKey(node.getState()) && forbiddenActions.get(node.getState()) == va.index)
@@ -229,7 +254,8 @@ public class Searcher {
                 	/*if(va.index==89){
                 		System.out.println("");
                 	}*/
-                    for(Node n : node.applyNonDeterministicAction(va, problem.vAxioms)){
+                    ArrayList<Node> getSuccessorNodes = node.applyNonDeterministicAction(va, problem.vAxioms);
+                    for(Node n : getSuccessorNodes){
                         //Review condition of adding the new state:
                         if(!DeadEnds.contains(n.getState())) {
                             updateHeuristic(n, node, va);
@@ -271,13 +297,16 @@ public class Searcher {
         //BitSet r = (BitSet) problem.getGoalSet().clone();
     	BitSet r = (BitSet) node.getState().clone();
         while(node.parent != null){
-            //Regress the action here
-        	//System.out.println("Regressing action: " + problem.getAction(node.indexAction).getName());
+            /*Regress the action here
+            Should we regress here?*/
             VAction a = problem.getAction(node.indexAction);
             if(node.axioms != null) regressAxioms(node, r);
-            for (int p = a.preconditions.nextSetBit(0); p >= 0; p = a.preconditions.nextSetBit(p+1)) {
+            //1 regress preconditions: put them all 1
+            r.or(a.preconditions);
+            /*for (int p = a.preconditions.nextSetBit(0); p >= 0; p = a.preconditions.nextSetBit(p+1)) {
                 r.set(p);
-            }
+            }*/
+            //Regress effects
             regressNode(a,node,r);
             policyP.put((BitSet) r.clone(), node.indexAction);
             node = node.parent;
@@ -288,15 +317,25 @@ public class Searcher {
     	for (int i=node.axioms.size()-1; i>=0;i--) {
     		int index = node.axioms.get(i);
     		VAction ax = problem.getAction(index);
-        	for (int p = ax.preconditions.nextSetBit(0); p >= 0; p = ax.preconditions.nextSetBit(p+1)) {
+            r.or(ax.preconditions);
+        	/*for (int p = ax.preconditions.nextSetBit(0); p >= 0; p = ax.preconditions.nextSetBit(p+1)) {
                 r.set(p);
-            }
+            }*/
+            //Axioms have only one effect:
         	for(VEffect e : ax.getEffects()){
-                for(int eff : e.getAddList()){
+                //BitSet A = (BitSet) e.getAddList().clone();
+                //A.and(r);
+                for(int j = e.getAddList().nextSetBit(0); j>=0;j=e.getAddList().nextSetBit(j+1)){
+                    r.set(j,false);
+                }
+                /*if(A.equals(e.getAddList())){
+
+                }*/
+                /*for(int eff : e.getAddList()){
                     if(r.get(eff)){
                     	r.set(eff,false);
                     }
-                }
+                }*/
             }
     	}
 	}
@@ -304,22 +343,45 @@ public class Searcher {
 	private void regressNode(VAction a, Node node, BitSet r){
         if(a.isNondeterministic){
             VEffect e = a.getEffects().get(node.indexEffect);
-            if(e.getCondition() != null) {
-                for (int c : e.getCondition()) r.set(c);
+            /*if(e.getCondition() != null) {
+                //for (int c : e.getCondition()) r.set(c);
+                //Add operation between bitsets:
+                r.or(e.getCondition());
+            }*/
+            //BitSet A = (BitSet) e.getAddList().clone();
+            //A.and(r);
+            /*if(A.equals(e.getAddList())){
+
+            }*/
+            r.or(e.getCondition());
+            for(int j = e.getAddList().nextSetBit(0); j>=0;j=e.getAddList().nextSetBit(j+1)){
+                r.set(j,false);
             }
-            for (int eff : e.getAddList()) {
+            /*for (int eff : e.getAddList()) {
                 if (r.get(eff)) {
                     r.set(eff, false);
                 }
-            }
+            }*/
         }else{
             for(VEffect e : a.getEffects()){
-                for(int c : e.getCondition()) r.set(c);
-                for(int eff : e.getAddList()){
+                //for(int c : e.getCondition()) r.set(c);
+                //Verify the effect was applied:
+                if(e.getCondition().isEmpty()){
+                    for(int j = e.getAddList().nextSetBit(0); j>=0;j=e.getAddList().nextSetBit(j+1)){
+                        r.set(j,false);
+                    }
+                }else{
+                    BitSet A = (BitSet) e.getAddList().clone();
+                    A.and(r);
+                    if(A.equals(e.getAddList())){
+                        r.or(e.getCondition());
+                    }
+                }
+                /*for(int eff : e.getAddList()){
                     if(r.get(eff)){
                         r.set(eff,false);
                     }
-                }
+                }*/
             }
         }
     }
@@ -352,7 +414,8 @@ public class Searcher {
                 .forEach(retList::add);*/
         for(VAction va : problem.getVaList()){
         	if(va.getName().startsWith("K-axiom-")) continue;
-            if(node.holds(va.getPreconditionArray())){
+            //if(node.holds(va.getPreconditionArray())){
+            if(node.holds(va.getPreconditions())){
                 retList.add(va);
                 //System.out.println(va.getName());
             }

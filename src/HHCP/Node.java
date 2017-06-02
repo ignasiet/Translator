@@ -36,14 +36,17 @@ public class Node {
     }
     
     /**TODO: optimize this function*/
-    public boolean holds(int[] conditions){
+    public boolean holds(BitSet conditions){
         if(conditions == null) return true;
-        for(int precondition : conditions){
+        BitSet A = (BitSet) conditions.clone();
+        A.and(State);
+        return A.equals(conditions);
+        /*for(int precondition : conditions){
             if(!State.get(precondition)){
                 return false;
             }
         }
-        return true;
+        return true;*/
     }
 
     public void setCost(int cost) {
@@ -74,12 +77,17 @@ public class Node {
         BitSet successor = (BitSet) State.clone();
         for(VEffect v : a.getEffects()){
             if(holds(v.getCondition())){
-                for(int e : v.getDelList()){
+                /*for(int e : v.getDelList()){
                     successor.set(e, false);
+                }*/
+                for(int i = v.getDelList().nextSetBit(0);i>=0;i=v.getDelList().nextSetBit(i+1)){
+                    successor.set(i, false);
                 }
-                for(int e : v.getAddList()){
+                //Add operation between bitsets:
+                successor.or(v.getAddList());
+                /*for(int e : v.getAddList()){
                     successor.set(e, true);
-                }
+                }*/
             }
         }
         Node n = new Node(successor);
@@ -94,12 +102,17 @@ public class Node {
         for(VEffect v : a.getEffects()){
             BitSet successor = (BitSet) State.clone();
             if(holds(v.getCondition())){
-                for(int e : v.getDelList()){
+                /*for(int e : v.getDelList()){
                     successor.set(e, false);
+                }*/
+                for(int i = v.getDelList().nextSetBit(0);i>=0;i=v.getDelList().nextSetBit(i+1)){
+                    successor.set(i, false);
                 }
-                for(int e : v.getAddList()){
+                //Add operation between bitsets:
+                successor.or(v.getAddList());
+                /*for(int e : v.getAddList()){
                     successor.set(e, true);
-                }
+                }*/
             }
             Node n = new Node(successor);
             n.parent = this;
@@ -115,12 +128,17 @@ public class Node {
     public Node applyEffect(VEffect v){
         BitSet successor = (BitSet) State.clone();
         if(holds(v.getCondition())){
-            for(int e : v.getDelList()){
+            /*for(int e : v.getDelList()){
                 successor.set(e, false);
+            }*/
+            for(int i = v.getDelList().nextSetBit(0);i>=0;i=v.getDelList().nextSetBit(i+1)){
+                successor.set(i, false);
             }
-            for(int e : v.getAddList()){
+            //Add operation between bitsets:
+            successor.or(v.getAddList());
+            /*for(int e : v.getAddList()){
                 successor.set(e, true);
-            }
+            }*/
         }
         Node n = new Node(successor);
         return n;
@@ -136,13 +154,18 @@ public class Node {
                 prec.and(getState());
                 if(prec.equals(ax.getPreconditions())){
                     if(!axioms.contains(ax.index)) axioms.add(ax.index);
-                    for(int index : ax.getEffects().get(0).getAddList()){
+                    //Add operation between bitsets:
+                    getState().or(ax.getEffects().get(0).getAddList());
+                    /*for(int index : ax.getEffects().get(0).getAddList()){
                         getState().set(index);
                         //System.out.println("Adding: " + p.getPredicate(index));
-                    }
-                    for(int index : ax.getEffects().get(0).getDelList()){
+                    }*/
+                    /*for(int index : ax.getEffects().get(0).getDelList()){
                         getState().set(index, false);
                         //System.out.println("Deleting: " + p.getPredicate(index));
+                    }*/
+                    for(int index = ax.getEffects().get(0).getDelList().nextSetBit(0);index>=0;index=ax.getEffects().get(0).getDelList().nextSetBit(index+1)){
+                        getState().set(index, false);
                     }
                 }
             }
@@ -161,12 +184,17 @@ public class Node {
 				prec.and(n.getState());
 				if(prec.equals(ax.getPreconditions())){
 					if(!n.axioms.contains(ax.index)) n.axioms.add(ax.index);
-					for(int index : ax.getEffects().get(0).getAddList()){
+                    //Add operation between bitsets:
+                    n.getState().or(ax.getEffects().get(0).getAddList());
+					/*for(int index : ax.getEffects().get(0).getAddList()){
 						n.getState().set(index);
-					}
-					for(int index : ax.getEffects().get(0).getDelList()){
+					}*/
+					/*for(int index : ax.getEffects().get(0).getDelList()){
 						n.getState().set(index, false);
-					}
+					}*/
+                    for(int index = ax.getEffects().get(0).getDelList().nextSetBit(0);index>=0;index=ax.getEffects().get(0).getDelList().nextSetBit(index+1)){
+                        n.getState().set(index, false);
+                    }
 				}
 			}
 			if(oldState.equals(n.getState())) fix = true;

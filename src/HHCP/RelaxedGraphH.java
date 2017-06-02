@@ -68,13 +68,15 @@ public class RelaxedGraphH {
                 //i represents the index of the action
                 VAction a = problem.getVaList().get(i);
                 for(VEffect e : a.getEffects()){
-                    for(int j = 0; j<e.getAddList().length;j++){
-                        int index = e.getAddList()[j];
-                        addRelation(index, i);
-                        if(factsLayer[index] > layerNumber){
-                            factsLayer[index] = layerNumber;
+                    //int j = e.getAddList().nextSetBit(0); j >= 0; j = e.getAddList().nextSetBit(i+1)
+                    //for(int j = 0; j<e.getAddList().length;j++){
+                    for(int j = e.getAddList().nextSetBit(0); j >= 0; j = e.getAddList().nextSetBit(j+1)){
+                        //int index = e.getAddList()[j];
+                        addRelation(j, i);
+                        if(factsLayer[j] > layerNumber){
+                            factsLayer[j] = layerNumber;
                             //3 Update actions whose preconditions have been updated
-                            updateActionCounter(index, layerNumber);
+                            updateActionCounter(j, layerNumber);
                         }
                     }
                 }
@@ -115,9 +117,10 @@ public class RelaxedGraphH {
     }
 
     private void extractPlan(){
-        for(int i = 0;i<problem.getGoal().length;i++){
+        //for(int i = 0;i<problem.getGoal().length;i++){
+        for(int i = problem.getGoal().nextSetBit(0);i >= 0; i = problem.getGoal().nextSetBit(i+1)){
             //Do I need this? test and see...
-            addList(m, problem.getGoal()[i], goalMembership);
+            addList(m, i, goalMembership);
         }
         for(int i = m; i>=0; i--){
             //Get the goals of level m
@@ -129,6 +132,7 @@ public class RelaxedGraphH {
                 goalMarked.set(g);*/
                 //Obtain the minimal difficulty action and add it to the relaxed solution
                 Integer minAct = addedBy.get(g)[0];
+                //if(!problem.getAction(minAct).getName().startsWith("K-axiom-"))
                 relaxedSolution.add(minAct);
                 //Add its preconditions to the goal of lower layers
                 VAction a = problem.getAction(minAct);
@@ -161,15 +165,15 @@ public class RelaxedGraphH {
     }
 
     private boolean goalReached(){
-        int[] goal = problem.getGoal();
-        for(int i=0;i< goal.length;i++){
-            if(factsLayer[goal[i]] == Integer.MAX_VALUE){
+        //int[] goal = problem.getGoal();
+        //for(int i=problem.getGoal().nextSetBit(0);i>= goal.length;i++){
+        for(int i=problem.getGoal().nextSetBit(0);i>=0;i = problem.getGoal().nextSetBit(i+1)){
+            if(factsLayer[i] == Integer.MAX_VALUE){
                 return false;
             }
         }
         return true;
     }
-
 
     public class MyComparator implements Comparator<Integer> {
         @Override

@@ -188,29 +188,9 @@ public class Parser {
 					list.add(predicate);
 				}
 			}
-			/*while(it.hasNext()){
-				String s = it.next().toString().trim();
-				if(!s.equals("and")){
-					if(s.contains("when")){
-						a._IsConditionalEffect = true;
-						Effect effect = new Effect(s);
-						a._Effects.add(effect);
-					}else{
-						s = cleanParentesis(s);
-						list.add(s);
-					}
-				}
-			}*/
-			a.parseEffects(list.toString());
-			/*
-			if(predicate.contains("when")){
-				a._IsConditionalEffect = true;
-				Effect effect = new Effect(predicate);
-				a._Effects.add(effect);
-			}else{
-				predicate = cleanParentesis(predicate);
-				a.parseEffects(predicate);
-			}*/
+			if(!list.isEmpty()){
+				a.parseEffects(list.toString());
+			}
 			break;
 		}
 	}

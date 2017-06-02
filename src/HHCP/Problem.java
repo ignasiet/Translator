@@ -20,8 +20,9 @@ public class Problem {
     private BiMap<Integer, String> Predicates;
 
     private BitSet initState;
-    private BitSet goalSet;
-    private int[] goal;
+    //private BitSet goalSet;
+    //private int[] goal;
+    private BitSet goal = new BitSet();
     public Hashtable<Integer, Integer[]> prec2Act = new Hashtable<Integer, Integer[]>();
     private ArrayList<VAction> vaList = new ArrayList<VAction>();
     public ArrayList<VAction> vAxioms = new ArrayList<VAction>();
@@ -32,7 +33,7 @@ public class Problem {
         size = predicates.size();
         //initState = new BitSet(size);
         initState = new BitSet();
-        goalSet = new BitSet();
+        //goalSet = new BitSet();
         int i = 0;
         for(String predicate : predicates){
             Predicates.put(i, predicate);
@@ -40,9 +41,9 @@ public class Problem {
         }
     }
 
-    public BitSet getGoalSet(){
+    /*public BitSet getGoalSet(){
         return goalSet;
-    }
+    }*/
 
     public int getSize() {
         return size;
@@ -55,12 +56,12 @@ public class Problem {
     }
 
     public void setGoalState(ArrayList<String> goalState){
-        goal = new int[goalState.size()];
-        int i = 0;
+        //goal = new int[goalState.size()];
+        //int i = 0;
         for(String s : goalState){
-            goal[i] = Predicates.inverse().get(s);
-            goalSet.set(Predicates.inverse().get(s));
-            i++;
+            //goal[i] = Predicates.inverse().get(s);
+            goal.set(Predicates.inverse().get(s));
+            //i++;
         }
     }
 
@@ -68,40 +69,45 @@ public class Problem {
         return Predicates.get(index);
     }
 
-    public int[] getGoal() {
+    public BitSet getGoal() {
         return goal;
     }
 
     public VEffect createEffects(Effect e){
         VEffect v = new VEffect();
-        int[] cond = new int[e._Condition.size()];
-        int i = 0;
+        //int[] cond = new int[e._Condition.size()];
+        //int i = 0;
+        BitSet cond = new BitSet();
         for(String condition : e._Condition){
-            cond[i] = Predicates.inverse().get(condition);
-            i++;
+            cond.set(Predicates.inverse().get(condition));
+            //i++;
         }
         v.setCondition(cond);
-        ArrayList<Integer> addList = new ArrayList<Integer>();
-        ArrayList<Integer> delList = new ArrayList<Integer>();
+        //ArrayList<Integer> addList = new ArrayList<Integer>();
+        //ArrayList<Integer> delList = new ArrayList<Integer>();
+        BitSet add = new BitSet();
+        BitSet del = new BitSet();
         for(String effect : e._Effects){
             if(effect.startsWith("~")){
-                delList.add(Predicates.inverse().get(effect.substring(1)));
+                //delList.add(Predicates.inverse().get(effect.substring(1)));
+                del.set(Predicates.inverse().get(effect.substring(1)));
             }else{
-                addList.add(Predicates.inverse().get(effect));
+                add.set(Predicates.inverse().get(effect));
+                //addList.add(Predicates.inverse().get(effect));
             }
         }
-        int[] add = new int[addList.size()];
-        int[] del = new int[delList.size()];
-        i = 0;
-        for(Integer in : addList){
+        //int[] add = new int[addList.size()];
+        //int[] del = new int[delList.size()];
+        //int i = 0;
+        /*for(Integer in : addList){
             add[i] = in;
             i++;
         }
-        i = 0;
-        for(Integer in : delList){
+        i = 0;*/
+        /*for(Integer in : delList){
             del[i] = in;
             i++;
-        }
+        }*/
         v.setAddList(add);
         v.setDelList(del);
         return v;
@@ -109,53 +115,63 @@ public class Problem {
 
     public ArrayList<VEffect> createNondeterministicEffects(Effect e, Action a){
         ArrayList<VEffect> listV = new ArrayList<VEffect>();
-        int[] cond = new int[e._Condition.size()];
+        //int[] cond = new int[e._Condition.size()];
+        BitSet cond = new BitSet();
         int i = 0;
         for(String condition : e._Condition){
-            cond[i] = Predicates.inverse().get(condition);
+            //cond[i] = Predicates.inverse().get(condition);
+            cond.set(Predicates.inverse().get(condition));
             i++;
         }
         //Effects
         ArrayList<Integer> addList = new ArrayList<Integer>();
+        //BitSet addList = new BitSet();
         ArrayList<Integer> delList = new ArrayList<Integer>();
         for(String effect : e._Effects){
             if(effect.startsWith("~")){
                 delList.add(Predicates.inverse().get(effect.substring(1)));
             }else{
                 addList.add(Predicates.inverse().get(effect));
+                //addList.set(Predicates.inverse().get(effect));
             }
         }
         for(Branch b : a._Branches){
             VEffect v = new VEffect();
             v.setCondition(cond);
             ArrayList<Integer> addBranch = new ArrayList<Integer>();
+            //BitSet addBranch = new BitSet();
             ArrayList<Integer> delBranch = new ArrayList<Integer>();
             for(String bnondet : b._Branches){
                 if(bnondet.startsWith("~")){
                     delBranch.add(Predicates.inverse().get(bnondet.substring(1)));
                 }else{
+                    //addBranch.set(Predicates.inverse().get(bnondet));
                     addBranch.add(Predicates.inverse().get(bnondet));
                 }
             }
             addBranch.addAll(addList);
             delBranch.addAll(delList);
-            int[] add = new int[addBranch.size()];
-            int[] del = new int[delBranch.size()];
-            i = 0;
+            //int[] add = new int[addBranch.size()];
+            //BitSet addList = new BitSet();
+            BitSet add = new BitSet();
+            BitSet del = new BitSet();
+            //int[] del = new int[delBranch.size()];
+            //i = 0;
             for(Integer in : addBranch){
-                add[i] = in;
-                i++;
+                //add[i] = in;
+                //i++;
+                add.set(in);
             }
-            i = 0;
+            //i = 0;
             for(Integer in : delBranch){
-                del[i] = in;
-                i++;
+                //del[i] = in;
+                //i++;
+                del.set(in);
             }
             v.setAddList(add);
             v.setDelList(del);
             listV.add(v);
         }
-
         return listV;
     }
 
@@ -259,17 +275,21 @@ public class Problem {
                     addBranch.add(Predicates.inverse().get(bnondet));
                 }
             }
-            int[] add = new int[addBranch.size()];
-            int[] del = new int[delBranch.size()];
-            int i = 0;
+            //int[] add = new int[addBranch.size()];
+            BitSet add = new BitSet();
+            BitSet del = new BitSet();
+            //int[] del = new int[delBranch.size()];
+            //int i = 0;
             for(Integer in : addBranch){
-                add[i] = in;
-                i++;
+                //add[i] = in;
+                add.set(in);
+                //i++;
             }
-            i = 0;
+            //int i = 0;
             for(Integer in : delBranch){
-                del[i] = in;
-                i++;
+                //del[i] = in;
+                del.set(in);
+                //i++;
             }
             v.setAddList(add);
             v.setDelList(del);
