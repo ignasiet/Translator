@@ -150,7 +150,6 @@ public class InternalTranslation extends Translation{
 	}
 
 	private void renforceAxioms(){
-		Hashtable<String, HashSet<String>> ORAxiomS = new Hashtable<String, HashSet<String>>();
 		for(ArrayList<String> preds : domain_to_translate.specialAxioms){
 			for(String predicate : preds){
 				if(domain_to_translate.isObservable(predicate) && predicate.startsWith("~")) {
@@ -159,7 +158,6 @@ public class InternalTranslation extends Translation{
 						if(!predOpposed.equals(predicate)){
 							entailedBy.add(fixedPointIterationReasoning(predOpposed));
 						}
-						//orAxiom.addAll(entailedBy.get(predicate));
 					}
 					HashSet<String> orAxiom = new HashSet<String>(entailedBy.get(0));
 					for(HashSet<String> key : entailedBy){
@@ -186,10 +184,15 @@ public class InternalTranslation extends Translation{
 				i++;
 				kAx1._Head.add(predicate);
 				kAx2._Body.add(predicate);
+				kAx1._Body.add("not-observed-" + predicate);
+				if(domain_to_translate.isObservable(predicate)){
+					kAx1._Head.add("~not-observed-" + predicate);
+				}
 				//entailedBy.put(predicate, fixedPointIterationReasoning(predicate));
 				for(String p_opposed : disj.getIterator()){
 					if(!p_opposed.equals(predicate)){
 						kAx2._Head.add(ParserHelper.complement(p_opposed));
+						//kAx2._Head.add("~not-observed-" + p_opposed);
 						kAx1._Body.add(ParserHelper.complement(p_opposed));
 					}
 				}
