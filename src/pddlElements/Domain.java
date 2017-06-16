@@ -43,8 +43,7 @@ public class Domain {
 	public boolean costFunction = false;
 	public SATSolver sat = new SATSolver();
 	public HashSet<String> observables = new HashSet<String>();
-	//public Hashtable<String, ArrayList<String>> relevance = new Hashtable<String, ArrayList<String>>();
-	
+	public Hashtable<String, ArrayList<String>> related = new Hashtable<String, ArrayList<String>>();
 	
 	public void parsePredicates(String predicates_list){
 		Matcher m = Pattern.compile("\\(([^)]+)\\)").matcher(predicates_list);
@@ -172,50 +171,6 @@ public class Domain {
 		predicates_never = new Hashtable<String, Integer>(variant_predicates);
 	}
 	
-	/*public void getInvariantPredicates(){
-		Hashtable<String, Integer> predicates_variants = new Hashtable<String, Integer>();
-		Enumeration<String> e = list_actions.keys();
-		while(e.hasMoreElements()){
-			Action a = list_actions.get(e.nextElement().toString());
-			//No single effects: now all are cond effects
-			for(Effect effect : a._Effects){
-				for(String eff : effect._Effects){
-					if(!eff.startsWith("~")){
-						
-					}
-					eff = eff.replace("~", "");
-					if(eff.contains("_")){
-						predicates_variants.put(eff.substring(0, eff.indexOf("_")), 1);
-					}else{
-						predicates_variants.put(eff, 1);
-					}
-				}				
-			}
-		}
-		for(Action a : action_list){
-			for(String predicate : a._precond){				
-				String auxPredicate = predicate;				
-				if(predicate.contains("_")){
-					auxPredicate = predicate.substring(0, predicate.indexOf("_"));
-				}
-				if(!predicates_variants.containsKey(auxPredicate) & !isUncertain(auxPredicate)){
-					predicates_invariants.put(auxPredicate, 1);
-				}
-			}
-			for(Effect eff : a._Effects){
-				for(String eff_cond : eff._Condition){
-					String auxPredicate = eff_cond.replace("~", "");
-					if(eff_cond.contains("_")){
-						auxPredicate = eff_cond.substring(0, eff_cond.indexOf("_"));
-					}
-					if(!predicates_variants.containsKey(auxPredicate) & !isUncertain(auxPredicate)){
-						predicates_invariants.put(auxPredicate, 1);
-					}
-				}
-			}
-		}
-	}*/
-
 	/*TODO: Non deterministic actions have effects in branches.
 	 * How to put observations/non-deterministc action effects?
 	  * */
@@ -365,72 +320,7 @@ public class Domain {
 			}			
 		}
 	}
-	
-	/*public void eliminateInvalidActions(){
-		Enumeration<String> e = list_actions.keys();
-		ArrayList<String> actions_to_be_removed = new ArrayList<String>();
-		while(e.hasMoreElements()){
-			String action_name = e.nextElement().toString();
-			Action a = list_actions.get(action_name);
-			for(String precond : a._precond){
-				String predicate_name = precond;
-				if(precond.contains("_")){
-					predicate_name = precond.substring(0, precond.indexOf("_"));
-				}
-				if(predicates_invariants.containsKey(predicate_name)){
-					if(!isUncertain(precond) && !state.containsKey(precond)){
-						System.out.println("Illegal action?: " + precond);
-					}
-					predicates_invariants_grounded.put(precond, 1);
-					predicates_grounded.remove(precond);
-					
-					 * Verify 2 things:
-					 * 1 - Does it happens in initial state?
-					 * 2 - Is it an uncertainty predicate?
-					 
-					if(!state.containsKey(precond)){
-						for(Disjunction elems : list_disjunctions){
-							if(!elems.contains(precond)){
-								actions_to_be_removed.add(action_name);
-								break;
-							}
-						}
-					}
-					if(!isUncertain(precond) && !state.containsKey(precond)){
-						System.out.println("Illegal action?: " + precond);
-						actions_to_be_removed.add(action_name);
-					}
-				}
-			}
-			for(Effect effect : a._Effects){
-				for(String cond_effect : effect._Condition){
-					String predicate_name = cond_effect;
-					if(cond_effect.contains("_")){
-						predicate_name = cond_effect.substring(0, cond_effect.indexOf("_"));
-					}
-					if(predicates_invariants.containsKey(predicate_name)){
-						predicates_invariants_grounded.put(cond_effect, 1);
-						predicates_grounded.remove(cond_effect);
-						if(!state.containsKey(cond_effect)){
-							for(Disjunction elems : list_disjunctions){
-								if(!elems.contains(cond_effect)){
-									actions_to_be_removed.add(action_name);
-									break;
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-		for(String deleteAction : actions_to_be_removed){
-			if(deleteAction.contains("move_p5-3_")){
-				System.out.println(deleteAction);
-			}
-			list_actions.remove(deleteAction);
-		}
-	}*/
-	
+
 	@SuppressWarnings({ "unchecked", "unused" })
 	public void ground_actions(Action action){
 		ArrayList<String> result = new ArrayList<String>();
@@ -542,36 +432,7 @@ public class Domain {
 			return false;
 		}
 	}
-	
-	/*private void groundEffects(Action act_grounded){
-		ArrayList<String> lista_objetos = new ArrayList<String>(Arrays.asList(act_grounded.combination.split(";")));
-		int i = 0;
-		for(int j=0; j<act_grounded._Effects.size();j++){
-			Effect in = act_grounded._Effects.get(j);
-			ArrayList<String> lista_cond = new ArrayList<String>();
-			String cond_eff = in._Condition.toString().replace("[", "").replace("]", "");
-			ArrayList<String> lista_efeitos = new ArrayList<String>();			
-			String eff = in._Effects.toString().replace("[", "").replace("]", "");
-			for(String parameter : act_grounded._parameters){
-				cond_eff = cond_eff.replace(parameter, lista_objetos.get(i));
-				eff = eff.replace(parameter, lista_objetos.get(i));
-				i++;
-			}
-			for(String item : Arrays.asList(cond_eff.split(","))){
-				lista_cond.add(item.trim());
-			}
-			for(String item : Arrays.asList(eff.split(","))){
-				lista_efeitos.add(item.trim());
-			}
-			act_grounded._Effects.remove(j);
-			if(!in._Condition.isEmpty()){
-				in._Condition = lista_cond;
-			}			
-			in._Effects = lista_efeitos;
-			act_grounded._Effects.add(in);
-		}
-	}*/
-	
+
 	public void parseGoalState(String goal_state){
 		//Matcher m = Pattern.compile("\\(([^)]+)\\)").matcher(goal_state);
 		Matcher m = Pattern.compile("\\((.*?)\\)").matcher(goal_state);
@@ -581,33 +442,6 @@ public class Domain {
 	    	goalState.add(ParserHelper.cleanString(aux));
 	    }
 	}
-	
-	/*public void addInitialState(String initial_state){
-		if(initial_state.contains("(oneof")){
-			int index_oneof = initial_state.indexOf("(oneof") + 6;
-			String oneof_string = initial_state.substring(index_oneof);
-			Matcher m = Pattern.compile("\\(([^)]+)\\)").matcher(oneof_string);
-		    while(m.find()) {
-		    	String aux = ParserHelper.cleanString(m.group(1));
-		    	predicates_uncertain.add(aux);
-		    }
-		    initial_state = initial_state.substring(0, index_oneof);
-		    addDeductiveOneOfAction();
-		}
-		Matcher m = Pattern.compile("\\(([^)]+)\\)").matcher(initial_state);
-	    while(m.find()) {
-	    	String auxString = ParserHelper.cleanString(m.group(1));
-	    	if(!predicates_count.containsKey(auxString)){
-	    		predicates_count.put(auxString, 1);
-	    		predicates_grounded.add(auxString);
-	    		if(auxString.contains("wumpus")){
-	    			wumpus = auxString;
-	    			System.out.println("Wumpus escolhido em: " + auxString);
-	    		}
-	    	}
-	    	state.put(auxString, 1);
-	    }
-	}*/
 	
 	public void addInitialPredicate(String initial_state){
 		if(initial_state.contains("(oneof")){
@@ -656,6 +490,7 @@ public class Domain {
 			}
 			//Prepare clauses for SAT SOLVER
 			sat.addClause(clause);
+			relateTo(clause);
 			for(String elem : clause){
 				Axiom a_1 = new Axiom();
 				a_1._Name = counter + "-" + elem;
@@ -704,6 +539,42 @@ public class Domain {
 
 	public void addObservable(String predicate) {
 		observables.add(predicate.substring(0, predicate.indexOf(" ")).replace("(", ""));
+	}
+
+	/*TODO: implement function Related to, where every threat (pit_X or wumpus_X)
+	* is related to a oneof element (safe_X)
+	* */
+	private void relateTo(ArrayList<String> axiom){
+		String flag = null;
+		for(String ex : axiom){
+			String pred = ParserHelper.cleanString(ParserHelper.cleanSpaces(ex));
+			for(Disjunction d : list_disjunctions){
+				if(d.contains(pred.replace("~", ""))){
+					flag = pred.replace("~", "");
+					d.derivates.addAll(axiom);
+					break;
+				}
+			}
+		}
+		if(flag!=null){
+			for(String p : axiom) {
+				if(p.replace("~", "").equals(flag)) continue;
+
+				updateRelated(flag, p);
+			}
+		}
+	}
+
+	public void updateRelated(String pred, String key){
+		if(related.containsKey(key)){
+			ArrayList<String> oldContent = new ArrayList<>(related.get(key));
+			oldContent.add(pred);
+			related.put(key, oldContent);
+		}else{
+			ArrayList<String> nContent = new ArrayList<>();
+			nContent.add(pred);
+			related.put(key, nContent);
+		}
 	}
 
 	public ArrayList<String> opositeObs(String predicate) {

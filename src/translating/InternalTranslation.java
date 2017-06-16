@@ -5,10 +5,7 @@ import pddlElements.*;
 import planner.SATSolver;
 import trapper.CausalGraph;
 
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Hashtable;
+import java.util.*;
 
 import org.sat4j.specs.TimeoutException;
 
@@ -30,6 +27,7 @@ public class InternalTranslation extends Translation{
 	private ArrayList<Action> listAxioms = new ArrayList<Action>();
 	private HashSet<String> usedAxioms = new HashSet<String>();
 	private HashSet<String> uselessObs = new HashSet<String>();
+	private ArrayList<Action> ObsHeuristics = new ArrayList<Action>();
 	private Hashtable<String, HashSet<String>> oppositeObs = new Hashtable<String, HashSet<String>>();
 
 	public InternalTranslation(Domain d, CausalGraph cg) {
@@ -53,8 +51,8 @@ public class InternalTranslation extends Translation{
 		// 3 - Translate goal
 		translateGoal(domain_to_translate.goalState);
 		// 3.5 - Add deductive actions
-		renforceAxioms();
 		addDeductiveActions(domain_to_translate);
+		renforceAxioms();
 		// 4 - Translate actions
 		translateActions(domain_to_translate.list_actions);
 		// 5 - Add aditional actions
@@ -153,21 +151,68 @@ public class InternalTranslation extends Translation{
 		for(ArrayList<String> preds : domain_to_translate.specialAxioms){
 			for(String predicate : preds){
 				if(domain_to_translate.isObservable(predicate) && predicate.startsWith("~")) {
-					ArrayList<HashSet<String>> entailedBy = new ArrayList<HashSet<String>>();
+					HashMap<String, HashSet<String>> entailedBy = new HashMap<String, HashSet<String>>();
+					ArrayList<String> addedAxioms = new ArrayList<String>();
 					for(String predOpposed : preds){
 						if(!predOpposed.equals(predicate)){
-							entailedBy.add(fixedPointIterationReasoning(predOpposed));
+							HashSet<String> list = fixedPointIterationReasoning(predOpposed);
+							entailedBy.put(predOpposed, list);
+							addedAxioms.addAll(list);
 						}
 					}
-					HashSet<String> orAxiom = new HashSet<String>(entailedBy.get(0));
-					for(HashSet<String> key : entailedBy){
-						orAxiom.retainAll(key);
+					for(Disjunction d : domain_to_translate.list_disjunctions){
+						HashSet<String> orAxiom = new HashSet<String>();
+						boolean init = false;
+						for(String pred : entailedBy.keySet()){
+							if(d.derivates.contains(pred)){
+								if(!init){
+									orAxiom.addAll(entailedBy.get(pred));
+									init = true;
+								}else {
+									orAxiom.retainAll(entailedBy.get(pred));
+								}
+							}
+						}
+						if(d.violates(addedAxioms)){
+							for(String s : domain_to_translate.opositeObs(predicate)) {
+								addOppositeObs(s, orAxiom);
+							}
+						}
 					}
-					for(String s : domain_to_translate.opositeObs(predicate)) {
-						oppositeObs.put(s, orAxiom);
-					}
+
+					/*for(Disjunction d : domain_to_translate.list_disjunctions){
+						HashSet<String> orAxiom = new HashSet<String>();
+						boolean init = false;
+						for(String s : d.getIterator()){
+							if(domain_to_translate.related.containsKey(s)){
+								for(String key : domain_to_translate.related.get(s)){
+									if(!init){
+										orAxiom.addAll(entailedBy.get(key));
+										init = true;
+									}else {
+										orAxiom.retainAll(entailedBy.get(key));
+									}
+								}
+							}
+						}
+						if(d.violates(addedAxioms)){
+							for(String s : domain_to_translate.opositeObs(predicate)) {
+								oppositeObs.put(s, orAxiom);
+							}
+						}
+					}*/
 				}
 			}
+		}
+	}
+
+	private void addOppositeObs(String s, HashSet<String> orAxiom){
+		if(oppositeObs.containsKey(s)){
+			HashSet<String> oldAxiom = new HashSet<String>(orAxiom);
+			oldAxiom.addAll(oppositeObs.get(s));
+			oppositeObs.put(s, oldAxiom);
+		}else {
+			oppositeObs.put(s, orAxiom);
 		}
 	}
 
@@ -184,8 +229,8 @@ public class InternalTranslation extends Translation{
 				i++;
 				kAx1._Head.add(predicate);
 				kAx2._Body.add(predicate);
-				kAx1._Body.add("not-observed-" + predicate);
 				if(domain_to_translate.isObservable(predicate)){
+					kAx1._Body.add("not-observed-" + predicate);
 					kAx1._Head.add("~not-observed-" + predicate);
 				}
 				//entailedBy.put(predicate, fixedPointIterationReasoning(predicate));
@@ -325,15 +370,38 @@ public class InternalTranslation extends Translation{
 
 		addPredicate("K" + obs);
 		addPredicate("K" + negObs);
+
+		//Add two heuristic actions that are the observations determinized
+		Action obs1 = new Action();
+		Action obs2 = new Action();
+		obs1.Name = a.Name + "#1";
+		obs2.Name = a.Name + "#2";
+		obs1._precond.addAll(a_translated._precond);
+		obs2._precond.addAll(a_translated._precond);
+
+		Effect e1 = new Effect();
+		Effect e2 = new Effect();
+
+		e1._Effects.add("K" + obs);
+		e1._Effects.add("~K" + negObs);
+
+		e2._Effects.add("K" + negObs);
+		e2._Effects.add("~K" + obs);
 		
 		/*branch1._Branches.add("K" + obs);
 		branch1._Branches.add("~K" + negObs);
 		branch2._Branches.add("K" + negObs);
 		branch2._Branches.add("~K" + obs);*/
+		obs1._Effects.add(e1);
+		obs2._Effects.add(e2);
+
+		ObsHeuristics.add(obs1);
+		ObsHeuristics.add(obs2);
 
 		if(oppositeObs.containsKey(negObs)){
 			for(String p : oppositeObs.get(negObs)){
 				branch2._Branches.add("K" + p);
+				branch2._Branches.add("~K" + ParserHelper.complement(p));
 				branch2._Branches.add("K~not-observed-" + p);
 				branch2._Branches.add("~Knot-observed-" + p);
 			}
@@ -363,7 +431,7 @@ public class InternalTranslation extends Translation{
 		//a_translated._Effects.add(e);
 		a_translated._Branches.add(branch1);
 		a_translated._Branches.add(branch2);
-
+		//Falta adiciona quando é seguro!
 		domain_translated.list_actions.put(a_translated.Name, a_translated);
 		//createObsDetupAction(a);
 	}
@@ -398,14 +466,10 @@ public class InternalTranslation extends Translation{
 		return entailedBy;
 	}
 
-	private boolean validOutcome(String negPredicate) {
-		try {
-			boolean r = domain_to_translate.sat.isSolvable(negPredicate);
-			return r;
-		} catch (TimeoutException e) {
-			e.printStackTrace();
-			return false;
-		}
+	private boolean validOutcome(ArrayList<String> predicates) {
+		domain_to_translate.sat.addClause(predicates);
+		boolean r = domain_to_translate.sat.isSolvable();
+		return r;
 	}
 
 	private HashSet<String> fixedPointIterationReasoning(String predicate){
@@ -502,5 +566,9 @@ public class InternalTranslation extends Translation{
 	public ArrayList<Action> getListAxioms() {
 		return listAxioms;
 	}
-	
+
+	public ArrayList<Action> getObsHeuristics() {
+		return ObsHeuristics;
+	}
+
 }

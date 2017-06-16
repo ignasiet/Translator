@@ -4,6 +4,7 @@
 package pddlElements;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Hashtable;
 
 
@@ -16,6 +17,7 @@ public class Disjunction {
 	private Hashtable<String,Integer> _Tags = new Hashtable<String,Integer>();
 	private ArrayList<String> listNodes = new ArrayList<String>();
 	private String fluent = "";
+	public HashSet<String> derivates = new HashSet<String>();
 	
 	public void add(String predicate){
 		setFluent(predicate);
@@ -45,6 +47,21 @@ public class Disjunction {
 	
 	public boolean contains(String predicate){
 		return _Tags.containsKey(predicate);
+	}
+
+	public boolean violates(ArrayList<String> predicates){
+		ArrayList<String> tags = new ArrayList<String>();
+		int counter = 0;
+		for(String p : predicates){
+			if(contains(p.replace("~", "")) && !tags.contains(p.replace("~", ""))){
+				tags.add(p.replace("~", ""));
+				if(p.startsWith("~")) counter++;
+			}
+		}
+		if(tags.containsAll(listNodes)) {
+			if(counter==0 || counter == listNodes.size()) return true;
+		}
+		return false;
 	}
 
 	public ArrayList<String> getIterator() {

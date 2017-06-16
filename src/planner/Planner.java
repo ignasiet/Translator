@@ -17,6 +17,7 @@ import HHCP.Problem;
 import HHCP.Searcher;
 import parser.Parser;
 import parser.ParserHelper;
+import pddlElements.Action;
 import pddlElements.Domain;
 import pddlElements.Printer;
 import translating.*;
@@ -61,8 +62,8 @@ public class Planner {
 		
 		/*Time measure: translation*/
 		domain = ParserHelper.cleanProblem(domain);
+		cg = new CausalGraph(domain);
 		startTime = System.currentTimeMillis();
-		//cg = new CausalGraph(domain);
 		/*Set size of the ksets to 2*/
 		//Trapper tp = new Trapper(cg.getLiterals(), domain, cg, 2);
 		Translation tr = translate(type, domain);
@@ -74,26 +75,35 @@ public class Planner {
 
 		/*Planner: review grounded literals*/
 		HHCP.Problem p;
+		HHCP.Problem hP;
 		if(domain_translated.predicates_grounded.isEmpty()){
 			p = new Problem(new ArrayList<String>(domain_translated.predicates_posit.keySet()));
+			hP = new Problem(new ArrayList<String>(domain_translated.predicates_posit.keySet()));
 		}else{
 			p = new Problem(domain_translated.predicates_grounded);
+			hP = new Problem(domain_translated.predicates_grounded);
 		}
 		p.setInitState(domain_translated.state);
 		p.setGoalState(domain_translated.goalState);
+		hP.setInitState(domain_translated.state);
+		hP.setGoalState(domain_translated.goalState);
 		p.setActions(domain_translated.list_actions);
+		for(String name : domain_translated.list_actions.keySet()){
+			Action a = domain_translated.list_actions.get(name);
+			if(!a.IsObservation){
+				hP.insertAction(a, false);
+			}
+		}
 		/* TODO: add to the problem actions the axioms. How to use them? */
 		p.setAxioms(tr.getListAxioms());
+		hP.setAxioms(tr.getListAxioms());
+		hP.setDeterminizedObs(tr.getObsHeuristics());
 
 		System.out.println("Transformation to vectors completed. ");
 		System.out.println("Init Search. ");
 
-		Searcher search = new Searcher(p);
+		Searcher search = new Searcher(p, hP);
 		//search.GenPlanPairs(p.getInitState());
-
-
-
-
 
 		//BDDSearcher b = new BDDSearcher(tr.getDomainTranslated());
 		//System.out.println("Regression complete");

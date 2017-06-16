@@ -11,6 +11,7 @@ import java.util.*;
 public class Searcher {
 
     private Problem problem;
+    private Problem HProblem;
     private HashSet<BitSet> visited = new HashSet<BitSet>();
     private HashSet<BitSet> seen = new HashSet<BitSet>();
     private Stack<BitSet> open = new Stack<BitSet>();
@@ -20,10 +21,11 @@ public class Searcher {
     private Heuristic h;
     private PartialPolicy policyP = new PartialPolicy();
 
-    public Searcher(Problem p){
+    public Searcher(Problem p, Problem heuristicP){
         problem = p;
+        HProblem = heuristicP;
         boolean deadEndsFound = false;
-        h = new Heuristic(p);
+        h = new Heuristic(heuristicP);
         double startTime = System.currentTimeMillis();
         boolean modified = true;
         while(modified){
@@ -229,6 +231,7 @@ public class Searcher {
         Comparator<Node> comparator = new NodeComparator();
         fringe = new PriorityQueue<Node>(100, comparator);
         Node initNode = new Node(initState);
+        h.getValue(initNode);
         fringe.add(initNode);
         visited.clear();
         while(!solution) {
@@ -247,38 +250,45 @@ public class Searcher {
                 RegressPlan(node);
                 break;
             }
-            for(VAction va : getApplicableActions(node)){
-                if(forbiddenActions.containsKey(node.getState()) && forbiddenActions.get(node.getState()) == va.index)
-                    continue;
-                if(va.isNondeterministic){
-                	/*if(va.index==89){
-                		System.out.println("");
-                	}*/
-                    ArrayList<Node> getSuccessorNodes = node.applyNonDeterministicAction(va, problem.vAxioms);
-                    for(Node n : getSuccessorNodes){
-                        //Review condition of adding the new state:
-                        if(!DeadEnds.contains(n.getState())) {
-                            updateHeuristic(n, node, va);
-                            fringe.add(n);
-                        }else{
-                            //Add this transition to the forbidden action state pair
-                            forbiddenActions.put(node.getState(), va.index);
-                        }
-                    }
-                }else{
-                    Node n = node.applyDeterministicAction(va);
-                    if(!DeadEnds.contains(n.getState())){
-                        updateHeuristic(n, node, va);
-                        fringe.add(n);
-                    }else{
-                        //Add this transition to the forbidden action state pair
-                        forbiddenActions.put(node.getState(), va.index);
-                    }
+            //TODO: Verify the selected action is not an axiom!
+            if(!node.relaxedSolution.isEmpty()){
+                VAction va = problem.getAction(node.preferredAction);
+                addToFringe(va, node);
+            }else {
+                for (VAction va : getApplicableActions(node)) {
+                    if (forbiddenActions.containsKey(node.getState()) && forbiddenActions.get(node.getState()) == va.index)
+                        continue;
+                    addToFringe(va, node);
                 }
             }
         }
         //Review termination conditions
         return true;
+    }
+
+    private void addToFringe(VAction va, Node node){
+        if (va.isNondeterministic) {
+            ArrayList<Node> getSuccessorNodes = node.applyNonDeterministicAction(va, problem.vAxioms);
+            for (Node n : getSuccessorNodes) {
+                //Review condition of adding the new state:
+                if (!DeadEnds.contains(n.getState())) {
+                    updateHeuristic(n, node, va);
+                    fringe.add(n);
+                } else {
+                    //Add this transition to the forbidden action state pair
+                    forbiddenActions.put(node.getState(), va.index);
+                }
+            }
+        } else {
+            Node n = node.applyDeterministicAction(va);
+            if (!DeadEnds.contains(n.getState())) {
+                updateHeuristic(n, node, va);
+                fringe.add(n);
+            } else {
+                //Add this transition to the forbidden action state pair
+                forbiddenActions.put(node.getState(), va.index);
+            }
+        }
     }
 
 	private boolean isSolvedNode(Node node) {
@@ -287,10 +297,7 @@ public class Searcher {
 
 	private void updateHeuristic(Node child, Node father, VAction va) {
         child.setCost(father.getCost() + va.cost);
-        //System.out.println("Expanding action: " + va.getName());
-        //System.out.println("In state: " + problem.printState(father.getState()));
-        child.setHeuristic(h.getValue(child.getState(), va));
-        //System.out.println("With heuristic: " + child.getH());
+        child.setHeuristic(h.getValue(child));
     }
 
     private void RegressPlan(Node node){

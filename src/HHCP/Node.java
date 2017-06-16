@@ -24,6 +24,13 @@ public class Node {
     //Index of the parent effect
     public int indexEffect;
     public ArrayList<Integer> axioms;
+    public ArrayList<Integer> relaxedSolution = new ArrayList<Integer>();
+    public String preferredAction;
+
+
+    public void setRelaxedSolution(ArrayList<Integer> relaxedSolution) {
+        this.relaxedSolution = relaxedSolution;
+    }
 
     public Node(BitSet state){
         State = (BitSet) state.clone();
@@ -77,17 +84,11 @@ public class Node {
         BitSet successor = (BitSet) State.clone();
         for(VEffect v : a.getEffects()){
             if(holds(v.getCondition())){
-                /*for(int e : v.getDelList()){
-                    successor.set(e, false);
-                }*/
                 for(int i = v.getDelList().nextSetBit(0);i>=0;i=v.getDelList().nextSetBit(i+1)){
                     successor.set(i, false);
                 }
                 //Add operation between bitsets:
                 successor.or(v.getAddList());
-                /*for(int e : v.getAddList()){
-                    successor.set(e, true);
-                }*/
             }
         }
         Node n = new Node(successor);
@@ -102,17 +103,11 @@ public class Node {
         for(VEffect v : a.getEffects()){
             BitSet successor = (BitSet) State.clone();
             if(holds(v.getCondition())){
-                /*for(int e : v.getDelList()){
-                    successor.set(e, false);
-                }*/
                 for(int i = v.getDelList().nextSetBit(0);i>=0;i=v.getDelList().nextSetBit(i+1)){
                     successor.set(i, false);
                 }
                 //Add operation between bitsets:
                 successor.or(v.getAddList());
-                /*for(int e : v.getAddList()){
-                    successor.set(e, true);
-                }*/
             }
             Node n = new Node(successor);
             n.parent = this;
@@ -136,9 +131,6 @@ public class Node {
             }
             //Add operation between bitsets:
             successor.or(v.getAddList());
-            /*for(int e : v.getAddList()){
-                successor.set(e, true);
-            }*/
         }
         Node n = new Node(successor);
         return n;
@@ -171,6 +163,15 @@ public class Node {
             }
             if(oldState.equals(getState())) fix = true;
             oldState = (BitSet) getState().clone();
+        }
+    }
+
+    /**Sets preferred action*/
+    public void setBestRelaxedAction(String action){
+        if(action.contains("#")){
+            preferredAction = action.substring(0, action.indexOf("#"));
+        }else {
+            preferredAction = action;
         }
     }
 

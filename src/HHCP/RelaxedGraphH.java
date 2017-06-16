@@ -11,6 +11,7 @@ public class RelaxedGraphH {
     private int[] factsLayer;
     private int[] actionCounter;
     private int[] actionLayer;
+    private int[] axiomLayer;
     private int[] difficultyLayer;
     //Mapping from layer level -> goals at that level
     private HashMap<Integer, Integer[]> goalMembership = new HashMap<Integer, Integer[]>();
@@ -66,12 +67,15 @@ public class RelaxedGraphH {
             for (int i = oldScheduledActions.nextSetBit(0); i >= 0; i = oldScheduledActions.nextSetBit(i+1)) {
                 //2 For every predicate that is in the effect of the action (non-det or det), update facts layer.
                 //i represents the index of the action
-                VAction a = problem.getVaList().get(i);
+                VAction a = problem.getAction(i);
+                /*if(i >= problem.indexAxioms){
+                    axiomLayer[i] = layerNumber;
+                    fixedPointAxioms(layerNumber, i);
+                }*/
                 for(VEffect e : a.getEffects()){
-                    //int j = e.getAddList().nextSetBit(0); j >= 0; j = e.getAddList().nextSetBit(i+1)
-                    //for(int j = 0; j<e.getAddList().length;j++){
                     for(int j = e.getAddList().nextSetBit(0); j >= 0; j = e.getAddList().nextSetBit(j+1)){
-                        //int index = e.getAddList()[j];
+                        //i: the action
+                        //j: the predicate
                         addRelation(j, i);
                         if(factsLayer[j] > layerNumber){
                             factsLayer[j] = layerNumber;
@@ -87,6 +91,24 @@ public class RelaxedGraphH {
             value = Integer.MAX_VALUE;
         }
         m=layerNumber;
+    }
+
+    //Let us try with the fixed point to the axioms
+    private void fixedPointAxioms(int layerNumber, int action){
+        boolean fix = false;
+        while(!fix){
+            VAction ax = problem.getAction(action);
+            for(VEffect e : ax.getEffects()){
+                for(int j = e.getAddList().nextSetBit(0); j >= 0; j = e.getAddList().nextSetBit(j+1)){
+                    addRelation(ax.index, j);
+                    if(factsLayer[j] > layerNumber){
+                        factsLayer[j] = layerNumber;
+                        //3 Update actions whose preconditions have been updated
+                        updateActionCounter(j, layerNumber);
+                    }
+                }
+            }
+        }
     }
 
     private void addRelation(int index, int i) {
@@ -122,28 +144,54 @@ public class RelaxedGraphH {
             //Do I need this? test and see...
             addList(m, i, goalMembership);
         }
-        for(int i = m; i>=0; i--){
+        HashSet<Integer> solved = new HashSet<Integer>();
+        for(int i = m; i>0; i--){
             //Get the goals of level m
             Integer[] goals = goalMembership.get(i);
             ArrayList<Integer> goalsLowerLayer = new ArrayList<Integer>();
             for(int g : goals){
-                if(factsLayer[g] == 0) continue;
-                /*if(goalMarked.get(g)) continue;
-                goalMarked.set(g);*/
+                if(solved.contains(g) || (factsLayer[g] == 0)) continue;
                 //Obtain the minimal difficulty action and add it to the relaxed solution
                 Integer minAct = addedBy.get(g)[0];
-                //if(!problem.getAction(minAct).getName().startsWith("K-axiom-"))
-                relaxedSolution.add(minAct);
+                solved.add(g);
+                if(!relaxedSolution.contains(minAct)) relaxedSolution.add(minAct);
                 //Add its preconditions to the goal of lower layers
+                //WARNING: only if not marked true already!
+                //TODO: if the fact is added after, then choose another fact
                 VAction a = problem.getAction(minAct);
                 for (int pr = a.preconditions.nextSetBit(0); pr >= 0; pr = a.preconditions.nextSetBit(pr+1)) {
-                    //for(int pr : problem.getAction(minAct).getPreconditions()){
-                    goalsLowerLayer.add(pr);
+                    if((factsLayer[pr] == 0) || goalsLowerLayer.contains(pr))continue;
+                    if(!(factsLayer[pr] >= i)){
+                        addGoalMembership(pr);
+                        //goalsLowerLayer.add(pr);
+                    }
+                }
+                //Mark other effects true
+                for(VEffect e : a.getEffects()) {
+                    if(e.getAddList().get(g)){
+                        for (int j = e.getAddList().nextSetBit(0); j >= 0; j = e.getAddList().nextSetBit(j + 1)) {
+                            if(factsLayer[j] >= i)  solved.add(j);
+                        }
+                    }
                 }
             }
-            if(i>0) {
+
+            /*if(i>0) {
                 goalMembership.put(i-1, goalsLowerLayer.toArray(new Integer[goalsLowerLayer.size()]));
-            }
+            }*/
+        }
+    }
+
+    private void addGoalMembership(int pr) {
+        int i = factsLayer[pr];
+        if(!goalMembership.containsKey(i)){
+            Integer[] l = new Integer[1];
+            l[0] = pr;
+            goalMembership.put(i, l);
+        }else{
+            Integer[] l = Arrays.copyOf(goalMembership.get(i), goalMembership.get(i).length+1);
+            l[goalMembership.get(i).length] = pr;
+            goalMembership.put(i, l);
         }
     }
 
@@ -175,12 +223,13 @@ public class RelaxedGraphH {
         return true;
     }
 
+    /**Comparator of the difficulty of the actions*/
     public class MyComparator implements Comparator<Integer> {
         @Override
         public int compare(Integer i1, Integer i2) {
-            int compare = (difficultyLayer[i1] > difficultyLayer[i2]) ? 1 : 0;
+            int compare = (actionLayer[i1] > actionLayer[i2]) ? 1 : 0;
             if(compare == 0){
-                compare = (difficultyLayer[i1] == difficultyLayer[i2]) ? 0 : -1;
+                compare = (actionLayer[i1] == actionLayer[i2]) ? 0 : -1;
             }
             return compare;
         }
@@ -190,5 +239,8 @@ public class RelaxedGraphH {
         return value;
     }
 
+    public ArrayList<Integer> getRelaxedSolution(){
+        return relaxedSolution;
+    }
 }
 

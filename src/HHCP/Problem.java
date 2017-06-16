@@ -24,8 +24,11 @@ public class Problem {
     //private int[] goal;
     private BitSet goal = new BitSet();
     public Hashtable<Integer, Integer[]> prec2Act = new Hashtable<Integer, Integer[]>();
+    public Hashtable<String, Integer> actionsIndex = new Hashtable<String, Integer>();
     private ArrayList<VAction> vaList = new ArrayList<VAction>();
     public ArrayList<VAction> vAxioms = new ArrayList<VAction>();
+    public ArrayList<VAction> hObservations = new ArrayList<VAction>();
+    public int indexAxioms = 0;
     private int size;
 
     public Problem(ArrayList<String> predicates) {
@@ -184,6 +187,7 @@ public class Problem {
             Action a = list_actions.get(name);
             insertAction(a, false);
         }
+        indexAxioms = vaList.size();
     }
 
     private void setPrec2Act(VAction va, int[] prec){
@@ -205,6 +209,10 @@ public class Problem {
         return vaList.get(index);
     }
 
+    public VAction getAction(String name){
+        return vaList.get(actionsIndex.get(name));
+    }
+
     public String printState(BitSet state){
         String ret = "";
         for (int i = state.nextSetBit(0); i >= 0; i = state.nextSetBit(i+1)) {
@@ -223,7 +231,7 @@ public class Problem {
         }
     }
 
-    private void insertAction(Action a, boolean isAxiom){
+    public void insertAction(Action a, boolean isAxiom){
         VAction va = new VAction();
         va.setName(a.Name);
         int[] prec = new int[a._precond.size()];
@@ -233,7 +241,6 @@ public class Problem {
             prec[i] = Predicates.inverse().get(s);
             i++;
         }
-        //va.addPreconditions(prec);
         /*Reading non deterministic branches.
         * Limited to one nondeterministic effect per action!
         * NOTE: In fact one non-deterministic effect means maximum 2 branches per action
@@ -259,6 +266,7 @@ public class Problem {
     	vaList.add(va);
         //Set prec2act:
         va.index = vaList.indexOf(va);
+        actionsIndex.put(va.getName(), va.index);
         setPrec2Act(va, prec);
     }
 
@@ -297,4 +305,12 @@ public class Problem {
         }
         return listV;
     }
+
+    public void setDeterminizedObs(ArrayList<Action> obsHeuristics) {
+        for(Action a : obsHeuristics){
+            insertAction(a, false);
+        }
+    }
+
+
 }

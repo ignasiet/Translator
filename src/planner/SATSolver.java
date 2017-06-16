@@ -54,9 +54,9 @@ public class SATSolver {
 		}
 	}
 	
-	public boolean isSolvable(String pred) throws TimeoutException{
-		int[] n = new int[1];
-		n[0] = getIndex(pred);
+	public boolean isSolvable() {
+		//int[] n = new int[1];
+		//n[0] = getIndex(pred);
 		ISolver solver = SolverFactory.newDefault ();
 		solver.newVar(MAXVAR);
 		solver.setExpectedNumberOfClauses(clauses.size() + 1);		
@@ -69,11 +69,15 @@ public class SATSolver {
 		}
 		// we are  done. Working  now on the  IProblem  interface
 		try {
-			solver.addClause(new  VecInt(n ));
-		} catch (ContradictionException e) {
-			// TODO Auto-generated catch block
+			//solver.addClause(new  VecInt(n));
+			return isSat(solver);
+		}catch (TimeoutException e) {
 			e.printStackTrace();
+			return false;
 		}
+	}
+
+	public boolean isSat(ISolver solver) throws TimeoutException{
 		IProblem  problem = solver;
 		return problem.isSatisfiable();
 	}

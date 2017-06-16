@@ -12,8 +12,13 @@ public class Heuristic {
         problem = p;
     }
 
-    public int getValue(BitSet state, VAction a){
-        RelaxedGraphH rp = new RelaxedGraphH(problem, state);
+    public int getValue(Node node){
+        RelaxedGraphH rp = new RelaxedGraphH(problem, node.getState());
+        if(rp.getValue() != 0){
+            node.setRelaxedSolution(rp.getRelaxedSolution());
+            node.setBestRelaxedAction(problem.getAction(rp.getRelaxedSolution().get(rp.getRelaxedSolution().size()-1)).getName());
+
+        }
         return rp.getValue();
     }
 

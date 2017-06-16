@@ -421,5 +421,10 @@ public class Translator_Kt extends Translation{
 	public ArrayList<Action> getListAxioms() {
 		// TODO Auto-generated method stub
 		return null;
-	}	
+	}
+
+	@Override
+	public ArrayList<Action> getObsHeuristics() {
+		return null;
+	}
 }

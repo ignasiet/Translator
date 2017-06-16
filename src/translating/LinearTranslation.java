@@ -467,5 +467,10 @@ public class LinearTranslation extends Translation{
 	public ArrayList<Action> getListAxioms() {
 		return listAxioms;
 	}
-	
+
+	@Override
+	public ArrayList<Action> getObsHeuristics() {
+		return null;
+	}
+
 }
