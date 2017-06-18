@@ -503,7 +503,7 @@ public class Domain {
 					}
 				}
 				_Axioms.add(a_1);
-			}			
+			}
 		}
 		counter++;
 	}

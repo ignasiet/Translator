@@ -68,6 +68,21 @@ public class InternalTranslation extends Translation{
 	}
 
 	private void addAxiomsActions(Domain domain_to_translate) {
+		for(ArrayList<String> clause : domain_to_translate.specialAxioms){
+			for(String elem : clause){
+				Axiom a_1 = new Axiom();
+				//a_1._Name = counter + "-" + elem;
+				//Body: condition
+				//Head: effect
+				a_1._Body.add(elem);
+				for(String other_elems : clause){
+					if(!other_elems.equals(elem)){
+						a_1._Head.add(ParserHelper.complement(other_elems));
+					}
+				}
+				domain_to_translate._Axioms.add(a_1);
+			}
+		}
 		HashSet<Axiom> unusedAxioms = new HashSet<Axiom>();
 		HashSet<Axiom> useless = new HashSet<Axiom>();
 		for(Axiom a : domain_to_translate._Axioms){
@@ -124,6 +139,10 @@ public class InternalTranslation extends Translation{
 				for(String b : ax._Head){
 					e._Effects.add("K" + b);
 					e._Effects.add("~K" + ParserHelper.complement(b));
+					if(domain_to_translate.isObservable(b)){
+						e._Effects.add("K~not-observed-" + b.replace("~", ""));
+						e._Effects.add("~Knot-observed-" + b.replace("~", ""));
+					}
 					addPredicate("K" + b);
 				}
 			}
@@ -413,6 +432,10 @@ public class InternalTranslation extends Translation{
 			addPredicate("K" + ParserHelper.complement(deducted));
 			branch1._Branches.add("K" + deducted);
 			branch1._Branches.add("~K" + ParserHelper.complement(deducted));
+			if(domain_to_translate.isObservable(deducted) && !obs.equals(deducted) && !negObs.equals(deducted)){
+				branch1._Branches.add("K~not-observed-" + deducted.replace("~", ""));
+				branch1._Branches.add("~Knot-observed-" + deducted.replace("~", ""));
+			}
 		}
 		//Same for obs 2
 		for(String deducted : deductions.get(negObs)){
@@ -420,6 +443,10 @@ public class InternalTranslation extends Translation{
 			addPredicate("K" + ParserHelper.complement(deducted));
 			branch2._Branches.add("K" + deducted);
 			branch2._Branches.add("~K" + ParserHelper.complement(deducted));
+			if(domain_to_translate.isObservable(deducted) && !obs.equals(deducted) && !negObs.equals(deducted)){
+				branch2._Branches.add("K~not-observed-" + deducted.replace("~", ""));
+				branch2._Branches.add("~Knot-observed-" + deducted.replace("~", ""));
+			}
 		}
 
 		branch1._Branches.add(newNegatPrecond);

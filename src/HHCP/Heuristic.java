@@ -17,7 +17,6 @@ public class Heuristic {
         if(rp.getValue() != 0){
             node.setRelaxedSolution(rp.getRelaxedSolution());
             node.setBestRelaxedAction(problem.getAction(rp.getRelaxedSolution().get(rp.getRelaxedSolution().size()-1)).getName());
-
         }
         return rp.getValue();
     }
