@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 
 import HHCP.Problem;
 import HHCP.Searcher;
+import landmark.Landmarker;
 import parser.Parser;
 import parser.ParserHelper;
 import pddlElements.Action;
@@ -100,17 +101,18 @@ public class Planner {
 		hP.setDeterminizedObs(tr.getObsHeuristics());
 
 		System.out.println("Transformation to vectors completed. ");
+
+		//LANDMARKS
+		//@SuppressWarnings("unused")
+		Landmarker l = new Landmarker(domain_translated.state, domain_translated.list_actions, domain_translated.goalState);
+
 		System.out.println("Init Search. ");
 
-		Searcher search = new Searcher(p, hP);
+		Searcher search = new Searcher(p, hP, l.getLandmarks());
 		//search.GenPlanPairs(p.getInitState());
 
 		//BDDSearcher b = new BDDSearcher(tr.getDomainTranslated());
 		//System.out.println("Regression complete");
-		
-		//LANDMARKS
-		//@SuppressWarnings("unused")
-		//Landmarker l = new Landmarker(tr.domain_translated.state, tr.domain_translated.list_actions, tr.domain_translated.goalState);
 		
 		/*Size measure*/
 		//System.out.println(domain.predicates_grounded.size() + " " + tr.domain_translated.predicates_grounded.size());

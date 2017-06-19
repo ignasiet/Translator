@@ -2,6 +2,7 @@ package HHCP;
 
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.HashMap;
 import java.util.HashSet;
 
 import pddlElements.Action;
@@ -202,4 +203,6 @@ public class Node {
 			oldState = (BitSet) n.getState().clone();
 		}
 	}
+
+
 }

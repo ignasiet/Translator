@@ -3,6 +3,7 @@ package HHCP;
 import oracle.jrockit.jfr.events.Bits;
 import simulator.Simulator;
 
+import java.lang.reflect.Array;
 import java.util.*;
 
 /**
@@ -20,12 +21,23 @@ public class Searcher {
     private PriorityQueue<Node> fringe;
     private Heuristic h;
     private PartialPolicy policyP = new PartialPolicy();
+    private ArrayList<Integer> landmarks;
 
-    public Searcher(Problem p, Problem heuristicP){
+
+    public Searcher(Problem p, Problem heuristicP, ArrayList<String> l){
         problem = p;
         HProblem = heuristicP;
         boolean deadEndsFound = false;
-        h = new Heuristic(heuristicP);
+        if(!l.isEmpty()){
+            landmarks = new ArrayList<>();
+            for(String landmark : l){
+                if(!p.getInitState().get(p.getPredicate(landmark))){
+                    landmarks.add(p.getPredicate(landmark));
+                }
+            }
+        }
+        h = new Heuristic(heuristicP, landmarks);
+        //Search starts!
         double startTime = System.currentTimeMillis();
         boolean modified = true;
         while(modified){
@@ -81,7 +93,7 @@ public class Searcher {
         System.out.println("Policy size: " + policyP.size());
         System.out.println("Number of states solved: " + policyP.marked.size());
         //printPolicy(p.getInitState());
-        Simulator sim = new Simulator(policyP, p.getInitState(), problem);
+        //Simulator sim = new Simulator(policyP, p.getInitState(), problem);
     }
 
     private BitSet regressStateAction(BitSet s, Integer action) {
@@ -272,6 +284,9 @@ public class Searcher {
             for (Node n : getSuccessorNodes) {
                 //Review condition of adding the new state:
                 if (!DeadEnds.contains(n.getState())) {
+                    /*if(visited.contains(n.getState())){
+                        System.out.println();
+                    }*/
                     updateHeuristic(n, node, va);
                     fringe.add(n);
                 } else {
@@ -282,6 +297,11 @@ public class Searcher {
         } else {
             Node n = node.applyDeterministicAction(va);
             if (!DeadEnds.contains(n.getState())) {
+                /*if(visited.contains(n.getState())){
+                    va = HProblem.getAction(node.relaxedSolution.get(node.relaxedSolution.size()-2));
+                    va = problem.getAction(va.getName());
+                    if(!va.isNondeterministic) n = node.applyDeterministicAction(va);
+                }*/
                 updateHeuristic(n, node, va);
                 fringe.add(n);
             } else {

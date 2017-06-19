@@ -16,14 +16,16 @@ public class RelaxedGraphH {
     //Mapping from layer level -> goals at that level
     private HashMap<Integer, Integer[]> goalMembership = new HashMap<Integer, Integer[]>();
     private HashMap<Integer, Integer[]> addedBy = new HashMap<Integer, Integer[]>();
+    private HashSet<Integer> landmarks;
     private int m;
     private BitSet scheduledActions;
     //Is predicate at i marked true?
     private BitSet goalMarked;
     private int value = 0;
     private ArrayList<Integer> relaxedSolution = new ArrayList<Integer>();
+    public HashMap<Integer, ArrayList<Integer>> reSolution = new HashMap<Integer, ArrayList<Integer>>();
 
-    public RelaxedGraphH(Problem p, BitSet state){
+    public RelaxedGraphH(Problem p, BitSet state, HashSet<Integer> l){
         problem = p;
         factsLayer = new int[p.getSize()];
         //goalMembership = new int[p.getSize()];
@@ -31,15 +33,31 @@ public class RelaxedGraphH {
         actionLayer = new int[p.getVaList().size()];
         difficultyLayer = new int[p.getVaList().size()];
         Arrays.fill(factsLayer, Integer.MAX_VALUE);
-        //Arrays.fill(difficultyLayer, Integer.MAX_VALUE);
-        //Arrays.fill(actionCounter, Integer.MIN_VALUE);
         goalMarked = new BitSet();
         initLayers(state);
-        expandGraph();
-        if(value==0){
-            extractPlan();
-            value = relaxedSolution.size();
+        if(l != null) {
+            landmarks = l;
+        }else{
+            landmarks = new HashSet<>();
         }
+        if(!landmarks.isEmpty()){
+            for(Integer landmark : landmarks){
+                expandGraph(landmark);
+                if(value==0){
+                    BitSet bsGoal = new BitSet();
+                    bsGoal.set(landmark);
+                    extractPlan(bsGoal);
+                    value = relaxedSolution.size();
+                }
+            }
+        }else {
+            expandGraph();
+            if(value==0){
+                extractPlan(problem.getGoal());
+                value = relaxedSolution.size();
+            }
+        }
+
     }
 
     private void initLayers(BitSet state) {
@@ -93,6 +111,45 @@ public class RelaxedGraphH {
         m=layerNumber;
     }
 
+    /**Expand the graph until a landmark has been found*/
+    private void expandGraph(Integer landmark){
+        //0 Init layer number = 1 (0 is the initial layer)
+        int layerNumber = 0;
+        BitSet oldScheduledActions = new BitSet();
+        while(!landmarkReached(landmark) && !(oldScheduledActions.equals(scheduledActions))){
+            layerNumber++;
+            oldScheduledActions = (BitSet) scheduledActions.clone();
+            scheduledActions.clear();
+            //1 Read list of scheduled actions:
+            for (int i = oldScheduledActions.nextSetBit(0); i >= 0; i = oldScheduledActions.nextSetBit(i+1)) {
+                //2 For every predicate that is in the effect of the action (non-det or det), update facts layer.
+                //i represents the index of the action
+                VAction a = problem.getAction(i);
+                /*if(i >= problem.indexAxioms){
+                    axiomLayer[i] = layerNumber;
+                    fixedPointAxioms(layerNumber, i);
+                }*/
+                for(VEffect e : a.getEffects()){
+                    for(int j = e.getAddList().nextSetBit(0); j >= 0; j = e.getAddList().nextSetBit(j+1)){
+                        //i: the action
+                        //j: the predicate
+                        addRelation(j, i);
+                        if(factsLayer[j] > layerNumber){
+                            factsLayer[j] = layerNumber;
+                            //3 Update actions whose preconditions have been updated
+                            updateActionCounter(j, layerNumber);
+                        }
+                    }
+                }
+            }
+        }
+        //System.out.println("Relaxed graph expanded.");
+        if(!landmarkReached(landmark)){
+            value = Integer.MAX_VALUE;
+        }
+        m=layerNumber;
+    }
+
     //Let us try with the fixed point to the axioms
     private void fixedPointAxioms(int layerNumber, int action){
         boolean fix = false;
@@ -138,9 +195,9 @@ public class RelaxedGraphH {
         }
     }
 
-    private void extractPlan(){
+    private void extractPlan(BitSet goal){
         //for(int i = 0;i<problem.getGoal().length;i++){
-        for(int i = problem.getGoal().nextSetBit(0);i >= 0; i = problem.getGoal().nextSetBit(i+1)){
+        for(int i = goal.nextSetBit(0);i >= 0; i = goal.nextSetBit(i+1)){
             //Do I need this? test and see...
             addList(m, i, goalMembership);
         }
@@ -155,6 +212,7 @@ public class RelaxedGraphH {
                 Integer minAct = addedBy.get(g)[0];
                 solved.add(g);
                 if(!relaxedSolution.contains(minAct)) relaxedSolution.add(minAct);
+                layerSolution(actionLayer[minAct], minAct);
                 //Add its preconditions to the goal of lower layers
                 //WARNING: only if not marked true already!
                 //TODO: if the fact is added after, then choose another fact
@@ -195,6 +253,18 @@ public class RelaxedGraphH {
         }
     }
 
+    private void layerSolution(int level, int action){
+        if(!reSolution.containsKey(level)){
+            ArrayList<Integer> l = new ArrayList<Integer>();
+            l.add(action);
+            reSolution.put(level, l);
+        }else{
+            ArrayList<Integer> l = new ArrayList<Integer>(reSolution.get(level));
+            l.add(action);
+            reSolution.put(level, l);
+        }
+    }
+
     private void updateActionCounter(int i, int layer){
         if(!problem.prec2Act.containsKey(i)) {
             return;
@@ -219,6 +289,13 @@ public class RelaxedGraphH {
             if(factsLayer[i] == Integer.MAX_VALUE){
                 return false;
             }
+        }
+        return true;
+    }
+
+    private boolean landmarkReached(Integer i){
+        if(factsLayer[i] == Integer.MAX_VALUE){
+            return false;
         }
         return true;
     }
