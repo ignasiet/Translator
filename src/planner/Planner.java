@@ -144,7 +144,7 @@ public class Planner {
 		Printer.print(outputPath + "Kdomain.pddl", outputPath + "Kproblem.pddl", 
 				tr.getDomainTranslated(), tr.getListAxioms());
 		long endTime = System.currentTimeMillis();
-		System.out.println("Printing time: " + (endTime - startTime) + " Milliseconds");
+		//System.out.println("Printing time: " + (endTime - startTime) + " Milliseconds");
 	}
 
 	public static void replan(){

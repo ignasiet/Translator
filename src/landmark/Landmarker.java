@@ -54,7 +54,7 @@ public class Landmarker {
             lastStep = _Steps.get(_Steps.size()-1);
         }
         if(num_MAX_iter == _Actions.size()){
-            System.out.println("FAIL! no plan found");
+            System.out.println("FAIL: no landmarks found.");
             fail = true;
         }else{
             //backtrackPlan();
