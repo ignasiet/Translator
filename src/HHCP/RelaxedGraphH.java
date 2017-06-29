@@ -19,6 +19,7 @@ public class RelaxedGraphH {
     private HashSet<Integer> landmarks;
     private int m;
     private BitSet scheduledActions;
+    private BitSet scheduledAxioms;
     //Is predicate at i marked true?
     private BitSet goalMarked;
     private int value = 0;
@@ -52,7 +53,7 @@ public class RelaxedGraphH {
             }
         }else {
             expandGraph();
-            if(value==0){
+            if (value == 0) {
                 extractPlan(problem.getGoal());
                 value = relaxedSolution.size();
             }
@@ -63,7 +64,7 @@ public class RelaxedGraphH {
     private void initLayers(BitSet state) {
         //1 Init list of scheduled actions: no action scheduled
         scheduledActions = new BitSet();
-        //scheduledActions = new BitSet(problem.getVaList().size());
+        scheduledAxioms = new BitSet();
         //2 For every predicate that is in the current state, update facts layer to put a 0 value
         for (int i = state.nextSetBit(0); i >= 0; i = state.nextSetBit(i+1)) {
             //System.out.println("Predicate: " + i + " correspond to: " + problem.getPredicate(i));
@@ -86,29 +87,48 @@ public class RelaxedGraphH {
                 //2 For every predicate that is in the effect of the action (non-det or det), update facts layer.
                 //i represents the index of the action
                 VAction a = problem.getAction(i);
-                /*if(i >= problem.indexAxioms){
-                    axiomLayer[i] = layerNumber;
-                    fixedPointAxioms(layerNumber, i);
-                }*/
-                for(VEffect e : a.getEffects()){
-                    for(int j = e.getAddList().nextSetBit(0); j >= 0; j = e.getAddList().nextSetBit(j+1)){
-                        //i: the action
-                        //j: the predicate
-                        addRelation(j, i);
-                        if(factsLayer[j] > layerNumber){
-                            factsLayer[j] = layerNumber;
-                            //3 Update actions whose preconditions have been updated
-                            updateActionCounter(j, layerNumber);
+                performUpdates(a, i, layerNumber);
+                //TODO: fixed point computation of axioms: verify if stopping after observation is good.
+                if(a.isObservation){
+                    HashSet<Integer> applied = new HashSet<Integer>();
+                    boolean fix = false;
+                    while(!fix){
+                        BitSet oldScheduledAxioms = (BitSet) scheduledAxioms.clone();
+                        for (int axIndex = oldScheduledAxioms.nextSetBit(0); axIndex >= 0;
+                             axIndex = oldScheduledAxioms.nextSetBit(axIndex+1)) {
+                            if(!applied.contains(axIndex)) {
+                                applied.add(axIndex);
+                                VAction axiom = problem.getAction(axIndex);
+                                //The predicates are added by the observation not the axioms!
+                                performUpdates(axiom, i, layerNumber);
+                            }
                         }
+                        if(oldScheduledAxioms.equals(scheduledAxioms)) fix = true;
                     }
                 }
             }
         }
-        //System.out.println("Relaxed graph expanded.");
-        if(!goalReached()){
+        if(goalReached()){
+            m=layerNumber;
+        }else{
+            //Not solution
             value = Integer.MAX_VALUE;
         }
-        m=layerNumber;
+    }
+
+    private void performUpdates(VAction a, int actionIndex, int layerNumber){
+        for(VEffect e : a.getEffects()){
+            for(int j = e.getAddList().nextSetBit(0); j >= 0; j = e.getAddList().nextSetBit(j+1)){
+                //actionIndex: the action
+                //j: the predicate
+                addRelation(j, actionIndex);
+                if(factsLayer[j] > layerNumber){
+                    factsLayer[j] = layerNumber;
+                    //3 Update actions whose preconditions have been updated
+                    updateActionCounter(j, layerNumber);
+                }
+            }
+        }
     }
 
     /**Expand the graph until a landmark has been found*/
@@ -143,7 +163,6 @@ public class RelaxedGraphH {
                 }
             }
         }
-        //System.out.println("Relaxed graph expanded.");
         if(!landmarkReached(landmark)){
             value = Integer.MAX_VALUE;
         }
@@ -204,31 +223,33 @@ public class RelaxedGraphH {
         HashSet<Integer> solved = new HashSet<Integer>();
         for(int i = m; i>0; i--){
             //Get the goals of level m
-            Integer[] goals = goalMembership.get(i);
-            ArrayList<Integer> goalsLowerLayer = new ArrayList<Integer>();
-            for(int g : goals){
-                if(solved.contains(g) || (factsLayer[g] == 0)) continue;
-                //Obtain the minimal difficulty action and add it to the relaxed solution
-                Integer minAct = addedBy.get(g)[0];
-                solved.add(g);
-                if(!relaxedSolution.contains(minAct)) relaxedSolution.add(minAct);
-                layerSolution(actionLayer[minAct], minAct);
-                //Add its preconditions to the goal of lower layers
-                //WARNING: only if not marked true already!
-                //TODO: if the fact is added after, then choose another fact
-                VAction a = problem.getAction(minAct);
-                for (int pr = a.preconditions.nextSetBit(0); pr >= 0; pr = a.preconditions.nextSetBit(pr+1)) {
-                    if((factsLayer[pr] == 0) || goalsLowerLayer.contains(pr))continue;
-                    if(!(factsLayer[pr] >= i)){
-                        addGoalMembership(pr);
-                        //goalsLowerLayer.add(pr);
+            if(goalMembership.containsKey(i)) {
+                Integer[] goals = goalMembership.get(i);
+                ArrayList<Integer> goalsLowerLayer = new ArrayList<Integer>();
+                for (int g : goals) {
+                    if (solved.contains(g) || (factsLayer[g] == 0)) continue;
+                    //Obtain the minimal difficulty action and add it to the relaxed solution
+                    Integer minAct = addedBy.get(g)[0];
+                    solved.add(g);
+                    if (!relaxedSolution.contains(minAct)) relaxedSolution.add(minAct);
+                    layerSolution(actionLayer[minAct], minAct);
+                    //Add its preconditions to the goal of lower layers
+                    //WARNING: only if not marked true already!
+                    //TODO: if the fact is added after, then choose another fact
+                    VAction a = problem.getAction(minAct);
+                    for (int pr = a.preconditions.nextSetBit(0); pr >= 0; pr = a.preconditions.nextSetBit(pr + 1)) {
+                        if ((factsLayer[pr] == 0) || goalsLowerLayer.contains(pr)) continue;
+                        if (!(factsLayer[pr] >= i)) {
+                            addGoalMembership(pr);
+                            //goalsLowerLayer.add(pr);
+                        }
                     }
-                }
-                //Mark other effects true
-                for(VEffect e : a.getEffects()) {
-                    if(e.getAddList().get(g)){
-                        for (int j = e.getAddList().nextSetBit(0); j >= 0; j = e.getAddList().nextSetBit(j + 1)) {
-                            if(factsLayer[j] >= i)  solved.add(j);
+                    //Mark other effects true
+                    for (VEffect e : a.getEffects()) {
+                        if (e.getAddList().get(g)) {
+                            for (int j = e.getAddList().nextSetBit(0); j >= 0; j = e.getAddList().nextSetBit(j + 1)) {
+                                if (factsLayer[j] >= i) solved.add(j);
+                            }
                         }
                     }
                 }
@@ -277,14 +298,16 @@ public class RelaxedGraphH {
             //4 if size preconditions == action layer size, schedule action
             if(problem.getVaList().get(actionIndex).getPreconditions().cardinality() == actionCounter[actionIndex]){
                 actionLayer[actionIndex] = layer;
-                scheduledActions.set(actionIndex,true);
+                if(actionIndex < problem.indexAxioms) {
+                    scheduledActions.set(actionIndex, true);
+                }else{
+                    scheduledAxioms.set(actionIndex, true);
+                }
             }
         }
     }
 
     private boolean goalReached(){
-        //int[] goal = problem.getGoal();
-        //for(int i=problem.getGoal().nextSetBit(0);i>= goal.length;i++){
         for(int i=problem.getGoal().nextSetBit(0);i>=0;i = problem.getGoal().nextSetBit(i+1)){
             if(factsLayer[i] == Integer.MAX_VALUE){
                 return false;

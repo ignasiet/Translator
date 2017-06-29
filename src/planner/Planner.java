@@ -95,10 +95,11 @@ public class Planner {
 				hP.insertAction(a, false);
 			}
 		}
+		hP.setDeterminizedObs(tr.getObsHeuristics());
 		/* TODO: add to the problem actions the axioms. How to use them? */
 		p.setAxioms(tr.getListAxioms());
 		hP.setAxioms(tr.getListAxioms());
-		hP.setDeterminizedObs(tr.getObsHeuristics());
+
 
 		System.out.println("Transformation to vectors completed. ");
 

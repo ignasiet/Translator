@@ -230,6 +230,7 @@ public class Problem {
     }
 
     public void setAxioms(ArrayList<Action> axioms) {
+        if(indexAxioms == 0) indexAxioms = vaList.size();
         for(Action a : axioms){
             insertAction(a, true);
         }

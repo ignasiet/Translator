@@ -552,6 +552,8 @@ public class Domain {
 				if(d.contains(pred.replace("~", ""))){
 					flag = pred.replace("~", "");
 					d.derivates.addAll(axiom);
+					d.axioms.add(axiom);
+					d.extractVars(pred, axiom);
 					break;
 				}
 			}
@@ -559,7 +561,6 @@ public class Domain {
 		if(flag!=null){
 			for(String p : axiom) {
 				if(p.replace("~", "").equals(flag)) continue;
-
 				updateRelated(flag, p);
 			}
 		}
