@@ -2,6 +2,7 @@ package HHCP;
 
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.HashMap;
 import java.util.HashSet;
 
 import pddlElements.Action;
@@ -183,6 +184,14 @@ public class Node {
 			for(VAction ax : vAxioms){
 				BitSet prec = (BitSet) ax.preconditions.clone();
 				prec.and(n.getState());
+                //Verify how to apply the axioms
+                boolean notApply = false;
+                /*for(int i=ax.getEffects().get(0).getAddList().nextSetBit(0);i>=0;i=ax.getEffects().get(0).getAddList().nextSetBit(i+1)){
+                    if(n.getState().get(i)){
+                        notApply = true;
+                    }
+                }
+                if(notApply) continue;*/
 				if(prec.equals(ax.getPreconditions())){
 					if(!n.axioms.contains(ax.index)) n.axioms.add(ax.index);
                     //Add operation between bitsets:
@@ -202,4 +211,6 @@ public class Node {
 			oldState = (BitSet) n.getState().clone();
 		}
 	}
+
+
 }

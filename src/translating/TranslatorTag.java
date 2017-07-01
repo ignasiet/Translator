@@ -460,4 +460,9 @@ public class TranslatorTag extends Translation{
 	public ArrayList<Action> getObsHeuristics() {
 		return null;
 	}
+
+	@Override
+	public ArrayList<String> getDisjunctions() {
+		return null;
+	}
 }

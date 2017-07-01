@@ -3,6 +3,7 @@ package HHCP;
 import oracle.jrockit.jfr.events.Bits;
 import simulator.Simulator;
 
+import java.lang.reflect.Array;
 import java.util.*;
 
 /**
@@ -20,12 +21,23 @@ public class Searcher {
     private PriorityQueue<Node> fringe;
     private Heuristic h;
     private PartialPolicy policyP = new PartialPolicy();
+    private ArrayList<Integer> landmarks;
 
-    public Searcher(Problem p, Problem heuristicP){
+
+    public Searcher(Problem p, Problem heuristicP, ArrayList<String> l){
         problem = p;
         HProblem = heuristicP;
         boolean deadEndsFound = false;
-        h = new Heuristic(heuristicP);
+        if(!l.isEmpty()){
+            landmarks = new ArrayList<>();
+            for(String landmark : l){
+                if(!p.getInitState().get(p.getPredicate(landmark))){
+                    landmarks.add(p.getPredicate(landmark));
+                }
+            }
+        }
+        h = new Heuristic(heuristicP, landmarks);
+        //Search starts!
         double startTime = System.currentTimeMillis();
         boolean modified = true;
         while(modified){
@@ -272,6 +284,9 @@ public class Searcher {
             for (Node n : getSuccessorNodes) {
                 //Review condition of adding the new state:
                 if (!DeadEnds.contains(n.getState())) {
+                    /*if(visited.contains(n.getState())){
+                        System.out.println();
+                    }*/
                     updateHeuristic(n, node, va);
                     fringe.add(n);
                 } else {
@@ -282,6 +297,11 @@ public class Searcher {
         } else {
             Node n = node.applyDeterministicAction(va);
             if (!DeadEnds.contains(n.getState())) {
+                /*if(visited.contains(n.getState())){
+                    va = HProblem.getAction(node.relaxedSolution.get(node.relaxedSolution.size()-2));
+                    va = problem.getAction(va.getName());
+                    if(!va.isNondeterministic) n = node.applyDeterministicAction(va);
+                }*/
                 updateHeuristic(n, node, va);
                 fringe.add(n);
             } else {
@@ -307,6 +327,7 @@ public class Searcher {
             /*Regress the action here
             Should we regress here?*/
             VAction a = problem.getAction(node.indexAction);
+            //TODO: verify how axioms are regressed
             if(node.axioms != null) regressAxioms(node, r);
             //1 regress preconditions: put them all 1
             r.or(a.preconditions);
@@ -333,7 +354,11 @@ public class Searcher {
                 //BitSet A = (BitSet) e.getAddList().clone();
                 //A.and(r);
                 for(int j = e.getAddList().nextSetBit(0); j>=0;j=e.getAddList().nextSetBit(j+1)){
-                    r.set(j,false);
+                    //TODO: vvvv verify regression here! vvvvv
+                    if(!node.parent.getState().get(j)){
+                        r.set(j,false);
+                    }
+                    //r.set(j,false);
                 }
                 /*if(A.equals(e.getAddList())){
 
@@ -348,6 +373,7 @@ public class Searcher {
 	}
 
 	private void regressNode(VAction a, Node node, BitSet r){
+        //TODO: verify that the bitset r does not delete what was at node.getState()
         if(a.isNondeterministic){
             VEffect e = a.getEffects().get(node.indexEffect);
             /*if(e.getCondition() != null) {
@@ -362,20 +388,23 @@ public class Searcher {
             }*/
             r.or(e.getCondition());
             for(int j = e.getAddList().nextSetBit(0); j>=0;j=e.getAddList().nextSetBit(j+1)){
-                r.set(j,false);
-            }
-            /*for (int eff : e.getAddList()) {
-                if (r.get(eff)) {
-                    r.set(eff, false);
+                //TODO: vvvv verify regression here! vvvvv
+                if(!node.parent.getState().get(j)){
+                    r.set(j,false);
                 }
-            }*/
+                //r.set(j,false);
+            }
         }else{
             for(VEffect e : a.getEffects()){
                 //for(int c : e.getCondition()) r.set(c);
                 //Verify the effect was applied:
                 if(e.getCondition().isEmpty()){
                     for(int j = e.getAddList().nextSetBit(0); j>=0;j=e.getAddList().nextSetBit(j+1)){
-                        r.set(j,false);
+                        //TODO: vvvv verify regression here! vvvvv
+                        if(!node.parent.getState().get(j)){
+                            r.set(j,false);
+                        }
+                        //r.set(j,false);
                     }
                 }else{
                     BitSet A = (BitSet) e.getAddList().clone();
@@ -384,11 +413,6 @@ public class Searcher {
                         r.or(e.getCondition());
                     }
                 }
-                /*for(int eff : e.getAddList()){
-                    if(r.get(eff)){
-                        r.set(eff,false);
-                    }
-                }*/
             }
         }
     }

@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 
 import HHCP.Problem;
 import HHCP.Searcher;
+import landmark.Landmarker;
 import parser.Parser;
 import parser.ParserHelper;
 import pddlElements.Action;
@@ -88,29 +89,32 @@ public class Planner {
 		hP.setInitState(domain_translated.state);
 		hP.setGoalState(domain_translated.goalState);
 		p.setActions(domain_translated.list_actions);
-		for(String name : domain_translated.list_actions.keySet()){
+		/*for(String name : domain_translated.list_actions.keySet()){
 			Action a = domain_translated.list_actions.get(name);
 			if(!a.IsObservation){
 				hP.insertAction(a, false);
 			}
-		}
-		/* TODO: add to the problem actions the axioms. How to use them? */
+		}*/
+		hP.setActions(domain_translated.list_actions);
+		hP.setDeterminizedObs(tr.getObsHeuristics());
 		p.setAxioms(tr.getListAxioms());
 		hP.setAxioms(tr.getListAxioms());
-		hP.setDeterminizedObs(tr.getObsHeuristics());
+		hP.setDisjunctions(tr.getDisjunctions());
+
 
 		System.out.println("Transformation to vectors completed. ");
+
+		//LANDMARKS
+		//@SuppressWarnings("unused")
+		Landmarker l = new Landmarker(domain_translated.state, domain_translated.list_actions, domain_translated.goalState);
+
 		System.out.println("Init Search. ");
 
-		Searcher search = new Searcher(p, hP);
+		Searcher search = new Searcher(p, hP, l.getLandmarks());
 		//search.GenPlanPairs(p.getInitState());
 
 		//BDDSearcher b = new BDDSearcher(tr.getDomainTranslated());
 		//System.out.println("Regression complete");
-		
-		//LANDMARKS
-		//@SuppressWarnings("unused")
-		//Landmarker l = new Landmarker(tr.domain_translated.state, tr.domain_translated.list_actions, tr.domain_translated.goalState);
 		
 		/*Size measure*/
 		//System.out.println(domain.predicates_grounded.size() + " " + tr.domain_translated.predicates_grounded.size());
@@ -142,7 +146,7 @@ public class Planner {
 		Printer.print(outputPath + "Kdomain.pddl", outputPath + "Kproblem.pddl", 
 				tr.getDomainTranslated(), tr.getListAxioms());
 		long endTime = System.currentTimeMillis();
-		System.out.println("Printing time: " + (endTime - startTime) + " Milliseconds");
+		//System.out.println("Printing time: " + (endTime - startTime) + " Milliseconds");
 	}
 
 	public static void replan(){

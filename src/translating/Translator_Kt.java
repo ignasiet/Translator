@@ -427,4 +427,9 @@ public class Translator_Kt extends Translation{
 	public ArrayList<Action> getObsHeuristics() {
 		return null;
 	}
+
+	@Override
+	public ArrayList<String> getDisjunctions() {
+		return null;
+	}
 }

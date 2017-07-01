@@ -12,6 +12,7 @@ public abstract class Translation {
 	public abstract Domain getDomainTranslated();
 	public abstract ArrayList<Action> getListAxioms();
 	public abstract ArrayList<Action> getObsHeuristics();
+	public abstract ArrayList<String> getDisjunctions();
 	abstract void translatePredicates(ArrayList<String> predicates_grounded, Hashtable<String, Integer> predicates_invariants_grounded);
 	abstract void translateInitialState(Hashtable<String, Integer> state);
 	abstract void translateGoal(ArrayList<String> goalState);

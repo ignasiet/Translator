@@ -473,4 +473,9 @@ public class LinearTranslation extends Translation{
 		return null;
 	}
 
+	@Override
+	public ArrayList<String> getDisjunctions() {
+		return null;
+	}
+
 }

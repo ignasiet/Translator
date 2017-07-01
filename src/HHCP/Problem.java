@@ -7,10 +7,7 @@ import pddlElements.Axiom;
 import pddlElements.Branch;
 import pddlElements.Effect;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.Hashtable;
+import java.util.*;
 
 /**
  * Created by ignasi on 15/05/17.
@@ -30,6 +27,7 @@ public class Problem {
     public ArrayList<VAction> hObservations = new ArrayList<VAction>();
     public int indexAxioms = 0;
     private int size;
+    private BitSet disjunctionSet = new BitSet();
 
     public Problem(ArrayList<String> predicates) {
         Predicates = HashBiMap.create();
@@ -70,6 +68,10 @@ public class Problem {
 
     public String getPredicate(int index){
         return Predicates.get(index);
+    }
+
+    public int getPredicate(String name){
+        return Predicates.inverse().get(name);
     }
 
     public BitSet getGoal() {
@@ -226,12 +228,13 @@ public class Problem {
     }
 
     public void setAxioms(ArrayList<Action> axioms) {
+        if(indexAxioms == 0) indexAxioms = vaList.size();
         for(Action a : axioms){
             insertAction(a, true);
         }
     }
 
-    public void insertAction(Action a, boolean isAxiom){
+    public Integer insertAction(Action a, boolean isAxiom){
         VAction va = new VAction();
         va.setName(a.Name);
         int[] prec = new int[a._precond.size()];
@@ -268,6 +271,7 @@ public class Problem {
         va.index = vaList.indexOf(va);
         actionsIndex.put(va.getName(), va.index);
         setPrec2Act(va, prec);
+        return va.index;
     }
 
     private ArrayList<VEffect> getBranches(Action a){
@@ -307,10 +311,34 @@ public class Problem {
     }
 
     public void setDeterminizedObs(ArrayList<Action> obsHeuristics) {
+        //Set the actions observation flag to true
         for(Action a : obsHeuristics){
-            insertAction(a, false);
+            Integer index = insertAction(a, false);
+            getAction(index).isObservation = true;
         }
     }
 
+    public void setDisjunctions(ArrayList<String> disjunctions) {
+        for(String disj : disjunctions){
+            disjunctionSet.set(Predicates.inverse().get(disj));
+        }
+    }
 
+    public HashSet<Integer> getDisjunctions(){
+        HashSet<Integer> hS = new HashSet<Integer>();
+        for(int i = disjunctionSet.nextSetBit(0); i>=0; i = disjunctionSet.nextSetBit(i+1)){
+            hS.add(i);
+        }
+        return hS;
+    }
+
+    public HashSet<Integer> getDisjunctions(BitSet bs){
+        HashSet<Integer> hS = new HashSet<Integer>();
+        for(int i = disjunctionSet.nextSetBit(0); i>=0; i = disjunctionSet.nextSetBit(i+1)){
+            if(!bs.get(i)){
+                hS.add(i);
+            }
+        }
+        return hS;
+    }
 }
