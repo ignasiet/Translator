@@ -100,11 +100,12 @@ public class RelaxedGraphH {
                         BitSet forbidenAxioms = new BitSet();
                         //We must not fire axioms activated with other predicates
                         int[] axiomCounter = Arrays.copyOf(actionCounter, actionCounter.length);
+                        int[] factCounter = Arrays.copyOf(factsLayer, factsLayer.length);
                         //The first update is the effect of the observation:
-                        performNonDetUpdates(e, layerNumber, addedPredicates, forbidenAxioms, noAxioms, axiomCounter);
+                        performNonDetUpdates(e, layerNumber, factCounter, addedPredicates, forbidenAxioms, noAxioms, axiomCounter);
                         HashSet<Integer> applied = new HashSet<Integer>();
                         //Obtain what can be fired
-                        fixedPointAxiomsComputation(applied, addedPredicates, layerNumber, forbidenAxioms, noAxioms, axiomCounter);
+                        fixedPointAxiomsComputation(applied, addedPredicates, layerNumber, forbidenAxioms, noAxioms, axiomCounter, factCounter);
                         //Here we must clean what was added by the older outcome of the observation
                         cleanAddedAxioms(DeductedPredicates, i, addedPredicates);
                         noAxioms.or(forbidenAxioms);
@@ -126,7 +127,7 @@ public class RelaxedGraphH {
     }
 
     /**Expand the graph until a solution has been found*/
-    private void expandGraph(HashSet<Integer> landmarks){
+    /*private void expandGraph(HashSet<Integer> landmarks){
         //0 Init layer number = 1 (0 is the initial layer)
         int layerNumber = 0;
         BitSet oldScheduledActions = new BitSet();
@@ -151,10 +152,10 @@ public class RelaxedGraphH {
                         //We must not fire axioms activated with other predicates
                         int[] axiomCounter = Arrays.copyOf(actionCounter, actionCounter.length);
                         //The first update is the effect of the observation:
-                        performNonDetUpdates(e, layerNumber, addedPredicates, forbidenAxioms, noAxioms, axiomCounter);
+                        performNonDetUpdates(e, layerNumber, factCounter, addedPredicates, forbidenAxioms, noAxioms, axiomCounter);
                         HashSet<Integer> applied = new HashSet<Integer>();
                         //Obtain what can be fired
-                        fixedPointAxiomsComputation(applied, addedPredicates, layerNumber, forbidenAxioms, noAxioms, axiomCounter);
+                        fixedPointAxiomsComputation(applied, addedPredicates, layerNumber, forbidenAxioms, noAxioms, axiomCounter, axiomCounter);
                         //Here we must clean what was added by the older outcome of the observation
                         cleanAddedAxioms(DeductedPredicates, i, addedPredicates);
                         noAxioms.or(forbidenAxioms);
@@ -171,9 +172,9 @@ public class RelaxedGraphH {
             value = Integer.MAX_VALUE;
         }
         m=layerNumber;
-    }
+    }*/
 
-    private void fixedPointAxiomsComputation(HashSet<Integer> applied, BitSet addedPredicates, int layerNumber, BitSet forbidenAxioms, BitSet noAxioms, int[] axiomCounter) {
+    private void fixedPointAxiomsComputation(HashSet<Integer> applied, BitSet addedPredicates, int layerNumber, BitSet forbidenAxioms, BitSet noAxioms, int[] axiomCounter, int[] factCounter) {
         boolean fix = false;
         //In this fixed point we should get all the fired axioms
         while(!fix){
@@ -185,7 +186,7 @@ public class RelaxedGraphH {
                     applied.add(axIndex);
                     VAction axiom = problem.getAction(axIndex);
                     //The predicates are added by the observation not the axioms!
-                    performNonDetUpdates(axiom.getEffects().get(0), layerNumber, addedPredicates,forbidenAxioms, noAxioms, axiomCounter);
+                    performNonDetUpdates(axiom.getEffects().get(0), layerNumber, factCounter, addedPredicates,forbidenAxioms, noAxioms, axiomCounter);
                 }
             }
             if(oldScheduledAxioms.equals(scheduledAxioms)) fix = true;
@@ -232,11 +233,15 @@ public class RelaxedGraphH {
     }
 
     /**Updates the non deterministic effects of actions */
-    private void performNonDetUpdates(VEffect e, int layerNumber, BitSet addedPredicates, BitSet forbidenAxioms, BitSet noAxioms, int[] axiomsCounter){
+    private void performNonDetUpdates(VEffect e, int layerNumber, int[] factCounter, BitSet addedPredicates, BitSet forbidenAxioms, BitSet noAxioms, int[] axiomsCounter){
+        for(int j = e.getDelList().nextSetBit(0); j >= 0; j = e.getDelList().nextSetBit(j+1)){
+            factCounter[j] = Integer.MAX_VALUE;
+            decreaseAxiomsCounter(j, axiomsCounter);
+        }
         for(int j = e.getAddList().nextSetBit(0); j >= 0; j = e.getAddList().nextSetBit(j+1)){
             //actionIndex: the action
             //j: the predicate
-            if(factsLayer[j] > layerNumber){
+            if(factCounter[j] > layerNumber){
                 //factsLayer[j] = layerNumber;
                 if(!addedPredicates.get(j)) {
                     addedPredicates.set(j);
@@ -244,6 +249,17 @@ public class RelaxedGraphH {
                     updateAxiomsCounter(j, forbidenAxioms, noAxioms, axiomsCounter);
                 }
             }
+        }
+    }
+
+    private void decreaseAxiomsCounter(int predicate, int[] counter) {
+        if(!problem.prec2Act.containsKey(predicate)) {
+            return;
+        }
+        Integer[] actions = problem.prec2Act.get(predicate);
+        for(int index = 0; index< actions.length;index++){
+            int actionIndex = actions[index];
+            counter[actionIndex]--;
         }
     }
 
@@ -343,6 +359,8 @@ public class RelaxedGraphH {
                 ArrayList<Integer> goalsLowerLayer = new ArrayList<Integer>();
                 for (int g : goals) {
                     if (solved.contains(g) || (factsLayer[g] == 0)) continue;
+                    //Sort the list first
+                    //Arrays.sort(addedBy.get(g), new MyComparator());
                     //Obtain the minimal difficulty action and add it to the relaxed solution
                     Integer minAct = addedBy.get(g)[0];
                     solved.add(g);
@@ -484,10 +502,21 @@ public class RelaxedGraphH {
     public class MyComparator implements Comparator<Integer> {
         @Override
         public int compare(Integer i1, Integer i2) {
-            int compare = (actionLayer[i1] > actionLayer[i2]) ? 1 : 0;
+            Integer compare = Integer.compare(difficultyLayer[i1], difficultyLayer[i2]);
+            if(compare == 0){
+                compare = Integer.compare(actionLayer[i1], actionLayer[i2]);
+            }
+            /*if((difficultyLayer[i1] > difficultyLayer[i2])){
+                return 1;
+            }else if(difficultyLayer[i1] < difficultyLayer[i2]){
+                return -1;
+            }else{
+                return Integer.compare()
+            }
+            int compare = (difficultyLayer[i1] > difficultyLayer[i2]) ? 1 : -1;
             if(compare == 0){
                 compare = (actionLayer[i1] == actionLayer[i2]) ? 0 : -1;
-            }
+            }*/
             return compare;
         }
     }

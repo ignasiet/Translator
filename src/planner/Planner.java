@@ -96,10 +96,14 @@ public class Planner {
 			}
 		}*/
 		hP.setActions(domain_translated.list_actions);
-		hP.setDeterminizedObs(tr.getObsHeuristics());
+		//hP.setDeterminizedObs(tr.getObsHeuristics());
 		p.setAxioms(tr.getListAxioms());
 		hP.setAxioms(tr.getListAxioms());
 		hP.setDisjunctions(tr.getDisjunctions());
+		hP.setDeterminizedObs(tr.getObsHeuristics());
+		/* TODO: add to the problem actions the axioms. How to use them? */
+		//p.setAxioms(tr.getListAxioms());
+		//hP.setAxioms(tr.getListAxioms());
 
 
 		System.out.println("Transformation to vectors completed. ");

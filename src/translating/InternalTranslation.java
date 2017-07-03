@@ -106,6 +106,34 @@ public class InternalTranslation extends Translation{
 		System.out.println("Done.");
 	}
 
+	/*private void addSpecialAxioms(){
+		for(Disjunction d : domain_to_translate.list_disjunctions){
+			for(ArrayList<String> axiom : d.axioms){
+				if(axiom.size()>2){
+					for(String elem : axiom){
+						Axiom a_1 = new Axiom();
+						//Body: condition
+						//Head: effect
+						a_1._Body.add(elem);
+						for(String other_elems : axiom){
+							if(!other_elems.equals(elem)){
+								a_1._Head.add(ParserHelper.complement(other_elems));
+							}
+						}
+						domain_to_translate._Axioms.add(a_1);
+					}
+					addPredicate("K" + b);
+				}
+			}
+			a._Effects.add(e);
+			a.Name = "K-axiom-" + i;
+			listAxioms.add(a);
+			//System.out.println(a.ToString("not"));
+			i++;
+		}
+		System.out.println("Done.");
+	}*/
+
 	private void addSpecialAxioms(){
 		for(Disjunction d : domain_to_translate.list_disjunctions){
 			for(ArrayList<String> axiom : d.axioms){
