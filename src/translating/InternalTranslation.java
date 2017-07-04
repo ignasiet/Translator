@@ -79,20 +79,7 @@ public class InternalTranslation extends Translation{
 	}
 
 	private void addAxiomsActions(Domain domain_to_translate) {
-		for(ArrayList<String> clause : domain_to_translate.specialAxioms){
-			for(String elem : clause){
-				Axiom a_1 = new Axiom();
-				//Body: condition
-				//Head: effect
-				a_1._Body.add(elem);
-				for(String other_elems : clause){
-					if(!other_elems.equals(elem)){
-						a_1._Head.add(ParserHelper.complement(other_elems));
-					}
-				}
-				domain_to_translate._Axioms.add(a_1);
-			}
-		}
+		addSpecialAxioms();
 		//Re group axioms with the same body!
 		Hashtable<ArrayList<String>, ArrayList<Axiom>> conditions = new Hashtable<>();
 		groupAxioms(conditions, removeUselessAxioms());
@@ -144,6 +131,27 @@ public class InternalTranslation extends Translation{
 			i++;
 		}
 		System.out.println("Done.");
+	}
+
+	private void addSpecialAxioms(){
+		for(Disjunction d : domain_to_translate.list_disjunctions){
+			for(ArrayList<String> axiom : d.axioms){
+				if(axiom.size()>2){
+					for(String elem : axiom){
+						Axiom a_1 = new Axiom();
+						//Body: condition
+						//Head: effect
+						a_1._Body.add(elem);
+						for(String other_elems : axiom){
+							if(!other_elems.equals(elem)){
+								a_1._Head.add(ParserHelper.complement(other_elems));
+							}
+						}
+						domain_to_translate._Axioms.add(a_1);
+					}
+				}
+			}
+		}
 	}
 
 	private void addCauses(String b, ArrayList<String> body) {
