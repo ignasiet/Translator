@@ -44,6 +44,7 @@ public class Domain {
 	public SATSolver sat = new SATSolver();
 	public HashSet<String> observables = new HashSet<String>();
 	public Hashtable<String, ArrayList<String>> related = new Hashtable<String, ArrayList<String>>();
+	public HashSet<String> UncertainPredicates = new HashSet<String>();
 	
 	public void parsePredicates(String predicates_list){
 		Matcher m = Pattern.compile("\\(([^)]+)\\)").matcher(predicates_list);
@@ -233,7 +234,7 @@ public class Domain {
 		predicates_invariants.removeAll(predicates_variants);
 	}
 	
-	private boolean isUncertain(String predicate){
+	public boolean isUncertain(String predicate){
 		predicate = predicate.replace("~", "");
 		for(Disjunction disj: list_disjunctions){
 			if(disj.hasInside(predicate)){
@@ -451,10 +452,10 @@ public class Domain {
 			Disjunction disj = new Disjunction();
 		    while(m.find()) {
 		    	String aux = ParserHelper.cleanString(m.group(1));
-		    	disj.add(aux);
+				UncertainPredicates.addAll(disj.add(aux));
 		    }
 		    sat.addXORClause(disj);
-		    list_disjunctions.add(disj);
+			list_disjunctions.add(disj);
 		    initial_state = initial_state.substring(0, index_oneof);
 		    //addDeductiveOneOfAction(disj);
 		}else if(initial_state.contains("(unknown")){

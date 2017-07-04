@@ -5,4 +5,4 @@
  * @author ignasi
  *
  */
-package trapper;
+package causalgraph;

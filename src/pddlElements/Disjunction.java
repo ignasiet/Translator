@@ -6,6 +6,7 @@ package pddlElements;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.Set;
 
 
 /**
@@ -19,12 +20,13 @@ public class Disjunction {
 	private String fluent = "";
 	public HashSet<String> derivates = new HashSet<String>();
 	
-	public void add(String predicate){
+	public Set<String> add(String predicate){
 		setFluent(predicate);
 		if(!_Tags.contains(predicate)){
 			_Tags.put(predicate, 1);
 			listNodes.add(predicate);
 		}
+		return _Tags.keySet();
 	}
 	
 	private void setFluent(String predicate){

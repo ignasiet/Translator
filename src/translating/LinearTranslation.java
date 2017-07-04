@@ -1,6 +1,5 @@
 package translating;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
@@ -11,7 +10,7 @@ import pddlElements.Branch;
 import pddlElements.Disjunction;
 import pddlElements.Domain;
 import pddlElements.Effect;
-import trapper.CausalGraph;
+import causalgraph.CausalGraph;
 
 /**
  * @author ignasi

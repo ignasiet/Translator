@@ -10,7 +10,7 @@ import pddlElements.Branch;
 import pddlElements.Disjunction;
 import pddlElements.Domain;
 import pddlElements.Effect;
-import trapper.CausalGraph;
+import causalgraph.CausalGraph;
 
 /**
  * @author ignasi

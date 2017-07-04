@@ -1,15 +1,14 @@
 package HHCP;
 
 import org.jgrapht.DirectedGraph;
-import org.jgrapht.event.VertexSetListener;
 import org.jgrapht.ext.DOTExporter;
 import org.jgrapht.ext.EdgeNameProvider;
 import org.jgrapht.ext.StringEdgeNameProvider;
 import org.jgrapht.ext.VertexNameProvider;
 import org.jgrapht.graph.ClassBasedEdgeFactory;
 import org.jgrapht.graph.DirectedMultigraph;
-import trapper.Edge;
-import trapper.Vertex;
+import causalgraph.Edge;
+import causalgraph.Vertex;
 
 import java.io.*;
 import java.util.BitSet;

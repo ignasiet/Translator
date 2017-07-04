@@ -22,7 +22,7 @@ import pddlElements.Action;
 import pddlElements.Domain;
 import pddlElements.Printer;
 import translating.*;
-import trapper.CausalGraph;
+import causalgraph.CausalGraph;
 
 
 public class Planner {
@@ -95,7 +95,6 @@ public class Planner {
 				hP.insertAction(a, false);
 			}
 		}
-		/* TODO: add to the problem actions the axioms. How to use them? */
 		p.setAxioms(tr.getListAxioms());
 		hP.setAxioms(tr.getListAxioms());
 		hP.setDeterminizedObs(tr.getObsHeuristics());

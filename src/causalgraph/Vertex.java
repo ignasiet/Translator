@@ -1,7 +1,7 @@
 /**
  * 
  */
-package trapper;
+package causalgraph;
 
 import org.jgrapht.ext.VertexNameProvider;
 

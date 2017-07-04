@@ -1,11 +1,8 @@
-package trapper;
+package causalgraph;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
@@ -29,7 +26,6 @@ import pddlElements.Axiom;
 import pddlElements.Disjunction;
 import pddlElements.Domain;
 import pddlElements.Effect;
-import trapper.Edge;
 
 public class CausalGraph {
 	private DirectedMultigraph<String, Edge> graph;
@@ -87,6 +83,15 @@ public class CausalGraph {
 			newL.add(ParserHelper.complement(l));
 		}
 		literals = newL;
+	}
+
+	public Set<String> getPredecessors(String vertex){
+		Set<Edge> edges = graph.incomingEdgesOf(cleanStringDot(vertex));
+		HashSet<String> predecessors = new HashSet<String>();
+		for(Edge<String> e : edges){
+			predecessors.add(cleanBackDot(e.getV1()));
+		}
+		return predecessors;
 	}
 
 	public boolean isVariable(String literal){
@@ -242,6 +247,7 @@ public class CausalGraph {
 	}
 
 	private String cleanBackDot(String s){
+		s = s.replace("not_", "~");
 		s = s.replace("wtz", "-");
 		return s;
 	}

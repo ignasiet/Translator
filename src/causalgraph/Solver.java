@@ -1,16 +1,13 @@
 /**
  * 
  */
-package trapper;
+package causalgraph;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.Set;
 
-import parser.ParserHelper;
 import pddlElements.Axiom;
-import pddlElements.Disjunction;
 
 /**
  * @author ignasi
