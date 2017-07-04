@@ -1,12 +1,10 @@
-/**
- * 
- */
 package pddlElements;
+
+import parser.ParserHelper;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Hashtable;
-import java.util.Set;
 
 
 /**
@@ -19,16 +17,17 @@ public class Disjunction {
 	private ArrayList<String> listNodes = new ArrayList<String>();
 	private String fluent = "";
 	public HashSet<String> derivates = new HashSet<String>();
-	
-	public Set<String> add(String predicate){
+	public ArrayList<ArrayList<String>> axioms = new ArrayList<ArrayList<String>>();
+	public Hashtable<String, ArrayList<String>> variablesDerivates = new Hashtable<String, ArrayList<String>>();
+
+	public void add(String predicate){
 		setFluent(predicate);
 		if(!_Tags.contains(predicate)){
 			_Tags.put(predicate, 1);
 			listNodes.add(predicate);
 		}
-		return _Tags.keySet();
 	}
-	
+
 	private void setFluent(String predicate){
 		if(fluent.isEmpty()){
 			if(predicate.contains("_")){
@@ -38,15 +37,15 @@ public class Disjunction {
 			}
 		}
 	}
-	
+
 	public String getFluent(){
 		return fluent;
 	}
-	
+
 	public boolean hasInside(String predicate){
 		return predicate.equals(fluent);
 	}
-	
+
 	public boolean contains(String predicate){
 		return _Tags.containsKey(predicate);
 	}
@@ -64,6 +63,19 @@ public class Disjunction {
 			if(counter==0 || counter == listNodes.size()) return true;
 		}
 		return false;
+	}
+
+	public void extractVars(String pred, ArrayList<String> axiom){
+		ArrayList<String> cleanedAx = new ArrayList<>();
+		for(String a : axiom){
+			if(!pred.equals(a)) cleanedAx.add(ParserHelper.complement(a));
+		}
+		if(variablesDerivates.containsKey(pred)){
+			cleanedAx.addAll(variablesDerivates.get(pred));
+			variablesDerivates.put(pred, cleanedAx);
+		}else {
+			variablesDerivates.put(pred, cleanedAx);
+		}
 	}
 
 	public ArrayList<String> getIterator() {
