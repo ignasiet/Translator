@@ -13,19 +13,20 @@ import java.util.Hashtable;
  */
 public class Disjunction {
 
-	private Hashtable<String,Integer> _Tags = new Hashtable<String,Integer>();
+	private HashSet<String> _Tags = new HashSet<String>();
 	private ArrayList<String> listNodes = new ArrayList<String>();
 	private String fluent = "";
 	public HashSet<String> derivates = new HashSet<String>();
 	public ArrayList<ArrayList<String>> axioms = new ArrayList<ArrayList<String>>();
 	public Hashtable<String, ArrayList<String>> variablesDerivates = new Hashtable<String, ArrayList<String>>();
 
-	public void add(String predicate){
+	public String add(String predicate){
 		setFluent(predicate);
 		if(!_Tags.contains(predicate)){
-			_Tags.put(predicate, 1);
+			_Tags.add(predicate);
 			listNodes.add(predicate);
 		}
+		return predicate;
 	}
 
 	private void setFluent(String predicate){
@@ -47,7 +48,7 @@ public class Disjunction {
 	}
 
 	public boolean contains(String predicate){
-		return _Tags.containsKey(predicate);
+		return _Tags.contains(predicate);
 	}
 
 	public boolean violates(ArrayList<String> predicates){

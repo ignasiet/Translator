@@ -29,16 +29,27 @@ public class Heuristic {
                 }
             }
             rp = new RelaxedGraphH(problem, node.getState(), landmarks);
+            return returnValue(rp, node);
         }else{
             rp = new RelaxedGraphH(problem, node.getState(), null);
+            return returnValue(rp, node);
         }
+    }
 
-        if(rp.getValue() != 0){
-            node.setRelaxedSolution(rp.getRelaxedSolution());
-            //node.setBestRelaxedAction(problem.getAction(extractPreferredAction(rp.reSolution)).getName());
-            node.setBestRelaxedAction(problem.getAction(rp.getRelaxedSolution().get(rp.getRelaxedSolution().size()-1)).getName());
+    private int returnValue(RelaxedGraphH rp, Node node){
+        try {
+            if (rp.getValue() != 0) {
+                node.setRelaxedSolution(rp.getRelaxedSolution());
+                //node.setBestRelaxedAction(problem.getAction(extractPreferredAction(rp.reSolution)).getName());
+                node.setBestRelaxedAction(problem.getAction(rp.getRelaxedSolution().get(rp.getRelaxedSolution().size() - 1)).getName());
+            }
+            return rp.getValue();
+        }catch (Exception e){
+            System.out.println("Error: ");
+            e.printStackTrace();
+            System.exit(0);
+            return -1;
         }
-        return rp.getValue();
     }
 
     /**Need to order the best first actions*/

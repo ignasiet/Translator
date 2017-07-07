@@ -15,12 +15,14 @@ import java.util.regex.Pattern;
 
 import HHCP.Problem;
 import HHCP.Searcher;
+import causalgraph.UncertaintyGraph;
 import landmark.Landmarker;
 import parser.Parser;
 import parser.ParserHelper;
 import pddlElements.Action;
 import pddlElements.Domain;
 import pddlElements.Printer;
+import simulator.Simulator;
 import translating.*;
 import causalgraph.CausalGraph;
 
@@ -64,6 +66,8 @@ public class Planner {
 		/*Time measure: translation*/
 		domain = ParserHelper.cleanProblem(domain);
 		cg = new CausalGraph(domain);
+
+		UncertaintyGraph uG = new UncertaintyGraph(domain);
 		startTime = System.currentTimeMillis();
 		/*Set size of the ksets to 2*/
 		//Trapper tp = new Trapper(cg.getLiterals(), domain, cg, 2);
@@ -95,9 +99,17 @@ public class Planner {
 				hP.insertAction(a, false);
 			}
 		}
+		hP.setDeterminizedObs(tr.getObsHeuristics());
 		p.setAxioms(tr.getListAxioms());
 		hP.setAxioms(tr.getListAxioms());
-		hP.setDeterminizedObs(tr.getObsHeuristics());
+
+		for(String pred : domain.UncertainPredicates){
+			hP.uncertainty.add(hP.getPredicate("K"+pred));
+			hP.uncertainty.add(hP.getPredicate("K~"+pred));
+		}
+		for(String pred : domain.obsPredicates){
+			hP.observables.add(hP.getPredicate("K"+pred));
+		}
 
 		System.out.println("Transformation to vectors completed. ");
 
@@ -107,6 +119,7 @@ public class Planner {
 
 		System.out.println("Init Search. ");
 
+		//Simulator sim = new Simulator(null, p.getInitState(), p, hP);
 		Searcher search = new Searcher(p, hP, l.getLandmarks());
 		//search.GenPlanPairs(p.getInitState());
 

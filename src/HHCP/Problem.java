@@ -7,10 +7,7 @@ import pddlElements.Axiom;
 import pddlElements.Branch;
 import pddlElements.Effect;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.Hashtable;
+import java.util.*;
 
 /**
  * Created by ignasi on 15/05/17.
@@ -28,6 +25,8 @@ public class Problem {
     private ArrayList<VAction> vaList = new ArrayList<VAction>();
     public ArrayList<VAction> vAxioms = new ArrayList<VAction>();
     public ArrayList<VAction> hObservations = new ArrayList<VAction>();
+    public HashSet<Integer> uncertainty = new HashSet<Integer>();
+    public HashSet<Integer> observables = new HashSet<Integer>();
     public int indexAxioms = 0;
     private int size;
 
@@ -43,10 +42,6 @@ public class Problem {
             i++;
         }
     }
-
-    /*public BitSet getGoalSet(){
-        return goalSet;
-    }*/
 
     public int getSize() {
         return size;

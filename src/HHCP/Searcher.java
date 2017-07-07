@@ -1,9 +1,6 @@
 package HHCP;
 
-import oracle.jrockit.jfr.events.Bits;
 import simulator.Simulator;
-
-import java.lang.reflect.Array;
 import java.util.*;
 
 /**
@@ -93,7 +90,7 @@ public class Searcher {
         System.out.println("Policy size: " + policyP.size());
         System.out.println("Number of states solved: " + policyP.marked.size());
         //printPolicy(p.getInitState());
-        Simulator sim = new Simulator(policyP, p.getInitState(), problem);
+        //Simulator sim = new Simulator(policyP, p.getInitState(), problem, heuristicP);
     }
 
     private BitSet regressStateAction(BitSet s, Integer action) {
@@ -114,20 +111,6 @@ public class Searcher {
                 }
                 ancestor.or(e.getCondition());
             }
-            /*else{
-                appliedEffect = false;
-            }*/
-            /*for(int eff : e.getAddList()){
-                if(ancestor.get(eff)){
-                    ancestor.set(eff,false);
-                }else{
-                    appliedEffect = false;
-                }
-            }*/
-            /*if(appliedEffect){
-                //for(int c : e.getCondition()) ancestor.set(c);
-                ancestor.or(e.getCondition());
-            }*/
         }
         return ancestor;
     }
@@ -215,11 +198,11 @@ public class Searcher {
         }
     }
 
-    private void printPolicy(BitSet initState) {
-        //Imprimir politica resultado.
-        //DirectedMultigraph<String, String> graph;
-        System.out.println("Printing solution:");
-        Solution sol = new Solution(policyP, initState, problem);
+    private void printState(BitSet initState) {
+        System.out.println("Printing state:");
+        for(int i = initState.nextSetBit(0);i>=0;i=initState.nextSetBit(i+1)){
+            System.out.println(i + ": " + problem.getPredicate(i));
+        }
     }
 
     private void processDeadEnds() {
@@ -249,20 +232,18 @@ public class Searcher {
         while(!solution) {
             if(fringe.isEmpty()){
                 System.out.println("No weak plan found.\nThe initial State for this search may have caused a Dead-end.");
+                printState(initState);
                 DeadEnds.add(initState);
                 return false;
             }
             Node node = fringe.poll();
-            //if(node.indexAction != -1) System.out.println("Applied action: " + problem.getAction(node.indexAction).getName());
             if(visited(node)) continue;
             visited.add(node.getState());
-            //TODO: isSolvedNode(node)? check
             if(node.holds(problem.getGoal()) || policyP.valid(node.getState()) ){
                 //solution = true;
                 RegressPlan(node);
                 break;
             }
-            //TODO: Verify the selected action is not an axiom!
             if(!node.relaxedSolution.isEmpty()){
                 VAction va = problem.getAction(node.preferredAction);
                 addToFringe(va, node);

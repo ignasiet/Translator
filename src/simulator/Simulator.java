@@ -1,10 +1,8 @@
 package simulator;
 
-import HHCP.Node;
-import HHCP.PartialPolicy;
-import HHCP.Problem;
-import HHCP.VAction;
+import HHCP.*;
 
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Scanner;
 
@@ -13,7 +11,61 @@ import java.util.Scanner;
  */
 public class Simulator {
 
-    public Simulator (PartialPolicy policyP, BitSet initState, Problem problem) {
+    public Simulator(PartialPolicy policyP, BitSet initState, Problem problem, Problem heuristicProblem){
+        if(policyP != null){
+            simulatePolicy(policyP, initState, problem);
+        }else{
+            simulateSearch(initState, problem, heuristicProblem);
+        }
+    }
+
+    private void simulateSearch(BitSet initState, Problem problem, Problem hproblem) {
+        Scanner reader = new Scanner(System.in);  // Reading from System.in
+        Heuristic h = new Heuristic(hproblem, null);
+        Node node = new Node(initState);
+        while(!node.holds(problem.getGoal())){
+            h.getValue(node);
+            System.out.println("Heuristic action:");
+            System.out.println(node.preferredAction);
+            System.out.println("Applicable actions:");
+            ArrayList<VAction> applicableActions = getApplicableActions(node, problem);
+            for (VAction va : applicableActions) {
+                System.out.println(applicableActions.indexOf(va) + ": "+ va.getName());
+            }
+            int chosenAct = reader.nextInt(); // Scans the next token of the input as an int.
+            while(chosenAct<0 || chosenAct > applicableActions.size()){
+                System.out.println("Wrong number!, enter again:");
+                chosenAct = reader.nextInt();
+            }
+            if(applicableActions.get(chosenAct).isNondeterministic){
+                System.out.println("Non-deterministic action " + applicableActions.get(chosenAct).getName() + ", choose effect: ");
+                System.out.println("0-" + applicableActions.get(chosenAct).getName());
+                System.out.println("1- not " + applicableActions.get(chosenAct).getName());
+                System.out.println("Enter a number: ");
+                int chosenEffect = reader.nextInt(); // Scans the next token of the input as an int.
+                while(!(chosenEffect>=0 && chosenEffect<2)){
+                    System.out.println("Wrong number!, enter again:");
+                    chosenEffect = reader.nextInt();
+                }
+                node= node.applyEffect(applicableActions.get(chosenAct).getEffects().get(chosenEffect));
+                node.fixedPoint(problem);
+            }else{
+                node = node.applyDeterministicAction(applicableActions.get(chosenAct));
+            }
+        }
+    }
+    private ArrayList<VAction> getApplicableActions(Node node, Problem problem) {
+        ArrayList<VAction> retList = new ArrayList<VAction>();
+        for(VAction va : problem.getVaList()){
+            if(va.getName().startsWith("K-axiom-")) continue;
+            if(node.holds(va.getPreconditions())){
+                retList.add(va);
+            }
+        }
+        return retList;
+    }
+
+    public void simulatePolicy (PartialPolicy policyP, BitSet initState, Problem problem) {
         Node n = new Node(initState);
         boolean solved = false;
         Scanner reader = new Scanner(System.in);  // Reading from System.in
@@ -41,7 +93,6 @@ public class Simulator {
                 }
                 n= n.applyEffect(action.getEffects().get(chosenEffect));
                 n.fixedPoint(problem);
-
             } else {
                 System.out.println("Deterministic action: " + action.getName());
                 Node succ = n.applyDeterministicAction(action);

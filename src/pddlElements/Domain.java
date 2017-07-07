@@ -1,4 +1,5 @@
 package pddlElements;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
@@ -45,6 +46,10 @@ public class Domain {
 	public HashSet<String> observables = new HashSet<String>();
 	public Hashtable<String, ArrayList<String>> related = new Hashtable<String, ArrayList<String>>();
 	public HashSet<String> UncertainPredicates = new HashSet<String>();
+	public HashSet<String> obsPredicates = new HashSet<String>();
+	public Hashtable<String, ArrayList<ArrayList<String>>> ruleSet = new Hashtable<>();
+	public Hashtable<String, ArrayList<ArrayList<String>>> relevanceSet = new Hashtable<>();
+
 	
 	public void parsePredicates(String predicates_list){
 		Matcher m = Pattern.compile("\\(([^)]+)\\)").matcher(predicates_list);
@@ -325,15 +330,8 @@ public class Domain {
 	@SuppressWarnings({ "unchecked", "unused" })
 	public void ground_actions(Action action){
 		ArrayList<String> result = new ArrayList<String>();
-		//Hashtable<String, String> substitution = new Hashtable<String, String>();
 		Enumeration<String> e = action.action_parameters.keys();
 		Enumeration<String> en = action.parameters_type.keys();
-		//Grounding errors: bad combinations. Use parameters_combination		
-		/*while(en.hasMoreElements()){
-			String parameter = en.nextElement().toString();
-			result = product(constantes.get(action.parameters_type.get(parameter)), result);
-		}*/
-		//String parameter = en.nextElement().toString();
 		for(String element : action.parameters_Combination){
 			result = product(constantes.get(action.parameters_type.get(element)), result);
 		}
@@ -348,32 +346,11 @@ public class Domain {
 			act_grounded.Name = action.Name + "_" + combination.replace(";", "_");
 			ArrayList<String> lista_objetos = new ArrayList<String>(Arrays.asList(combination.split(";")));
 			int i = 0;
-			//String posit_eff = action._Positive_effects.toString().replace("[", "").replace("]", "");
-			//String negat_eff = action._Negative_effects.toString().replace("[", "").replace("]", "");
 			String precond = action._precond.toString().replace("[", "").replace("]", "");
 			for(String parameter : action._parameters){
-				//String parameter = e.nextElement().toString();
-				//posit_eff = posit_eff.replace(parameter, lista_objetos.get(i));
-				//negat_eff = negat_eff.replace(parameter, lista_objetos.get(i));
 				precond = precond.replace(parameter, lista_objetos.get(i));
 				i++;
 			}
-			//ArrayList<String> lista_efeitos_positivos = new ArrayList<String>();
-			//ArrayList<String> lista_efeitos_negativos = new ArrayList<String>();
-			/*for(String item : Arrays.asList(posit_eff.split(","))){
-				lista_efeitos_positivos.add(item.trim());
-				if(!predicates_count.containsKey(item.trim())){
-					predicates_grounded.add(item.trim());
-					predicates_count.put(item.trim(), 1);
-				}
-			}
-			for(String item : Arrays.asList(negat_eff.split(","))){
-				lista_efeitos_negativos.add(item.trim());
-				if(!predicates_count.containsKey(item.trim())){
-					predicates_grounded.add(item.trim());
-					predicates_count.put(item.trim(), 1);
-				}
-			}*/
 			ArrayList<String> lista_precond = new ArrayList<String>();
 			for(String item : Arrays.asList(precond.split(","))){
 				lista_precond.add(item.trim());
@@ -382,8 +359,6 @@ public class Domain {
 					predicates_count.put(item.trim(), 1);
 				}
 			}
-			//act_grounded._Positive_effects = lista_efeitos_positivos;
-			//act_grounded._Negative_effects = lista_efeitos_negativos;
 			act_grounded._precond = lista_precond;
 			if(validAction){
 				act_grounded._parameters.addAll(action._parameters);
@@ -443,23 +418,23 @@ public class Domain {
 	    	goalState.add(ParserHelper.cleanString(aux));
 	    }
 	}
-	
+
 	public void addInitialPredicate(String initial_state){
 		if(initial_state.contains("(oneof")){
 			int index_oneof = initial_state.indexOf("(oneof") + 6;
 			String oneof_string = initial_state.substring(index_oneof);
 			Matcher m = Pattern.compile("\\(([^)]+)\\)").matcher(oneof_string);
 			Disjunction disj = new Disjunction();
-		    while(m.find()) {
-		    	String aux = ParserHelper.cleanString(m.group(1));
-				UncertainPredicates.addAll(disj.add(aux));
-		    }
-		    sat.addXORClause(disj);
+			while(m.find()) {
+				String aux = ParserHelper.cleanString(m.group(1));
+				//disj.add(aux);
+				UncertainPredicates.add(disj.add(aux));
+			}
+			sat.addXORClause(disj);
 			list_disjunctions.add(disj);
-		    initial_state = initial_state.substring(0, index_oneof);
-		    //addDeductiveOneOfAction(disj);
+			initial_state = initial_state.substring(0, index_oneof);
+			//addDeductiveOneOfAction(disj);
 		}else if(initial_state.contains("(unknown")){
-			//TODO: consider unknown predicates?
 			System.out.println("Predicate with initial uncertainty: " + initial_state);
 		}else if(initial_state.contains("total-cost")){
 			System.out.println("Domain with costs");
@@ -503,12 +478,44 @@ public class Domain {
 						a_1._Body.add(ParserHelper.complement(other_elems));
 					}
 				}
+				if(UncertainPredicates.contains(elem)){
+					addRelevanceSet(elem, a_1._Body);
+				}else{
+					if(!isObservable(elem) && !elem.startsWith("~")) addRuleSet(elem, a_1._Body);
+				}
 				_Axioms.add(a_1);
 			}
 		}
 		counter++;
 	}
-	
+
+	private void addRuleSet(String elem, ArrayList<String> body) {
+		for(String p : body){
+			if(UncertainPredicates.contains(p.replace("~", ""))) return;
+		}
+		if(ruleSet.containsKey(elem)){
+			ArrayList<ArrayList<String>> newList = new ArrayList<ArrayList<String>>(ruleSet.get(elem));
+			newList.add(body);
+			ruleSet.put(elem, newList);
+		}else{
+			ArrayList<ArrayList<String>> newList = new ArrayList<ArrayList<String>>();
+			newList.add(body);
+			ruleSet.put(elem, newList);
+		}
+	}
+
+	private void addRelevanceSet(String elem, ArrayList<String> body){
+		if(relevanceSet.containsKey(elem)){
+			ArrayList<ArrayList<String>> newList = new ArrayList<ArrayList<String>>(relevanceSet.get(elem));
+			newList.add(body);
+			relevanceSet.put(elem, newList);
+		}else{
+			ArrayList<ArrayList<String>> newList = new ArrayList<ArrayList<String>>();
+			newList.add(body);
+			relevanceSet.put(elem, newList);
+		}
+	}
+
 	public void addHiddenState(String initial_state){
 		Matcher m = Pattern.compile("\\(([^)]+)\\)").matcher(initial_state);
 	    while(m.find()) {
@@ -553,6 +560,8 @@ public class Domain {
 				if(d.contains(pred.replace("~", ""))){
 					flag = pred.replace("~", "");
 					d.derivates.addAll(axiom);
+					d.axioms.add(axiom);
+					d.extractVars(pred, axiom);
 					break;
 				}
 			}
@@ -560,7 +569,6 @@ public class Domain {
 		if(flag!=null){
 			for(String p : axiom) {
 				if(p.replace("~", "").equals(flag)) continue;
-
 				updateRelated(flag, p);
 			}
 		}

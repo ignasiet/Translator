@@ -149,14 +149,6 @@ public class Node {
                     if(!axioms.contains(ax.index)) axioms.add(ax.index);
                     //Add operation between bitsets:
                     getState().or(ax.getEffects().get(0).getAddList());
-                    /*for(int index : ax.getEffects().get(0).getAddList()){
-                        getState().set(index);
-                        //System.out.println("Adding: " + p.getPredicate(index));
-                    }*/
-                    /*for(int index : ax.getEffects().get(0).getDelList()){
-                        getState().set(index, false);
-                        //System.out.println("Deleting: " + p.getPredicate(index));
-                    }*/
                     for(int index = ax.getEffects().get(0).getDelList().nextSetBit(0);index>=0;index=ax.getEffects().get(0).getDelList().nextSetBit(index+1)){
                         getState().set(index, false);
                     }
@@ -164,6 +156,13 @@ public class Node {
             }
             if(oldState.equals(getState())) fix = true;
             oldState = (BitSet) getState().clone();
+        }
+        for(int index : axioms){
+            VAction rule = p.getAction(index);
+            BitSet added = rule.getEffects().get(0).getAddList();
+            for(int a = added.nextSetBit(0);a>=0;a=added.nextSetBit(a+1)){
+                System.out.println("Deducted: " + p.getPredicate(a));
+            }
         }
     }
 
@@ -184,24 +183,10 @@ public class Node {
 			for(VAction ax : vAxioms){
 				BitSet prec = (BitSet) ax.preconditions.clone();
 				prec.and(n.getState());
-                //Verify how to apply the axioms
-                boolean notApply = false;
-                /*for(int i=ax.getEffects().get(0).getAddList().nextSetBit(0);i>=0;i=ax.getEffects().get(0).getAddList().nextSetBit(i+1)){
-                    if(n.getState().get(i)){
-                        notApply = true;
-                    }
-                }
-                if(notApply) continue;*/
 				if(prec.equals(ax.getPreconditions())){
 					if(!n.axioms.contains(ax.index)) n.axioms.add(ax.index);
                     //Add operation between bitsets:
                     n.getState().or(ax.getEffects().get(0).getAddList());
-					/*for(int index : ax.getEffects().get(0).getAddList()){
-						n.getState().set(index);
-					}*/
-					/*for(int index : ax.getEffects().get(0).getDelList()){
-						n.getState().set(index, false);
-					}*/
                     for(int index = ax.getEffects().get(0).getDelList().nextSetBit(0);index>=0;index=ax.getEffects().get(0).getDelList().nextSetBit(index+1)){
                         n.getState().set(index, false);
                     }

@@ -56,50 +56,94 @@ public class InternalTranslation extends Translation{
 		//addTagRefutation(domain_to_translate);
 		// 8 - Add axioms
 		addAxiomsActions(domain_to_translate);
-		addCausalGraphImplications();
 		// 9 - Translate invariants
 		translateInvariants(domain_to_translate);
 		// 10 - Add tag maximal effects: called when actions are translated
 		//addTagMaximalEffects(domain_to_translate);
 	}
 
+	private void addDeductiveActions(Domain domain_to_translate) {
+		int i=0;
+		for(Disjunction disj: domain_to_translate.list_disjunctions){
+			for(String predicate : disj.getIterator()){
+				//entailedBy.put(predicate, fixedPointIterationReasoning(predicate));
+				Axiom kAx1 = new Axiom();
+				Axiom kAx2 = new Axiom();
+				kAx1._Name = "invariant-at-least-one-" + i;
+				i++;
+				kAx2._Name = "invariant-at-most-one-" + i;
+				i++;
+				kAx1._Head.add(predicate);
+				kAx2._Body.add(predicate);
+				if(domain_to_translate.isObservable(predicate)){
+					kAx1._Body.add("not-observed-" + predicate);
+					kAx1._Head.add("~not-observed-" + predicate);
+				}
+				//entailedBy.put(predicate, fixedPointIterationReasoning(predicate));
+				for(String p_opposed : disj.getIterator()){
+					if(!p_opposed.equals(predicate)){
+						kAx2._Head.add(ParserHelper.complement(p_opposed));
+						//kAx2._Head.add("~not-observed-" + p_opposed);
+						kAx1._Body.add(ParserHelper.complement(p_opposed));
+					}
+				}
+				domain_to_translate._Axioms.add(kAx1);
+				domain_to_translate._Axioms.add(kAx2);
+			}
+		}
+	}
 
-	private void addCausalGraphImplications() {
-		//TODO: fire axioms only when predecessors sensing have been achieved
-		Hashtable<String, HashSet<String>> causality = new Hashtable<String, HashSet<String>>();
-		for(String pred : causes.keySet()){
-			HashSet<String> hs = new HashSet<String>();
-			for(String lit : causes.get(pred)) {
-				if(!domain_to_translate.isObservable(lit)){
-					hs.addAll(causal.getPredecessors(lit));
+	private void renforceAxioms(){
+		for(ArrayList<String> preds : domain_to_translate.specialAxioms){
+			for(String predicate : preds){
+				Axiom rule = new Axiom();
+				rule._Body.add(predicate);
+				for(String predOpposed : preds) {
+					if (!predOpposed.equals(predicate)) {
+						rule._Head.add(ParserHelper.complement(predOpposed));
+					}
+				}
+				if(validOutcome(rule)){
+					rule._Name = "extra-rule-" + predicate;
+					domain_to_translate._Axioms.add(rule);
 				}
 			}
-			causality.put(pred, hs);
 		}
+	}
+
+	private ArrayList<Axiom> recycleRules(){
+		Hashtable<ArrayList<String>, ArrayList<Axiom>> conditions = new Hashtable<ArrayList<String>, ArrayList<Axiom>>();
+		for(Axiom a : domain_to_translate._Axioms){
+			if(usedAxioms.contains(a._Name)){
+				if(conditions.containsKey(a._Body)){
+					ArrayList<Axiom> aSet = new ArrayList<Axiom>(conditions.get(a._Body));
+					aSet.add(a);
+					conditions.put(a._Body, aSet);
+				}else{
+					ArrayList<Axiom> aSet = new ArrayList<Axiom>();
+					aSet.add(a);
+					conditions.put(a._Body, aSet);
+				}
+			}
+		}
+		ArrayList<Axiom> returnedRules = new ArrayList<>();
+		for(ArrayList<String> body : conditions.keySet()){
+			Axiom rule = new Axiom();
+			rule._Body.addAll(body);
+			for(Axiom rules : conditions.get(body)){
+				rule._Head.addAll(rules._Head);
+			}
+			returnedRules.add(rule);
+		}
+		return returnedRules;
 	}
 
 	private void addAxiomsActions(Domain domain_to_translate) {
 		addSpecialAxioms();
 		//Re group axioms with the same body!
 		Hashtable<ArrayList<String>, ArrayList<Axiom>> conditions = new Hashtable<>();
-		groupAxioms(conditions, removeUselessAxioms());
+		groupAxioms(conditions, removeUselessAxioms(), recycleRules());
 		int i = 0;
-		//Get the only observables that are able to tell the difference between safe and not safe
-		/*for(ArrayList<String> clause : domain_to_translate.specialAxioms){
-			for(String pred : clause){
-				Hashtable<String, HashSet<String>> entailedBy = new Hashtable<String, HashSet<String>>();
-				for(String other : clause) {
-					if(!pred.equals(other)) {
-						HashSet<String> hs = fixedPointIterationReasoning(other);
-						entailedBy.put(other, hs);
-					}else{
-						HashSet<String> hs = fixedPointIterationReasoning(ParserHelper.complement(other));
-						entailedBy.put(other, hs);
-					}
-				}
-				System.out.println();
-			}
-		}*/
 		for(ArrayList<String> key : conditions.keySet()){
 			Action a = new Action();
 			Effect e = new Effect();
@@ -117,11 +161,9 @@ public class InternalTranslation extends Translation{
 							e._Effects.add("~Knot-observed-" + b.replace("~", ""));
 						}
 						addPredicate("K" + b);
-					}
-					/*if(domain_to_translate.UncertainPredicates.contains(b)){
+					}if(domain_to_translate.UncertainPredicates.contains(b)){
 						addCauses(b, ax._Body);
-					}*/
-
+					}
 				}
 			}
 			a._Effects.add(e);
@@ -183,7 +225,8 @@ public class InternalTranslation extends Translation{
 		return unusedAxioms;
 	}
 
-	private void groupAxioms(Hashtable<ArrayList<String>, ArrayList<Axiom>> conditions, HashSet<Axiom> unusedAxioms){
+	//TODO: Refactor this...please!
+	private void groupAxioms(Hashtable<ArrayList<String>, ArrayList<Axiom>> conditions, HashSet<Axiom> unusedAxioms, ArrayList<Axiom> axioms){
 		for(Axiom axiom : unusedAxioms){
 			if(conditions.containsKey(axiom._Body)){
 				ArrayList<Axiom> aux = new ArrayList<Axiom>(conditions.get(axiom._Body));
@@ -193,6 +236,17 @@ public class InternalTranslation extends Translation{
 				ArrayList<Axiom> aux = new ArrayList<Axiom>();
 				aux.add(axiom);
 				conditions.put(axiom._Body, aux);
+			}
+		}
+		for(Axiom rule :axioms){
+			if(conditions.containsKey(rule._Body)){
+				ArrayList<Axiom> aux = new ArrayList<Axiom>(conditions.get(rule._Body));
+				aux.add(rule);
+				conditions.put(rule._Body, aux);
+			}else{
+				ArrayList<Axiom> aux = new ArrayList<Axiom>();
+				aux.add(rule);
+				conditions.put(rule._Body, aux);
 			}
 		}
 	}
@@ -208,65 +262,6 @@ public class InternalTranslation extends Translation{
 		}
 	}
 
-	private void renforceAxioms(){
-		for(ArrayList<String> preds : domain_to_translate.specialAxioms){
-			for(String predicate : preds){
-				if(domain_to_translate.isObservable(predicate) && predicate.startsWith("~")) {
-					HashMap<String, HashSet<String>> entailedBy = new HashMap<String, HashSet<String>>();
-					ArrayList<String> addedAxioms = new ArrayList<String>();
-					for(String predOpposed : preds){
-						if(!predOpposed.equals(predicate)){
-							HashSet<String> list = fixedPointIterationReasoning(predOpposed);
-							entailedBy.put(predOpposed, list);
-							addedAxioms.addAll(list);
-						}
-					}
-					for(Disjunction d : domain_to_translate.list_disjunctions){
-						HashSet<String> orAxiom = new HashSet<String>();
-						boolean init = false;
-						for(String pred : entailedBy.keySet()){
-							if(d.derivates.contains(pred)){
-								if(!init){
-									orAxiom.addAll(entailedBy.get(pred));
-									init = true;
-								}else {
-									orAxiom.retainAll(entailedBy.get(pred));
-								}
-							}
-						}
-						if(d.violates(addedAxioms)){
-							for(String s : domain_to_translate.opositeObs(predicate)) {
-								addOppositeObs(s, orAxiom);
-							}
-						}
-					}
-
-					/*for(Disjunction d : domain_to_translate.list_disjunctions){
-						HashSet<String> orAxiom = new HashSet<String>();
-						boolean init = false;
-						for(String s : d.getIterator()){
-							if(domain_to_translate.related.containsKey(s)){
-								for(String key : domain_to_translate.related.get(s)){
-									if(!init){
-										orAxiom.addAll(entailedBy.get(key));
-										init = true;
-									}else {
-										orAxiom.retainAll(entailedBy.get(key));
-									}
-								}
-							}
-						}
-						if(d.violates(addedAxioms)){
-							for(String s : domain_to_translate.opositeObs(predicate)) {
-								oppositeObs.put(s, orAxiom);
-							}
-						}
-					}*/
-				}
-			}
-		}
-	}
-
 	private void addOppositeObs(String s, HashSet<String> orAxiom){
 		if(oppositeObs.containsKey(s)){
 			HashSet<String> oldAxiom = new HashSet<String>(orAxiom);
@@ -274,39 +269,6 @@ public class InternalTranslation extends Translation{
 			oppositeObs.put(s, oldAxiom);
 		}else {
 			oppositeObs.put(s, orAxiom);
-		}
-	}
-
-	private void addDeductiveActions(Domain domain_to_translate) {
-		int i=0;
-		for(Disjunction disj: domain_to_translate.list_disjunctions){
-			for(String predicate : disj.getIterator()){
-				//entailedBy.put(predicate, fixedPointIterationReasoning(predicate));
-				Axiom kAx1 = new Axiom();
-				Axiom kAx2 = new Axiom();
-				kAx1._Name = "invariant-at-least-one-" + i;
-				i++;
-				kAx2._Name = "invariant-at-most-one-" + i;
-				i++;
-				kAx1._Head.add(predicate);
-				kAx2._Body.add(predicate);
-				if(domain_to_translate.isObservable(predicate)){
-					kAx1._Body.add("not-observed-" + predicate);
-					kAx1._Head.add("~not-observed-" + predicate);
-				}
-				//entailedBy.put(predicate, fixedPointIterationReasoning(predicate));
-				for(String p_opposed : disj.getIterator()){
-					if(!p_opposed.equals(predicate)){
-						kAx2._Head.add(ParserHelper.complement(p_opposed));
-						//kAx2._Head.add("~not-observed-" + p_opposed);
-						kAx1._Body.add(ParserHelper.complement(p_opposed));
-					}
-				}
-				domain_to_translate._Axioms.add(kAx1);
-				domain_to_translate._Axioms.add(kAx2);
-			}
-			//HashSet<String> entailed = new HashSet<>(disj.getIterator());
-			//fixedPointIterationReasoningArray(entailed);
 		}
 	}
 
@@ -328,7 +290,7 @@ public class InternalTranslation extends Translation{
 				translateDeadAction(a, complexEff);
 			}*/
 			if(a.IsObservation){
-				@SuppressWarnings("unused")				
+				@SuppressWarnings("unused")
 				Hashtable<String, HashSet<String>> entailedBy = getReasonedPredicates(a);
 				if(entailedBy != null)	translateObservations(a, entailedBy);
 			}else{
@@ -337,7 +299,6 @@ public class InternalTranslation extends Translation{
 				a_translated.cost = a.cost;
 				a_translated.IsObservation = false;
 				a_translated.Name = a.Name;
-				//a_translated._precond.add("Knormal-execution");
 				for(String precondition : a._precond){
 					//Preconditions now are conditions of conditionals effects
 					//TODO: add M-predicates
@@ -413,6 +374,8 @@ public class InternalTranslation extends Translation{
 		//An observation has only one observable literal:
 		String obs = a._Effects.get(0)._Effects.get(0);
 		String negObs = ParserHelper.complement(obs);
+		domain_to_translate.obsPredicates.add(obs);
+		domain_to_translate.obsPredicates.add(negObs);
 
 		String newPrecond = "Knot-observed-" + obs;
 		String newNegatPrecond = "K~not-observed-" + obs;
@@ -431,33 +394,6 @@ public class InternalTranslation extends Translation{
 
 		addPredicate("K" + obs);
 		addPredicate("K" + negObs);
-
-		//Add two heuristic actions that are the observations determinized
-		Action obs1 = new Action();
-		Action obs2 = new Action();
-		obs1.Name = a.Name + "#1";
-		obs2.Name = a.Name + "#2";
-		obs1._precond.addAll(a_translated._precond);
-		obs2._precond.addAll(a_translated._precond);
-
-		Effect e1 = new Effect();
-		Effect e2 = new Effect();
-
-		e1._Effects.add("K" + obs);
-		e1._Effects.add("~K" + negObs);
-
-		e2._Effects.add("K" + negObs);
-		e2._Effects.add("~K" + obs);
-		
-		/*branch1._Branches.add("K" + obs);
-		branch1._Branches.add("~K" + negObs);
-		branch2._Branches.add("K" + negObs);
-		branch2._Branches.add("~K" + obs);*/
-		obs1._Effects.add(e1);
-		obs2._Effects.add(e2);
-
-		ObsHeuristics.add(obs1);
-		ObsHeuristics.add(obs2);
 
 		if(oppositeObs.containsKey(negObs)){
 			for(String p : oppositeObs.get(negObs)){
@@ -497,12 +433,40 @@ public class InternalTranslation extends Translation{
 		branch2._Branches.add("~" + newPrecond);
 
 
+		createDeterminizedObs(a, a_translated._precond, branch1._Branches, branch2._Branches);
 		//a_translated._Effects.add(e);
 		a_translated._Branches.add(branch1);
 		a_translated._Branches.add(branch2);
 		//Falta adiciona quando é seguro!
 		domain_translated.list_actions.put(a_translated.Name, a_translated);
 		//createObsDetupAction(a);
+	}
+
+	private void createDeterminizedObs(Action a, ArrayList<String> precond, ArrayList<String> branches1, ArrayList<String> branches2) {
+		//Add two heuristic actions that are the observations determinized
+		Action obs1 = new Action();
+		Action obs2 = new Action();
+		obs1.Name = a.Name + "#1";
+		obs2.Name = a.Name + "#2";
+		obs1._precond.addAll(precond);
+		obs2._precond.addAll(precond);
+
+		Effect e1 = new Effect();
+		Effect e2 = new Effect();
+
+		//e1._Effects.add("K" + obs);
+		//e1._Effects.add("~K" + negObs);
+		e1._Effects.addAll(branches1);
+
+		//e2._Effects.add("K" + negObs);
+		//e2._Effects.add("~K" + obs);
+		e2._Effects.addAll(branches2);
+
+		obs1._Effects.add(e1);
+		obs2._Effects.add(e2);
+
+		ObsHeuristics.add(obs1);
+		ObsHeuristics.add(obs2);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -515,32 +479,67 @@ public class InternalTranslation extends Translation{
 		//HashSet<String> used = new HashSet<String>();
 		String predicate = a._Effects.get(0)._Effects.get(0);
 		String negPredicate = ParserHelper.complement(a._Effects.get(0)._Effects.get(0));
-		HashSet<String> tempUsed = (HashSet<String>) usedAxioms.clone();
-		entailedBy.put(predicate, fixedPointIterationReasoning(predicate));
-		entailedBy.put(negPredicate, fixedPointIterationReasoning(negPredicate));
-		//Review conditions!
-		//TODO: I need to cut actions that take off more than one disjunction: i mean
-		// eliminate actions that allow the agent to infer there is no wumpus anywere.
+		//HashSet<String> tempUsed = (HashSet<String>) usedAxioms.clone();
+
+		HashSet<String> used = new HashSet<String>();
+		entailedBy.put(predicate, fixedPointIterationReasoning(predicate, used));
+		entailedBy.put(negPredicate, fixedPointIterationReasoning(negPredicate, used));
+
 		if(((entailedBy.get(predicate).size()==1) && (entailedBy.get(negPredicate).size()==1)) ){
 			System.out.println("Useless observation: " + a.Name);
-			usedAxioms.clear();
+			used.clear();
 			uselessObs.add(predicate);
-			//used.clear();
 			return null;
 		}
-		usedAxioms.addAll(tempUsed);
-		//usedAxioms.addAll(used);
+		usedAxioms.addAll(used);
 		//System.out.println("Used axioms: " + used.toString());
 		return entailedBy;
 	}
 
-	private boolean validOutcome(ArrayList<String> predicates) {
-		domain_to_translate.sat.addClause(predicates);
-		boolean r = domain_to_translate.sat.isSolvable();
-		return r;
+	private boolean validOutcome(Axiom rule) {
+		for(Disjunction d : domain_to_translate.list_disjunctions){
+			if(d.derivates.containsAll(rule._Head)){
+				return true;
+			}
+		}
+		return false;
+		/*for(String predicate : predicates){
+			if(domain_to_translate.isObservable(predicate) && predicate.startsWith("~")) {
+				HashMap<String, HashSet<String>> entailedBy = new HashMap<String, HashSet<String>>();
+				ArrayList<String> addedAxioms = new ArrayList<String>();
+				HashSet<String> used = new HashSet<String>();
+				for(String predOpposed : predicates){
+					if(!predOpposed.equals(predicate)){
+						HashSet<String> list = fixedPointIterationReasoning(predOpposed, used);
+						//usedAxioms.addAll(used);
+						entailedBy.put(predOpposed, list);
+						addedAxioms.addAll(list);
+					}
+				}
+				for(Disjunction d : domain_to_translate.list_disjunctions){
+					HashSet<String> orAxiom = new HashSet<String>();
+					boolean init = false;
+					for(String pred : entailedBy.keySet()){
+						if(d.derivates.contains(pred)){
+							if(!init){
+								orAxiom.addAll(entailedBy.get(pred));
+								init = true;
+							}else {
+								orAxiom.retainAll(entailedBy.get(pred));
+							}
+						}
+					}
+					if(d.violates(addedAxioms)){
+						for(String s : domain_to_translate.opositeObs(predicate)) {
+							addOppositeObs(s, orAxiom);
+						}
+					}
+				}
+			}
+		}*/
 	}
 
-	private HashSet<String> fixedPointIterationReasoning(String predicate){
+	private HashSet<String> fixedPointIterationReasoning(String predicate, HashSet<String> used){
 		HashSet<String> lit = new HashSet<String>();
 		lit.add(predicate);
 		boolean fix = false;
@@ -549,19 +548,19 @@ public class InternalTranslation extends Translation{
 			for(Axiom ax : domain_to_translate._Axioms){
 				if(entailedBy(litAdded, ax)){
 					litAdded.addAll(ax._Head);
-					//usedAxioms.add(ax._Name);
+					used.add(ax._Name);
 				}
 			}
 			if(lit.size() == litAdded.size()) fix = true;
 			lit = litAdded;
 		}
-		for(String b : lit){
+		/*for(String b : lit){
 			ArrayList<String> l = new ArrayList<String>();
 			if(domain_to_translate.UncertainPredicates.contains(b)){
 				l.add(predicate);
 				addCauses(b, l);
 			}
-		}
+		}*/
 		return lit;
 	}
 
