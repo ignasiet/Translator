@@ -94,7 +94,12 @@ public class InternalTranslation extends Translation{
 	}
 
 	private void renforceAxioms(){
+		ArrayList<ArrayList<String>> ruleSet = new ArrayList<ArrayList<String>>();
 		for(ArrayList<String> preds : domain_to_translate.specialAxioms){
+			//This is a special axioms inference...please refactor...seriously...
+			if(preds.size() > 3){
+				ruleSet.add(preds);
+			}
 			for(String predicate : preds){
 				Axiom rule = new Axiom();
 				rule._Body.add(predicate);
@@ -103,12 +108,79 @@ public class InternalTranslation extends Translation{
 						rule._Head.add(ParserHelper.complement(predOpposed));
 					}
 				}
-				if(validOutcome(rule)){
+				if(validOutcome(rule) || domain_to_translate.isObservable(rule._Body.get(0))){
 					rule._Name = "extra-rule-" + predicate;
 					domain_to_translate._Axioms.add(rule);
+					if(domain_to_translate.isObservable(predicate)) createOpRule(ParserHelper.complement(predicate), rule._Head);
 				}
 			}
 		}
+		for(ArrayList<String> orRule : ruleSet){
+			for(ArrayList<String> otherRule : ruleSet){
+				if(orRule == otherRule) continue;
+				ArrayList<String> auxRule = new ArrayList<>(otherRule);
+				auxRule.retainAll(orRule);
+				if(!auxRule.isEmpty()){
+					mergeRules(orRule, otherRule, auxRule);
+				}
+			}
+		}
+	}
+
+	private void createOpRule(String complement, ArrayList<String> head) {
+		Axiom ax = new Axiom();
+		ArrayList<ArrayList<String>> metaMerge = new ArrayList<ArrayList<String>>();
+		for(String opposite : head){
+			ArrayList<String> predicates = new ArrayList<String>();
+			if(!domain_to_translate.ruleSet.containsKey(ParserHelper.complement(opposite))) continue;
+			for(ArrayList<String> rules : domain_to_translate.ruleSet.get(ParserHelper.complement(opposite))){
+				for(String p : rules){
+					if(domain_to_translate.isObservable(p)) predicates.add(p);
+				}
+			}
+			metaMerge.add(predicates);
+		}
+		boolean b = true;
+		ArrayList<String> positiveDisj = new ArrayList<String>();
+		for(ArrayList<String> list : metaMerge){
+			if(b){
+				positiveDisj.addAll(list);
+				b = false;
+			}else{
+				positiveDisj.retainAll(list);
+			}
+		}
+		if(positiveDisj.isEmpty()) return;
+		if(positiveDisj.size() == 1 && positiveDisj.contains(complement)) return;
+		ax._Name = "positive-obs-" + complement;
+		ax._Body.add(complement);
+		ax._Head.addAll(positiveDisj);
+		domain_to_translate._Axioms.add(ax);
+	}
+
+	private void mergeRules(ArrayList<String> orRule, ArrayList<String> otherRule, ArrayList<String> auxRule) {
+		Axiom ax = new Axiom();
+		for(String observable : orRule){
+			if(domain_to_translate.isObservable(observable)){
+				ax._Body.add(ParserHelper.complement(observable));
+			}
+		}
+		for(String observable : otherRule){
+			if(domain_to_translate.isObservable(observable)){
+				ax._Body.add(ParserHelper.complement(observable));
+			}
+		}
+		for(String possiblePred : auxRule){
+			for(Disjunction d : domain_to_translate.list_disjunctions){
+				String keySafe = domain_to_translate.related.get(possiblePred).get(0);
+				if(!d.contains(keySafe)) continue;
+				for(String o : d.variablesDerivates.get(keySafe)){
+					if(!o.equals(ParserHelper.complement(possiblePred))) ax._Head.add(o);
+				}
+			}
+		}
+		ax._Name = "merged-axiom-" + ax._Head.toString();
+		domain_to_translate._Axioms.add(ax);
 	}
 
 	private ArrayList<Axiom> recycleRules(){
