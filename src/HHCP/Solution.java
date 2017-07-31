@@ -64,11 +64,11 @@ public class Solution {
             if(graph.getEdge(from, to) != null) continue;
             addEdge(from, to, label);
             if(a.isNondeterministic){
-                for(Node succ : s.applyNonDeterministicAction(a, problem.vAxioms)){
+                for(Node succ : s.applyNonDeterministicAction(a, problem)){
                     open.push(succ);
                 }
             }else{
-                Node succ = s.applyDeterministicAction(a);
+                Node succ = s.applyDeterministicAction(a, problem);
                 open.push(succ);
             }
             solved.add(s.getState());

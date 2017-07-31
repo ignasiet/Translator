@@ -23,6 +23,10 @@ public class Simulator {
         Scanner reader = new Scanner(System.in);  // Reading from System.in
         Heuristic h = new Heuristic(hproblem, null);
         Node node = new Node(initState);
+        node.setActionCounter(new int[problem.getVaList().size()]);
+        node.setActionLayer(new int[problem.getVaList().size()]);
+        int[] factlayer = problem.initLayers(node.getState());
+        node.setFacts(factlayer);
         while(!node.holds(problem.getGoal())){
             h.getValue(node);
             System.out.println("Heuristic action:");
@@ -47,10 +51,18 @@ public class Simulator {
                     System.out.println("Wrong number!, enter again:");
                     chosenEffect = reader.nextInt();
                 }
-                node= node.applyEffect(applicableActions.get(chosenAct).getEffects().get(chosenEffect));
-                node.fixedPoint(problem);
+                /*int[] factlayer = problem.initLayers(node.getState());
+                node.setActionCounter(new int[problem.getVaList().size()]);
+                node.setActionLayer(new int[problem.getVaList().size()]);
+                node.setFacts(factlayer);*/
+                node= node.applyEffect(applicableActions.get(chosenAct).getEffects().get(chosenEffect), problem);
+                //node.fixedPoint(problem);
             }else{
-                node = node.applyDeterministicAction(applicableActions.get(chosenAct));
+                /*int[] factlayer = problem.initLayers(node.getState());
+                node.setActionCounter(new int[problem.getVaList().size()]);
+                node.setActionLayer(new int[problem.getVaList().size()]);
+                node.setFacts(factlayer);*/
+                node = node.applyDeterministicAction(applicableActions.get(chosenAct), problem);
             }
         }
     }
@@ -91,11 +103,11 @@ public class Simulator {
                     System.out.println("Wrong number!, enter again:");
                     chosenEffect = reader.nextInt();
                 }
-                n= n.applyEffect(action.getEffects().get(chosenEffect));
+                n= n.applyEffect(action.getEffects().get(chosenEffect), problem);
                 n.fixedPoint(problem);
             } else {
                 System.out.println("Deterministic action: " + action.getName());
-                Node succ = n.applyDeterministicAction(action);
+                Node succ = n.applyDeterministicAction(action, problem);
                 n = succ;
             }
         }

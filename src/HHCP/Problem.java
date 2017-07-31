@@ -314,5 +314,14 @@ public class Problem {
         }
     }
 
-
+    public int[] initLayers(BitSet state) {
+        //1 Init list of scheduled actions: no action scheduled
+        int[] factsLayer = new int[getSize()];
+        Arrays.fill(factsLayer, Integer.MAX_VALUE);
+        //2 For every predicate that is in the current state, update facts layer to put a 0 value
+        for (int i = state.nextSetBit(0); i >= 0; i = state.nextSetBit(i+1)) {
+            factsLayer[i] =0;
+        }
+        return factsLayer;
+    }
 }

@@ -11,7 +11,6 @@ public class RelaxedGraphH {
     private int[] factsLayer;
     private int[] actionCounter;
     private int[] actionLayer;
-    private int[] axiomLayer;
     private int[] difficultyLayer;
     //Mapping from layer level -> goals at that level
     private HashMap<Integer, Integer[]> goalMembership = new HashMap<Integer, Integer[]>();

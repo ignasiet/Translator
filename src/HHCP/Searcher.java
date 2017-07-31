@@ -40,6 +40,7 @@ public class Searcher {
         while(modified){
             modified = false;
             open.add(p.getInitState());
+            //Init the fact layer for the first time...
             HashMap<BitSet, Integer> parentAction = new HashMap<>();
             while(!open.isEmpty()){
                 BitSet s = open.pop();
@@ -60,11 +61,6 @@ public class Searcher {
                     int indexAction = policyP.find(s);
                     //New verification: verify that the new pair is not marked yet!
                     if(!policyP.valid(s)){
-                    	//If it is not marked...put it on the open list
-                    	/*if(indexAction == 198){
-                    		System.out.println(problem.getAction(parentAction.get(s)).getName());
-                    		System.out.println("Fatal moment");
-                    	}*/
                         applyAction(indexAction, s, parentAction);
                         modified = false;
                     }
@@ -124,7 +120,6 @@ public class Searcher {
             changed = false;
             for(BitSet bs : policyP.iteratorStatesActions()){
                 if(entails(bs, problem.getGoal()) || !policyP.marked.get(bs)) continue;
-                //TODO:correct find operation. Use tries?
                 int indexAction = policyP.find(bs);
                 VAction a = problem.getAction(indexAction);
                 //Verify for each effect 2 conditions:
@@ -132,19 +127,23 @@ public class Searcher {
                 if(a.isNondeterministic) {
                     for (VEffect e : a.getEffects()) {
                         BitSet s = (BitSet) bs.clone();
-                        applyEffect(s, e);
-                        successors.add(s);
+                        //applyEffect(s, e);
+                        successors.add(applyEffect(s, e));
                     }
                 }else{
                     BitSet s = (BitSet) bs.clone();
                     for(VEffect e : a.getEffects()) {
-                        applyEffect(s, e);
+                        //applyEffect(s, e);
+                        s.or(e.getAddList());
+                        for(int i = e.getDelList().nextSetBit(0);i>=0;i=e.getDelList().nextSetBit(i+1)){
+                            s.set(i, false);
+                        }
                     }
                     successors.add(s);
                 }
                 /*With the new states verify the 2 conditions:
-                1 At least one successor is in the policy:
-                2 States returned are marked.
+                    1 At least one successor is in the policy:
+                    2 States returned are marked.
                 If not children or goal nodes: remain marked true
                 */
                 for(BitSet successor : successors){
@@ -160,39 +159,42 @@ public class Searcher {
         }
     }
 
-    private void applyEffect(BitSet s, VEffect e){
-        /*for(int indexEffect : e.getDelList()){
-            s.set(indexEffect, false);
-        }*/
-        //Add operation between bitsets:
-        s.or(e.getAddList());
-        /*BitSet x = (BitSet) s.clone();
-        x.xor(e.getDelList());*/
+    private BitSet applyEffect(BitSet s, VEffect e){
+        //TODO: Apply effects and non-deterministic points here!!!!
+        /*s.or(e.getAddList());
         for(int i = e.getDelList().nextSetBit(0);i>=0;i=e.getDelList().nextSetBit(i+1)){
             s.set(i, false);
-        }
-        //s.xor(e.getDelList());
-        /*for(int indexEffect : e.getAddList()){
-            s.set(indexEffect);
         }*/
+        Node initNode = new Node(s);
+        //TODO: how to recover the counters of action preconditions
+        int[] factlayer = problem.initLayers(s);
+        initNode.setFacts(factlayer);
+        initNode.setActionCounterInc(problem);
+        //initNode.setActionCounter(new int[problem.getVaList().size()]);
+        initNode.setActionLayer(new int[problem.getVaList().size()]);
+        Node returnNode = initNode.applyEffect(e, problem);
+        return returnNode.getState();
     }
 
     private void applyAction(int indexAction, BitSet s, HashMap<BitSet, Integer> parentAction){
         VAction a = problem.getAction(indexAction);
         if(a.isNondeterministic){
             for(VEffect e : a.getEffects()){
-                BitSet s2 = (BitSet) s.clone();
-                applyEffect(s2, e);
+                BitSet s2 = applyEffect((BitSet) s.clone(), e);
                 parentAction.put(s2, indexAction);
                 Node n = new Node(s2);
-                n.fixedPoint(n, problem.vAxioms);
+                //n.fixedPoint(n, problem.vAxioms);
                 open.push(n.getState());
             }
         }else{
-            BitSet s2 = (BitSet) s.clone();
             for(VEffect e : a.getEffects()){
-                applyEffect(s2, e);
+                //applyEffect(s2, e);
+                s.or(e.getAddList());
+                for(int i = e.getDelList().nextSetBit(0);i>=0;i=e.getDelList().nextSetBit(i+1)){
+                    s.set(i, false);
+                }
             }
+            BitSet s2 = (BitSet) s.clone();
             parentAction.put(s2, indexAction);
             open.push(s2);
         }
@@ -226,6 +228,13 @@ public class Searcher {
         Comparator<Node> comparator = new NodeComparator();
         fringe = new PriorityQueue<Node>(100, comparator);
         Node initNode = new Node(initState);
+        //TODO: how to recover the counters of action preconditions
+        int[] factlayer = problem.initLayers(initState);
+        initNode.setActionCounterInc(problem);
+        //initNode.setActionCounter(new int[problem.getVaList().size()]);
+        initNode.setActionLayer(new int[problem.getVaList().size()]);
+        initNode.setFacts(factlayer);
+        //
         h.getValue(initNode);
         fringe.add(initNode);
         visited.clear();
@@ -241,6 +250,7 @@ public class Searcher {
             visited.add(node.getState());
             if(node.holds(problem.getGoal()) || policyP.valid(node.getState()) ){
                 //solution = true;
+                //System.out.println("Solution found");
                 RegressPlan(node);
                 break;
             }
@@ -261,7 +271,7 @@ public class Searcher {
 
     private void addToFringe(VAction va, Node node){
         if (va.isNondeterministic) {
-            ArrayList<Node> getSuccessorNodes = node.applyNonDeterministicAction(va, problem.vAxioms);
+            ArrayList<Node> getSuccessorNodes = node.applyNonDeterministicAction(va, problem);
             for (Node n : getSuccessorNodes) {
                 //Review condition of adding the new state:
                 if (!DeadEnds.contains(n.getState())) {
@@ -276,7 +286,7 @@ public class Searcher {
                 }
             }
         } else {
-            Node n = node.applyDeterministicAction(va);
+            Node n = node.applyDeterministicAction(va, problem);
             if (!DeadEnds.contains(n.getState())) {
                 /*if(visited.contains(n.getState())){
                     va = HProblem.getAction(node.relaxedSolution.get(node.relaxedSolution.size()-2));
@@ -327,28 +337,13 @@ public class Searcher {
     		int index = node.axioms.get(i);
     		VAction ax = problem.getAction(index);
             r.or(ax.preconditions);
-        	/*for (int p = ax.preconditions.nextSetBit(0); p >= 0; p = ax.preconditions.nextSetBit(p+1)) {
-                r.set(p);
-            }*/
-            //Axioms have only one effect:
         	for(VEffect e : ax.getEffects()){
-                //BitSet A = (BitSet) e.getAddList().clone();
-                //A.and(r);
                 for(int j = e.getAddList().nextSetBit(0); j>=0;j=e.getAddList().nextSetBit(j+1)){
                     //TODO: vvvv verify regression here! vvvvv
                     if(!node.parent.getState().get(j)){
                         r.set(j,false);
                     }
-                    //r.set(j,false);
                 }
-                /*if(A.equals(e.getAddList())){
-
-                }*/
-                /*for(int eff : e.getAddList()){
-                    if(r.get(eff)){
-                    	r.set(eff,false);
-                    }
-                }*/
             }
     	}
 	}
