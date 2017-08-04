@@ -58,11 +58,10 @@ public class Planner {
 		//domain.eliminateInvalidObservations();
 		domain.eliminateUselessEffects();
 		long endTime = System.currentTimeMillis();
+		domain.transformToVariables();
 		System.out.println("Preprocessing time: " + (endTime - startTime) + " milliseconds");
 		
-		//TODO: Print domain, to test for errors: show Thiago
-		// to create a domain generator
-		
+
 		/*Time measure: translation*/
 		domain = ParserHelper.cleanProblem(domain);
 		cg = new CausalGraph(domain);

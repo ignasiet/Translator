@@ -177,9 +177,6 @@ public class Domain {
 		predicates_never = new Hashtable<String, Integer>(variant_predicates);
 	}
 	
-	/*TODO: Non deterministic actions have effects in branches.
-	 * How to put observations/non-deterministc action effects?
-	  * */
 	public void getInvariantPredicates(){
 		HashSet<String> predicates_variants = new HashSet<String>();
 		for(String p : predicates){
@@ -550,7 +547,7 @@ public class Domain {
 	}
 
 	/*TODO: implement function Related to, where every threat (pit_X or wumpus_X)
-	* is related to a oneof element (safe_X)
+	 is related to a oneof element (safe_X)
 	* */
 	private void relateTo(ArrayList<String> axiom){
 		String flag = null;
@@ -596,5 +593,9 @@ public class Domain {
 			}
 		}
 		return r;
+	}
+
+	public void transformToVariables() {
+
 	}
 }

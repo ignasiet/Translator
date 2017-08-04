@@ -94,6 +94,7 @@ public class PartialPolicy {
     }
 
     public boolean valid(BitSet s){
+        if(marked.containsKey(s)) return marked.get(s);
         for(BitSet li : marked.keySet()){
         	BitSet A = (BitSet) li.clone();
     		A.and(s);
@@ -108,6 +109,7 @@ public class PartialPolicy {
     /**Returns the index of the action or -1 if there is no state that entails s*/
     public int action(BitSet s){
     	//BitSet[] li = (BitSet[]) marked.keySet().toArray();
+        if(partial.containsKey(s)) return partial.get(s);
     	boolean found = false;
     	//int i = 0;
     	BitSet bestShot = new BitSet();
