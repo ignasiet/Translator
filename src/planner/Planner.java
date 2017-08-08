@@ -13,6 +13,8 @@ import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import HHCP.Heuristic;
+import HHCP.Node;
 import HHCP.Problem;
 import HHCP.Searcher;
 import causalgraph.UncertaintyGraph;
@@ -44,21 +46,8 @@ public class Planner {
 			outputPath = file_out_path;
 		}
 		long startTime = System.currentTimeMillis();
-		domain = initParsing(domain_file_path, problem_file_path);
-		//init();
-		/*Ground conditional effects*/
-		domain.ground_all_actions();
-		if(!(hidden_file == null)){
-			parseHidden(hidden_file);
-		}
-		
-		/*Process entry*/
-		domain.getInvariantPredicates();
-		domain.eliminateInvalidActions();
-		//domain.eliminateInvalidObservations();
-		domain.eliminateUselessEffects();
+		initDomain(domain_file_path, problem_file_path, hidden_file);
 		long endTime = System.currentTimeMillis();
-		domain.transformToVariables();
 		System.out.println("Preprocessing time: " + (endTime - startTime) + " milliseconds");
 		
 
@@ -111,19 +100,20 @@ public class Planner {
 		}
 
 		System.out.println("Transformation to vectors completed. ");
+		
+		
 
 		//LANDMARKS
 		//@SuppressWarnings("unused")
 		Landmarker l = new Landmarker(domain_translated.state, domain_translated.list_actions, domain_translated.goalState);
+		
+		computeHeuristic(hP);
 
 		System.out.println("Init Search. ");
 
 		//Simulator sim = new Simulator(null, p.getInitState(), p, hP);
 		Searcher search = new Searcher(p, hP, l.getLandmarks());
 		//search.GenPlanPairs(p.getInitState());
-
-		//BDDSearcher b = new BDDSearcher(tr.getDomainTranslated());
-		//System.out.println("Regression complete");
 		
 		/*Size measure*/
 		//System.out.println(domain.predicates_grounded.size() + " " + tr.domain_translated.predicates_grounded.size());
@@ -131,6 +121,33 @@ public class Planner {
 		if(!(file_out_path == null)) printDomain(tr);
 	}
 	
+	private static void computeHeuristic(Problem p) {
+        boolean deadEndsFound = false;
+        Heuristic h = new Heuristic(p, new ArrayList<Integer>());
+        Node initNode = new Node(p.getInitState());
+        int hVal = h.getValue(initNode);
+        if(hVal >= Integer.MAX_VALUE || hVal < 0){
+        	System.out.println("Dead-end!!!! of type 1 or 3");
+        	//TODO: add human observations to verify if type 3, and correct
+        }
+	}
+
+	private static void initDomain(String domain_file_path, String problem_file_path, String hidden_file) {
+		domain = initParsing(domain_file_path, problem_file_path);
+		//init();
+		/*Ground conditional effects*/
+		domain.ground_all_actions();
+		if(!(hidden_file == null)){
+			parseHidden(hidden_file);
+		}		
+		/*Process entry*/
+		domain.getInvariantPredicates();
+		domain.eliminateInvalidActions();
+		//domain.eliminateInvalidObservations();
+		domain.eliminateUselessEffects();
+		//domain.transformToVariables();
+	}
+
 	private static Translation translate(String type, Domain domain){
 		if(type.equals("internal")){
 			InternalTranslation it = new InternalTranslation(domain, cg);

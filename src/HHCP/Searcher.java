@@ -228,10 +228,9 @@ public class Searcher {
         Comparator<Node> comparator = new NodeComparator();
         fringe = new PriorityQueue<Node>(100, comparator);
         Node initNode = new Node(initState);
-        //TODO: how to recover the counters of action preconditions
         int[] factlayer = problem.initLayers(initState);
         initNode.setActionCounterInc(problem);
-        //initNode.setActionCounter(new int[problem.getVaList().size()]);
+
         initNode.setActionLayer(new int[problem.getVaList().size()]);
         initNode.setFacts(factlayer);
         //
@@ -250,7 +249,7 @@ public class Searcher {
             visited.add(node.getState());
             if(node.holds(problem.getGoal()) || policyP.valid(node.getState()) ){
                 //solution = true;
-                //System.out.println("Solution found");
+                System.out.println("Solution found");
                 RegressPlan(node);
                 break;
             }

@@ -339,6 +339,9 @@ public class Domain {
 			if(action.IsObservation){
 				act_grounded.IsObservation = true;
 			}
+			if(action._IsNondeterministic){
+				act_grounded._IsNondeterministic = true;
+			}
 			act_grounded.combination = combination;
 			act_grounded.Name = action.Name + "_" + combination.replace(";", "_");
 			ArrayList<String> lista_objetos = new ArrayList<String>(Arrays.asList(combination.split(";")));
@@ -366,9 +369,31 @@ public class Domain {
 					act_grounded._Effects.add(groundEffect(effect, act_grounded));
 				}					
 				//groundEffects(act_grounded);
+				if(act_grounded._IsNondeterministic){
+					for(Branch br : action._Branches){
+						act_grounded._Branches.add(groundBranches(br, act_grounded));
+					}
+				}
 				list_actions.put(act_grounded.Name, act_grounded);
-			}
+			}			
 		}
+	}
+	
+	private Branch groundBranches(Branch br, Action act_grounded){
+		Branch b = new Branch();
+		ArrayList<String> lista_objetos = new ArrayList<String>(Arrays.asList(act_grounded.combination.split(";")));
+		ArrayList<String> list_effects = new ArrayList<String>();
+		String eff_effect = br._Branches.toString().replace("[", "").replace("]", "");
+		int i = 0;
+		for(String parameter : act_grounded._parameters){
+			eff_effect = eff_effect.replace(parameter, lista_objetos.get(i));
+			i++;
+		}
+		for(String item : Arrays.asList(eff_effect.split(","))){
+			list_effects.add(item.trim());
+		}		
+		b._Branches = list_effects;
+		return b;
 	}
 	
 	private Effect groundEffect(Effect eff, Action act_grounded){
@@ -595,7 +620,8 @@ public class Domain {
 		return r;
 	}
 
+	//TODO: Identify variables
 	public void transformToVariables() {
-
+		
 	}
 }

@@ -6,6 +6,7 @@ package parser;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -52,7 +53,8 @@ public class ParserHelper {
 	}
 	
 	public static int countElements(String predicate){
-		PDDLTokenizer tzr = new PDDLTokenizer(predicate);
+		String p = predicate.replace("not", "");
+		PDDLTokenizer tzr = new PDDLTokenizer(p);
 		PDDLParser parser = new PDDLParser(tzr);
 		Expr result;
 		try {
@@ -62,8 +64,7 @@ public class ParserHelper {
 		} catch (ParseException e) {
 			e.printStackTrace();
 			return 0;
-		}
-		
+		}		
 	}
 	
 	public static ExprList parse(String predicate){
@@ -78,6 +79,24 @@ public class ParserHelper {
 			//e.printStackTrace();
 			return null;
 		}
+	}
+	
+	private static void parse(String list, ArrayList<String> Branches) {
+		PDDLTokenizer tzr = new PDDLTokenizer(list);
+		PDDLParser parser = new PDDLParser(tzr);
+		Expr result;
+		try {
+			result = parser.parseExpr();
+			ExprList eList = (ExprList) result;
+			Iterator<Expr> it = eList.iterator();
+			while(it.hasNext()){
+				String s = it.next().toString().trim();
+				if(s.equals("and")) continue;
+				Branches.add(cleanString(s));
+			}
+		} catch (ParseException e) {
+			//e.printStackTrace();
+		}		
 	}
 	
 	public static int ParseCost(String s){
@@ -102,17 +121,32 @@ public class ParserHelper {
 		Branch b1 = new Branch();
 		Branch b2 = new Branch();
 		ExprList e = new ExprList();
+		
 		if((e = ParserHelper.itemize(s)) != null){
-			String branch1 = cleanString(e.get(1).toString().trim());
+			if(countElements(e.get(1).toString()) > 1){
+				parse(e.get(1).toString(), b1._Branches);
+			}else{
+				String listEffects = e.get(1).toString().replaceAll("\\n", "").replaceAll("not\\s+\\(", "~");
+				parse(listEffects, b1._Branches);
+			}
+			if(countElements(e.get(2).toString()) > 1){
+				parse(e.get(2).toString(), b2._Branches);
+			}else{
+				String listEffects = e.get(2).toString().replaceAll("\\n", "").replaceAll("not\\s+\\(", "~");
+				parse(listEffects, b2._Branches);
+			}
+			/*String branch1 = cleanString(e.get(1).toString().trim());
 			b1._Branches.add(branch1);
 			String branch2 = cleanString(e.get(2).toString().trim());
-			b2._Branches.add(branch2);
+			b2._Branches.add(branch2);*/
 		}
 		Branch[] branches = new Branch[2];
 		branches[0] = b1;
 		branches[1] = b2;
 		return branches;
 	}
+
+	
 
 	public static String cleanString(String a){
 		a = a.replace("and", "").replaceAll("\\n", "").replaceAll("\\s+", " ");;

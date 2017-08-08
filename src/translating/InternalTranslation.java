@@ -365,6 +365,8 @@ public class InternalTranslation extends Translation{
 				@SuppressWarnings("unused")
 				Hashtable<String, HashSet<String>> entailedBy = getReasonedPredicates(a);
 				if(entailedBy != null)	translateObservations(a, entailedBy);
+			}else if(a._IsNondeterministic){
+				translateBranches(a);
 			}else{
 				Action a_translated = new Action();
 				//Copying costs
@@ -373,7 +375,6 @@ public class InternalTranslation extends Translation{
 				a_translated.Name = a.Name;
 				for(String precondition : a._precond){
 					//Preconditions now are conditions of conditionals effects
-					//TODO: add M-predicates
 					a_translated._precond.add("K" + precondition);
 				}
 				if(a.deductive_action){
@@ -383,14 +384,43 @@ public class InternalTranslation extends Translation{
 					a_translated._IsConditionalEffect = true;
 				}
 				for(Effect eff : a._Effects){
-					/*if(!eff._Condition.isEmpty() && isImposibleConditions(eff._Condition)){
-						continue;
-					}*/
 					a_translated._Effects.addAll(translateEffects(eff, a._precond));
 				}
 				domain_translated.list_actions.put(a_translated.Name, a_translated);
 			}
 		}
+	}
+
+	private void translateBranches(Action a) {
+		Action a_translated = new Action();
+		a_translated.Name = a.Name;
+		
+		for(String precondition : a._precond){
+			a_translated._precond.add("K" + precondition);
+		}
+		
+		Branch branch1 = new Branch();
+		Branch branch2 = new Branch();
+		if(!a._Effects.isEmpty()){
+			for(String eff : a._Effects.get(0)._Effects){
+				branch1._Branches.add("K" + eff);
+				branch1._Branches.add("~K" + ParserHelper.complement(eff));
+				branch2._Branches.add("K" + eff);
+				branch2._Branches.add("~K" + ParserHelper.complement(eff));
+			}
+		}
+		for(String br1 : a._Branches.get(0)._Branches){
+			branch1._Branches.add("K" + br1);
+			branch1._Branches.add("~K" + ParserHelper.complement(br1));
+		}
+		
+		for(String br2 : a._Branches.get(1)._Branches){
+			branch2._Branches.add("K" + br2);
+			branch2._Branches.add("~K" + ParserHelper.complement(br2));
+		}		
+		a_translated._Branches.add(branch1);
+		a_translated._Branches.add(branch2);
+		domain_translated.list_actions.put(a_translated.Name, a_translated);
 	}
 
 	private ArrayList<Effect> translateEffects(Effect eff, ArrayList<String> _precond){

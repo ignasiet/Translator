@@ -38,7 +38,7 @@ public class Heuristic {
 
     private int returnValue(RelaxedGraphH rp, Node node){
         try {
-            if (rp.getValue() != 0) {
+            if (rp.getValue() != 0 && rp.getValue() < Integer.MAX_VALUE) {
                 node.setRelaxedSolution(rp.getRelaxedSolution());
                 //node.setBestRelaxedAction(problem.getAction(extractPreferredAction(rp.reSolution)).getName());
                 node.setBestRelaxedAction(problem.getAction(rp.getRelaxedSolution().get(rp.getRelaxedSolution().size() - 1)).getName());
