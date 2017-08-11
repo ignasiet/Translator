@@ -12,19 +12,21 @@ public class RelaxedGraphH {
     private int[] actionCounter;
     private int[] actionLayer;
     private int[] difficultyLayer;
+    private int[] cost;
+    private boolean usecosts = false;
     //Mapping from layer level -> goals at that level
     private HashMap<Integer, Integer[]> goalMembership = new HashMap<Integer, Integer[]>();
     private HashMap<Integer, Integer[]> addedBy = new HashMap<Integer, Integer[]>();
     private HashSet<Integer> landmarks;
     private int m;
-    private BitSet scheduledActions;
+    private BitSet scheduledActions = new BitSet();
     //Is predicate at i marked true?
     private BitSet goalMarked;
     private int value = 0;
     private ArrayList<Integer> relaxedSolution = new ArrayList<Integer>();
     public HashMap<Integer, ArrayList<Integer>> reSolution = new HashMap<Integer, ArrayList<Integer>>();
 
-    public RelaxedGraphH(Problem p, BitSet state, HashSet<Integer> l){
+    public RelaxedGraphH(Problem p){
         problem = p;
         factsLayer = new int[p.getSize()];
         //goalMembership = new int[p.getSize()];
@@ -33,6 +35,14 @@ public class RelaxedGraphH {
         difficultyLayer = new int[p.getVaList().size()];
         Arrays.fill(factsLayer, Integer.MAX_VALUE);
         goalMarked = new BitSet();
+    }
+
+    public void setCost(int[] cost) {
+        usecosts = true;
+        this.cost = cost;
+    }
+
+    public void calculateHeuristic(BitSet state, HashSet<Integer> l){
         initLayers(state);
         if(l != null) {
             landmarks = l;
@@ -59,9 +69,13 @@ public class RelaxedGraphH {
 
     }
 
+    public void preScheduleActions(BitSet preacts){
+        scheduledActions.or(preacts);
+    }
+
     private void initLayers(BitSet state) {
         //1 Init list of scheduled actions: no action scheduled
-        scheduledActions = new BitSet();
+        //scheduledActions = new BitSet();
         //scheduledActions = new BitSet(problem.getVaList().size());
         //2 For every predicate that is in the current state, update facts layer to put a 0 value
         for (int i = state.nextSetBit(0); i >= 0; i = state.nextSetBit(i+1)) {
@@ -168,7 +182,11 @@ public class RelaxedGraphH {
             Integer[] oldList = addedBy.get(index);
             Integer[] newList = Arrays.copyOf(oldList, oldList.length + 1);
             newList[oldList.length] = i;
-            Arrays.sort(newList, new MyComparator());
+            if(!usecosts) {
+                Arrays.sort(newList, new difficultyComparator());
+            }else{
+                Arrays.sort(newList, new costComparator());
+            }
             addedBy.put(index, newList);
         }else{
             Integer[] listNew = new Integer[1];
@@ -312,13 +330,25 @@ public class RelaxedGraphH {
         return true;
     }
 
-    /**Comparator of the difficulty of the actions*/
-    public class MyComparator implements Comparator<Integer> {
+    /** Actions difficulty comparator*/
+    public class difficultyComparator implements Comparator<Integer> {
         @Override
         public int compare(Integer i1, Integer i2) {
             int compare = (actionLayer[i1] > actionLayer[i2]) ? 1 : 0;
             if(compare == 0){
                 compare = (actionLayer[i1] == actionLayer[i2]) ? 0 : -1;
+            }
+            return compare;
+        }
+    }
+
+    /** Cost comparator*/
+    public class costComparator implements Comparator<Integer> {
+        @Override
+        public int compare(Integer i1, Integer i2) {
+            int compare = (cost[i1] > cost[i2]) ? 1 : 0;
+            if(compare == 0){
+                compare = (cost[i1] == cost[i2]) ? 0 : -1;
             }
             return compare;
         }

@@ -24,6 +24,7 @@ public class InternalTranslation extends Translation{
 	private ArrayList<Action> ObsHeuristics = new ArrayList<Action>();
 	private Hashtable<String, HashSet<String>> oppositeObs = new Hashtable<String, HashSet<String>>();
 	private Hashtable<String, HashSet<String>> causes = new Hashtable<String, HashSet<String>>();
+	private HashSet<String> uselessObsFluents = new HashSet<String>();
 
 	public InternalTranslation(Domain d, CausalGraph cg) {
 		// 0 - Copy domain metadata
@@ -228,7 +229,7 @@ public class InternalTranslation extends Translation{
 					if(!e._Effects.contains("K" + b)){
 						e._Effects.add("K" + b);
 						e._Effects.add("~K" + ParserHelper.complement(b));
-						if(domain_to_translate.isObservable(b)){
+						if(domain_to_translate.isObservable(b) && !notUselessObs(b)){
 							e._Effects.add("K~not-observed-" + b.replace("~", ""));
 							e._Effects.add("~Knot-observed-" + b.replace("~", ""));
 						}
@@ -245,6 +246,10 @@ public class InternalTranslation extends Translation{
 			i++;
 		}
 		System.out.println("Done.");
+	}
+
+	private boolean notUselessObs(String b) {
+		return uselessObsFluents.contains(b);
 	}
 
 	private void addSpecialAxioms(){
@@ -362,7 +367,6 @@ public class InternalTranslation extends Translation{
 				translateDeadAction(a, complexEff);
 			}*/
 			if(a.IsObservation){
-				@SuppressWarnings("unused")
 				Hashtable<String, HashSet<String>> entailedBy = getReasonedPredicates(a);
 				if(entailedBy != null)	translateObservations(a, entailedBy);
 			}else if(a._IsNondeterministic){
@@ -394,6 +398,7 @@ public class InternalTranslation extends Translation{
 	private void translateBranches(Action a) {
 		Action a_translated = new Action();
 		a_translated.Name = a.Name;
+		a_translated.cost = a.cost;
 		
 		for(String precondition : a._precond){
 			a_translated._precond.add("K" + precondition);
@@ -512,7 +517,9 @@ public class InternalTranslation extends Translation{
 			addPredicate("K" + ParserHelper.complement(deducted));
 			branch1._Branches.add("K" + deducted);
 			branch1._Branches.add("~K" + ParserHelper.complement(deducted));
-			if(domain_to_translate.isObservable(deducted) && !obs.equals(deducted) && !negObs.equals(deducted)){
+			if(domain_to_translate.isObservable(deducted) && !obs.equals(deducted) && !negObs.equals(deducted) && !notUselessObs(deducted)){
+				addPredicate("K~not-observed-" + deducted.replace("~", ""));
+				addPredicate("Knot-observed-" + deducted.replace("~", ""));
 				branch1._Branches.add("K~not-observed-" + deducted.replace("~", ""));
 				branch1._Branches.add("~Knot-observed-" + deducted.replace("~", ""));
 			}
@@ -587,7 +594,8 @@ public class InternalTranslation extends Translation{
 		entailedBy.put(predicate, fixedPointIterationReasoning(predicate, used));
 		entailedBy.put(negPredicate, fixedPointIterationReasoning(negPredicate, used));
 
-		if(((entailedBy.get(predicate).size()==1) && (entailedBy.get(negPredicate).size()==1)) ){
+		if(((entailedBy.get(predicate).size()==1) && (entailedBy.get(negPredicate).size()==1))
+				|| (notInvalidConclussions(entailedBy))){
 			System.out.println("Useless observation: " + a.Name);
 			used.clear();
 			uselessObs.add(predicate);
@@ -596,6 +604,19 @@ public class InternalTranslation extends Translation{
 		usedAxioms.addAll(used);
 		//System.out.println("Used axioms: " + used.toString());
 		return entailedBy;
+	}
+
+	private boolean notInvalidConclussions(Hashtable<String, HashSet<String>> entailedBy) {
+		for(String key : entailedBy.keySet()){
+			for(Disjunction d : domain_to_translate.list_disjunctions){
+				if(d.entailsInvalid(entailedBy.get(key))){
+					uselessObsFluents.add(key);
+					uselessObsFluents.add(ParserHelper.complement(key));
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	private boolean validOutcome(Axiom rule) {

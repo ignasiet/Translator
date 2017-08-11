@@ -81,5 +81,11 @@ public class Effect {
 			return predicate;
 		}
 	}
-	
+
+	public boolean affectedPred(String predicate){
+		if(_Effects.contains(predicate) || _Effects.contains(ParserHelper.complement(predicate))){
+			return true;
+		}
+		return false;
+	}
 }

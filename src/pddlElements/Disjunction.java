@@ -43,6 +43,10 @@ public class Disjunction {
 		return fluent;
 	}
 
+	public Boolean entailsInvalid(HashSet<String> strings){
+		return strings.containsAll(listNodes);
+	}
+
 	public boolean hasInside(String predicate){
 		return predicate.equals(fluent);
 	}

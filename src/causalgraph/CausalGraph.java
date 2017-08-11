@@ -12,6 +12,7 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.Stack;
 
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.Graphs;
@@ -33,6 +34,7 @@ public class CausalGraph {
 	private Integer index = 0;
 	private Set<String> literals = new HashSet<String>();
 	private Hashtable<String, Integer> predicateCount;
+
 	
 	public CausalGraph(Domain d){
 		graph = createStringGraph();
@@ -221,10 +223,6 @@ public class CausalGraph {
 	private void buildgraph(Domain d, Action a) {
 		for(Effect e : a._Effects){
 			for(String to : e._Effects){
-				/*if(isVariable(to)){
-					addToVariablesList(variables, to);
-				}*/
-				//if(!d.isUncertain(to)) continue;
 				graph.addVertex(cleanStringDot(to));
 				ArrayList<String> origins = new ArrayList<String>(e._Condition);
 				origins.addAll(a._precond);
@@ -232,7 +230,6 @@ public class CausalGraph {
 					Edge<String> edge = new Edge<String>(cleanStringDot(from), cleanStringDot(to), a.Name);
 					graph.addVertex(cleanStringDot(from));
 					if(from.equals(to)){
-						//System.out.println("Loop: action " + a.Name + " " + from + " " + to);
 						continue;
 					}
 					graph.addEdge(cleanStringDot(from), cleanStringDot(to), edge);
@@ -314,45 +311,42 @@ public class CausalGraph {
     	}
     }
 
-    /*private void extract(Action a) {
-		for(Effect e : a._Effects){
-			for(String effect : e._Effects){
-				ArrayList<String> list = new ArrayList<String>(a._precond);
-				list.addAll(e._Condition);
-				if(antecessors.containsKey(effect)){
-					//list.addAll(antecessor.get(effect));
-					//Remove duplicates
-					Set<String> hs = new HashSet<>();
-					hs.addAll(list);
-					hs.addAll(antecessors.get(effect));
-					list.clear();
-					list.addAll(hs);
-					antecessors.put(effect, list);
-				}else{
-					antecessors.put(effect, list);
-				}
-			}
-		}
-	}
-	
-	private void construct(String key, ArrayList<String> list){
-		for(String s : list){
-			if(successors.containsKey(s)){
-				//Remove duplicates
-				Set<String> hs = new HashSet<>();
-				hs.addAll(successors.get(s));
-				ArrayList<String> sucList = new ArrayList<String>();
-				hs.add(key);
-				sucList.addAll(hs);
-				successors.put(s, sucList);
+	public HashSet<String> relevantLiterals(ArrayList<String> goalState){
+		HashSet<String> visited = new HashSet<String>();
+		//Start marking from node Dummy
+		Stack<String> fringe = new Stack<String>();
+		for(String goal : goalState){
+			//Clean goal string (it is translated)
+			if(goal.startsWith("K") || goal.startsWith("Kn_")){
+				fringe.add(cleanStringDot(goal.replace("Kn_", "").replace("K", "")));
+				//visited.add(cleanStringDot(goal.replace("Kn_", "").replace("K", "")));
 			}else{
-				ArrayList<String> sucList = new ArrayList<String>();
-				sucList.add(key);
-				successors.put(s, sucList);
+				fringe.add(goal);
 			}
 		}
-	}*/
-    
+		while(!fringe.isEmpty()){
+			String current = cleanStringDot(fringe.pop());
+			if(visited.contains(current)) continue;
+			visited.add(current);
+			Set<Edge> edges = graph.incomingEdgesOf(current);
+			for(Edge edge : edges){
+				String vertex = graph.getEdgeSource(edge);
+				if(visited.contains(vertex)) continue;
+				fringe.add(vertex);
+			}
+		}
+		return cleanSetFluents(visited);
+	}
+
+	private HashSet<String> cleanSetFluents(HashSet<String> visited){
+		HashSet<String> originalRelevantFluents = new HashSet<String>();
+		for(String fluent : visited){
+			String flCleaned = cleanBackDot(fluent);
+			originalRelevantFluents.add("K" + flCleaned);
+		}
+		return originalRelevantFluents;
+	}
+
     public ArrayList<String> enhancedObservation(String observed){
     	List<String> causal = Graphs.predecessorListOf(graph, cleanStringDot(observed));
     	List<String> inversed = Graphs.predecessorListOf(graph, cleanStringDot(ParserHelper.complement(observed)));

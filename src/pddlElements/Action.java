@@ -222,4 +222,13 @@ public class Action{
 		}
 		return auxStr;
 	}
+
+	public boolean affectedPred(String predicate){
+		for(Effect eff : _Effects) {
+			if (eff.affectedPred(predicate)) {
+				return true;
+			}
+		}
+		return false;
+	}
 }

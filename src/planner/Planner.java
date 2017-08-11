@@ -6,17 +6,11 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.Random;
-import java.util.Scanner;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import HHCP.Heuristic;
-import HHCP.Node;
-import HHCP.Problem;
-import HHCP.Searcher;
+import HHCP.*;
 import causalgraph.UncertaintyGraph;
 import landmark.Landmarker;
 import parser.Parser;
@@ -54,6 +48,7 @@ public class Planner {
 		/*Time measure: translation*/
 		domain = ParserHelper.cleanProblem(domain);
 		cg = new CausalGraph(domain);
+		HashSet<String> relevants = cg.relevantLiterals(domain.goalState);
 
 		UncertaintyGraph uG = new UncertaintyGraph(domain);
 		startTime = System.currentTimeMillis();
@@ -99,12 +94,11 @@ public class Planner {
 			hP.observables.add(hP.getPredicate("K"+pred));
 		}
 
-		System.out.println("Transformation to vectors completed. ");
-		
-		
+		p.setVectorCosts();
+		hP.setVectorCosts();
 
+		System.out.println("Transformation to vectors completed. ");
 		//LANDMARKS
-		//@SuppressWarnings("unused")
 		Landmarker l = new Landmarker(domain_translated.state, domain_translated.list_actions, domain_translated.goalState);
 		
 		computeHeuristic(hP);
@@ -122,19 +116,32 @@ public class Planner {
 	}
 	
 	private static void computeHeuristic(Problem p) {
-        boolean deadEndsFound = false;
-        Heuristic h = new Heuristic(p, new ArrayList<Integer>());
+		//boolean deadEndsFound = false;
+        Heuristic h = new Heuristic(p, null);
         Node initNode = new Node(p.getInitState());
         int hVal = h.getValue(initNode);
         if(hVal >= Integer.MAX_VALUE || hVal < 0){
+			BitSet acts = new BitSet();
         	System.out.println("Dead-end!!!! of type 1 or 3");
-        	//TODO: add human observations to verify if type 3, and correct
+			int cost = 10;
+			for(VAction obs : p.hObservations){
+				acts.set(p.insertHumanObservation(obs, cost));
+			}
+			h = new Heuristic(p, null);
+			h.useCosts();
+			initNode = new Node(p.getInitState());
+			hVal = h.getValueI(initNode,acts);
+			if(hVal < Integer.MAX_VALUE && hVal >= 0){
+				System.out.println("Corrected Problem.");
+				System.out.println("Excuse: " + h.getExcuse());
+			}
         }
 	}
 
+	//TODO: before grounding, extract mutex free variables
 	private static void initDomain(String domain_file_path, String problem_file_path, String hidden_file) {
 		domain = initParsing(domain_file_path, problem_file_path);
-		//init();
+		domain.getMutexFree();
 		/*Ground conditional effects*/
 		domain.ground_all_actions();
 		if(!(hidden_file == null)){

@@ -30,6 +30,7 @@ public class UncertaintyGraph {
             ArrayList<ArrayList<String>> lists = new ArrayList<>(d.relevanceSet.get(key));
             for(String predicate : lists.get(0)){
                 addEdge(predicate, key);
+                if(!d.ruleSet.containsKey(predicate.replace("~", ""))) continue;
                 for(ArrayList<String> relevants : d.ruleSet.get(predicate.replace("~", ""))){
                     addEdge("axiom-"+predicate+index, predicate);
                     for(String rel : relevants){

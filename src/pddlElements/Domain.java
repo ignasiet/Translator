@@ -49,8 +49,9 @@ public class Domain {
 	public HashSet<String> obsPredicates = new HashSet<String>();
 	public Hashtable<String, ArrayList<ArrayList<String>>> ruleSet = new Hashtable<>();
 	public Hashtable<String, ArrayList<ArrayList<String>>> relevanceSet = new Hashtable<>();
+	private HashSet<String> freeVars;
 
-	
+
 	public void parsePredicates(String predicates_list){
 		Matcher m = Pattern.compile("\\(([^)]+)\\)").matcher(predicates_list);
 	    while(m.find()) {	    	
@@ -169,7 +170,7 @@ public class Domain {
 		Enumeration<String> e = variant_predicates.keys();
 		while(e.hasMoreElements()){
 			String p = e.nextElement().toString();
-			if(state.containsKey(p)){
+			if(state.containsKey(p) || UncertainPredicates.contains(p)){
 				variant_predicates.remove(p);
 			}
 		}
@@ -188,13 +189,13 @@ public class Domain {
 			}
 		}
 		Enumeration<String> e = list_actions.keys();
+		for(Disjunction disj : list_disjunctions){
+			//predicates_variants.put(disj.getFluent(), 1);
+			predicates_uncertain.add(disj.getFluent());
+		}
 		while(e.hasMoreElements()){
 			Action a = list_actions.get(e.nextElement().toString());
 			//No single effects: now all are cond effects
-			for(Disjunction disj : list_disjunctions){
-				//predicates_variants.put(disj.getFluent(), 1);
-				predicates_uncertain.add(disj.getFluent());
-			}
 			if(a._IsNondeterministic){
 				for(Branch b : a._Branches){
 					for(String nFluent : b._Branches){
@@ -623,5 +624,16 @@ public class Domain {
 	//TODO: Identify variables
 	public void transformToVariables() {
 		
+	}
+
+	public void getMutexFree() {
+		freeVars = new HashSet<String>();
+		for (Action a : action_list) {
+			for (String precond : a._precond) {
+				if(!a.affectedPred(precond)){
+					freeVars.add(precond);
+				}
+			}
+		}
 	}
 }

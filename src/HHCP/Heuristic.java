@@ -12,6 +12,8 @@ public class Heuristic {
 
     Problem problem;
     private HashSet<Integer> landmarks;
+    private RelaxedGraphH rp;
+
     public Heuristic(Problem p, ArrayList<Integer> l){
         problem = p;
         if(l != null) landmarks = new HashSet<Integer>(l);
@@ -19,21 +21,28 @@ public class Heuristic {
 
     public int getValue(Node node){
         HashSet<Integer> landmarksNotReached;
-        RelaxedGraphH rp;
         if(landmarks != null) {
             landmarksNotReached = new HashSet<>(landmarks);
             for (Integer i : landmarks) {
                 if (node.getState().get(i)) {
-                    //Landmark reached!
                     landmarksNotReached.remove(i);
                 }
             }
-            rp = new RelaxedGraphH(problem, node.getState(), landmarks);
+            rp = new RelaxedGraphH(problem);
+            rp.calculateHeuristic(node.getState(), landmarks);
             return returnValue(rp, node);
         }else{
-            rp = new RelaxedGraphH(problem, node.getState(), null);
+            rp = new RelaxedGraphH(problem);
+            rp.calculateHeuristic(node.getState(), null);
             return returnValue(rp, node);
         }
+    }
+
+    public int getValueI(Node node, BitSet acts){
+        rp = new RelaxedGraphH(problem);
+        rp.preScheduleActions(acts);
+        rp.calculateHeuristic(node.getState(), null);
+        return returnValue(rp, node);
     }
 
     private int returnValue(RelaxedGraphH rp, Node node){
@@ -65,4 +74,11 @@ public class Heuristic {
         }
     }
 
+    public String getExcuse() {
+        return problem.getAction(rp.getRelaxedSolution().get(rp.getRelaxedSolution().size() - 1)).getName();
+    }
+
+    public void useCosts() {
+
+    }
 }

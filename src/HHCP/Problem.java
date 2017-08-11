@@ -27,6 +27,7 @@ public class Problem {
     public ArrayList<VAction> hObservations = new ArrayList<VAction>();
     public HashSet<Integer> uncertainty = new HashSet<Integer>();
     public HashSet<Integer> observables = new HashSet<Integer>();
+    private int[] cost;
     public int indexAxioms = 0;
     private int size;
 
@@ -233,6 +234,7 @@ public class Problem {
     public Integer insertAction(Action a, boolean isAxiom){
         VAction va = new VAction();
         va.setName(a.Name);
+        va.cost = a.cost;
         int[] prec = new int[a._precond.size()];
         int i = 0;
         for(String s : a._precond){
@@ -310,6 +312,7 @@ public class Problem {
         //Set the actions observation flag to true
         for(Action a : obsHeuristics){
             Integer index = insertAction(a, false);
+            hObservations.add(getAction(index));
             getAction(index).isObservation = true;
         }
     }
@@ -323,5 +326,35 @@ public class Problem {
             factsLayer[i] =0;
         }
         return factsLayer;
+    }
+
+    public int insertHumanObservation(VAction a, int cost) {
+        VAction va = new VAction();
+        va.setName(a.getName()+"HUMAN");
+        va.cost = cost;
+
+        va.isNondeterministic = true;
+        va.isObservation = true;
+
+        for(VEffect e : a.getEffects()){
+            VEffect eff = new VEffect();
+            eff.setAddList((BitSet) e.getAddList().clone());
+            eff.setDelList((BitSet) e.getDelList().clone());
+            va.addEffect(eff);
+        }
+        vaList.add(va);
+        //Set prec2act:
+        va.index = vaList.indexOf(va);
+        actionsIndex.put(va.getName(), va.index);
+        setVectorCosts();
+        return va.index;
+    }
+
+    public void setVectorCosts(){
+        cost = new int[vaList.size()];
+        for(int i=0;i < vaList.size() ;i++){
+            cost[i] = vaList.get(i).cost;
+        }
+
     }
 }
