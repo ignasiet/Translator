@@ -126,14 +126,14 @@ public class ParserHelper {
 			if(countElements(e.get(1).toString()) > 1){
 				parse(e.get(1).toString(), b1._Branches);
 			}else{
-				String listEffects = e.get(1).toString().replaceAll("\\n", "").replaceAll("not\\s+\\(", "~");
-				parse(listEffects, b1._Branches);
+				String listEffects = cleanString(e.get(1).toString());
+				b1._Branches.add(listEffects);
 			}
 			if(countElements(e.get(2).toString()) > 1){
 				parse(e.get(2).toString(), b2._Branches);
 			}else{
-				String listEffects = e.get(2).toString().replaceAll("\\n", "").replaceAll("not\\s+\\(", "~");
-				parse(listEffects, b2._Branches);
+				String listEffects = cleanString(e.get(2).toString());
+				b2._Branches.add(listEffects);
 			}
 			/*String branch1 = cleanString(e.get(1).toString().trim());
 			b1._Branches.add(branch1);
@@ -149,7 +149,7 @@ public class ParserHelper {
 	
 
 	public static String cleanString(String a){
-		a = a.replace("and", "").replaceAll("\\n", "").replaceAll("\\s+", " ");;
+		a = a.replace("and", "").replaceAll("\\n", "").replaceAll("\\s+", " ").trim();
 		if(a.startsWith("not")){
 			a = a.replaceAll("[()]", "").replace("not ", "").trim();
 			a = a.replace(" ", "_");

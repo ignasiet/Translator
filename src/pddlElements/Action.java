@@ -28,8 +28,6 @@ public class Action{
 
 	public Action(){
 		_precond = new ArrayList<String>();
-		//_Positive_effects = new ArrayList<String>();
-		//_Negative_effects = new ArrayList<String>();
 		IsObservation = false;
 	}
 	
@@ -89,41 +87,84 @@ public class Action{
 		_Effects.add(e);
 	}
 	
-	public String ToString(String negateString){
+	public String ToString(String negateString, boolean useCosts){
 		String auxStr = "";
-		if(IsObservation){
-			auxStr =  printObservations(auxStr, negateString);
+		//TODO:caution!
+		_precond.add("Knormal-execution");
+		if(IsObservation || _IsNondeterministic){
+			auxStr =  printObservations(auxStr, negateString, useCosts);
+			auxStr = printObsDetupActions(auxStr, negateString);
 			return auxStr;
 		}else{
 			auxStr = "\n(:action " + Name;
 			//Preconditions
 			auxStr = printPreconditions(auxStr, negateString);
-			auxStr = printEffects(auxStr, negateString);
+			auxStr = printEffects(auxStr, negateString, useCosts);
 			auxStr = auxStr + ")\n";
 			return auxStr;
 		}
 	}
-	
-	private String printObservations(String auxStr, String negateString) {
+
+	private String printObsDetupActions(String auxStr, String negateString) {
+		String auxStr1 = "\n(:action sensor-" + Name + "-obs0_DETDUP_0";
+		String auxStr2 = "\n(:action sensor-" + Name + "-obs0_DETDUP_1";
+
+		//auxStr1 = auxStr1 + "\n:precondition (and " + ParserHelper.createStringPredicate("K_need-post-for-" + Name, negateString);
+		//auxStr2 = auxStr2 + "\n:precondition (and " + ParserHelper.createStringPredicate("K_need-post-for-" + Name, negateString);
+
+		auxStr1 = auxStr1 + "\n:effect " + "(when (and " + ParserHelper.createStringPredicate("K_need-post-for-" + Name, negateString);
+		auxStr2 = auxStr2 + "\n:effect " + "(when (and " + ParserHelper.createStringPredicate("K_need-post-for-" + Name, negateString);
+
+		for(Branch b : _Branches){
+			for(String s : b._Branches){
+				auxStr1 = auxStr1 + ParserHelper.createStringPredicate(ParserHelper.complement(s), negateString);
+				auxStr2 = auxStr2 + ParserHelper.createStringPredicate(ParserHelper.complement(s), negateString);
+			}
+		}
+		auxStr1 = auxStr1 + ")\n";
+
+
+		auxStr2 = auxStr2 + ")\n";
+
+		//auxStr1 = auxStr1 + ParserHelper.createStringPredicate("K_need-post-for-" + Name, negateString);
+		//auxStr2 = auxStr2 + ParserHelper.createStringPredicate("K_need-post-for-" + Name, negateString);
+
+		auxStr1 = auxStr1 + _Branches.get(0).toString(negateString) + "\n)\n)\n";
+
+		auxStr2 = auxStr2 + _Branches.get(1).toString(negateString)+ "\n)\n)\n";
+		return auxStr + auxStr1 + auxStr2;
+	}
+
+	private String printObservations(String auxStr, String negateString, boolean useCosts) {
 		String act = "\n(:action " + Name;
-		//auxStr =  "\n(:action sensor-" + Name + "-obs0_DETDUP_0";
-		//String auxStr2 = "\n(:action sensor-" + Name + "-obs0_DETDUP_1";
-		//Preconditions
-		act = act + "\n:precondition (and ";
+		//Preconditions:
+		if(_precond.size()>0){
+			act = act + "\n:precondition (and ";
+			for(String precond : _precond){
+				act = act + ParserHelper.createStringPredicate(precond, negateString);
+			}
+			act = act + ")";
+		}
+
+		if(useCosts){
+			if(cost == 0) {
+				cost = 1;
+			}
+			auxStr = auxStr + "\n(increase (total-cost) " + cost + ")";
+		}
+
 		//auxStr = printPreconditions(auxStr, negateString);
 		//auxStr = printObservations(auxStr, negateString);
 		/*auxStr = auxStr + "\n:effect " + "(when (and ";
 		auxStr2 = auxStr2 + "\n:effect " + "(when (and ";
 		auxStr = auxStr + ParserHelper.createStringPredicate("K_need-post-for-" + Name, negateString);
 		auxStr2 = auxStr2 + ParserHelper.createStringPredicate("K_need-post-for-" + Name, negateString);*/
-		for(String precond : _precond){
-			act = act + ParserHelper.createStringPredicate(precond, negateString);
-		}/*
+		/*
 		for(Branch b : _Branches){
 			auxStr = auxStr + ParserHelper.createStringPredicate(precond, negateString);
 			auxStr2 = auxStr2 + ParserHelper.createStringPredicate(precond, negateString);
 		}*/
-		act = act + ")";
+
 		act = printSpecialEffectsObs(act, negateString);
 		act = act + ")\n";
 		/*auxStr = auxStr + ")";
@@ -139,10 +180,10 @@ public class Action{
 	
 	private String printSpecialEffectsObs(String act, String negateString) {
 		act = act + "\n:effect (and ";
-		//addPredicate("Knormal-execution");
-		//addPredicate("Kn_normal-execution");
-		//addPredicate("K_need-post-for-" + a.Name);
-		//addPredicate("K_not_need-post-for-" + a.Name);
+		/*addPredicate("Knormal-execution");
+		addPredicate("Kn_normal-execution");
+		addPredicate("K_need-post-for-" + a.Name);
+		addPredicate("K_not_need-post-for-" + a.Name);*/
 		act = act + ParserHelper.createStringPredicate("~Knormal-execution", negateString);
 		act = act + ParserHelper.createStringPredicate("Kn_normal-execution", negateString);
 		act = act + ParserHelper.createStringPredicate("~K_not_need-post-for-" + Name, negateString);
@@ -167,7 +208,7 @@ public class Action{
 		return aux;
 	}
 
-	private String printEffects(String auxStr, String negateString){
+	private String printEffects(String auxStr, String negateString, boolean useCosts){
 		//Effects
 		if(!_Effects.isEmpty()){
 			auxStr = auxStr + "\n:effect (and ";
@@ -195,8 +236,11 @@ public class Action{
 			}else{
 				auxStr = auxStr + condEffects;
 			}
-			if(cost != 0){
-				auxStr = auxStr + "(increase (total-cost) " + cost + ")";
+			if(useCosts){
+				if(cost == 0) {
+					cost = 1;
+				}
+				auxStr = auxStr + "\n(increase (total-cost) " + cost + ")";
 			}
 			auxStr = auxStr + ")";
 		}
@@ -223,9 +267,27 @@ public class Action{
 		return auxStr;
 	}
 
-	public boolean affectedPred(String predicate){
+	public boolean affectedEff(String predicate){
 		for(Effect eff : _Effects) {
 			if (eff.affectedPred(predicate)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public boolean affectedPrec(String predicate){
+		for(String p : _precond) {
+			if (p.contains(predicate)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public boolean affectedBranches(String parameter) {
+		for(Branch b : _Branches){
+			if(b.contains(parameter)){
 				return true;
 			}
 		}

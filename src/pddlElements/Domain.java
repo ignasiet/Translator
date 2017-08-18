@@ -49,7 +49,7 @@ public class Domain {
 	public HashSet<String> obsPredicates = new HashSet<String>();
 	public Hashtable<String, ArrayList<ArrayList<String>>> ruleSet = new Hashtable<>();
 	public Hashtable<String, ArrayList<ArrayList<String>>> relevanceSet = new Hashtable<>();
-	private HashSet<String> freeVars;
+	public Hashtable<String,ArrayList<String>> freeVars = new Hashtable<String,ArrayList<String>>();
 
 
 	public void parsePredicates(String predicates_list){
@@ -174,6 +174,11 @@ public class Domain {
 				variant_predicates.remove(p);
 			}
 		}
+		for(Axiom ax : _Axioms){
+			for(String sAx : ax._Head){
+				variant_predicates.remove(sAx);
+			}
+		}
 		System.out.println("Not used fluent: " + variant_predicates.keySet().toString());
 		predicates_never = new Hashtable<String, Integer>(variant_predicates);
 	}
@@ -188,11 +193,11 @@ public class Domain {
 				predicates_invariants.add(p);
 			}
 		}
-		Enumeration<String> e = list_actions.keys();
-		for(Disjunction disj : list_disjunctions){
+		/*for(Disjunction disj : list_disjunctions){
 			//predicates_variants.put(disj.getFluent(), 1);
 			predicates_uncertain.add(disj.getFluent());
-		}
+		}*/
+		Enumeration<String> e = list_actions.keys();
 		while(e.hasMoreElements()){
 			Action a = list_actions.get(e.nextElement().toString());
 			//No single effects: now all are cond effects
@@ -283,8 +288,7 @@ public class Domain {
 			for(String precond : a._precond){
 				if(isInvariant(precond) && !isUncertain(precond)){
 					predicates_grounded.remove(precond);
-					/*
-					 * Verify 2 things:
+					/* Verify 2 things:
 					 * 1 - Does it happens in initial state?
 					 * 2 - Is it an uncertainty predicate?
 					 */
@@ -627,11 +631,21 @@ public class Domain {
 	}
 
 	public void getMutexFree() {
-		freeVars = new HashSet<String>();
+		//freeVars = new HashSet<String>();
 		for (Action a : action_list) {
-			for (String precond : a._precond) {
-				if(!a.affectedPred(precond)){
-					freeVars.add(precond);
+			if(a.IsObservation) continue;
+			for(String parameter : a._parameters){
+				if((a.affectedPrec(parameter)) && !a.affectedEff(parameter) && !a.affectedBranches(parameter)){
+					//freeVars.put(parameter);
+					if(freeVars.containsKey(a.parameters_type.get(parameter))){
+						ArrayList<String> oldList = new ArrayList<String>(
+								freeVars.get(a.parameters_type.get(parameter)));
+						freeVars.put(a.parameters_type.get(parameter), oldList);
+					}else{
+						ArrayList<String> oldList = new ArrayList<String>();
+						oldList.add(parameter);
+						freeVars.put(a.parameters_type.get(parameter), oldList);
+					}
 				}
 			}
 		}

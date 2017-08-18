@@ -20,6 +20,7 @@ public class Main {
 	@SuppressWarnings("unused")
 	public static void main(String[] args){
 		// create Options object
+		boolean ontop = true;
 
 		// add options
 		options.addOption("h", "help", false, "Show help.");
@@ -29,6 +30,7 @@ public class Main {
 		options.addOption("p", "problem", true, "Problem file.");
 		options.addOption("r", "hidden", true, "Real World file.");
 		options.addOption("t", "trans", true, "Translation.");
+		options.addOption("c", "correction", true, "Correction actions in any place in the plan.");
 		
 		try {
 	        // parse the command line arguments
@@ -49,6 +51,12 @@ public class Main {
 				if(!cmd.hasOption("r")){
 					System.out.println("No simulation");
 					simulateFlag = false;
+				}
+				if(!cmd.hasOption("c")){
+					System.out.println("Correction actions on top (Default).");
+				}else{
+					System.out.println("Correction actions on demand.");
+					ontop = false;
 				}
 				String translationType = "ktype";
 				if(cmd.hasOption("t")){
@@ -73,7 +81,7 @@ public class Main {
 				String problemfile = cmd.getOptionValue("p");
 				String outputfile = cmd.getOptionValue("o");
 				String hiddenfile = cmd.getOptionValue("r");
-				Planner.startPlanner(domainfile, problemfile, hiddenfile, outputfile, translationType);
+				Planner.startPlanner(domainfile, problemfile, hiddenfile, outputfile, translationType, ontop);
 				//Time for the planner:
 				//callPlanner();
 			}

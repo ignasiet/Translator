@@ -23,5 +23,13 @@ public class Branch {
 			return null;
 		}		
 	}
-	
+
+	public boolean contains(String parameter) {
+		for(String b : _Branches){
+			if (b.contains(parameter)) {
+				return true;
+			}
+		}
+		return false;
+	}
 }

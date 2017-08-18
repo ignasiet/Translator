@@ -240,7 +240,8 @@ public class InternalTranslation extends Translation{
 				}
 			}
 			a._Effects.add(e);
-			a.Name = "K-axiom-" + i;
+			//a.Name = "K-axiom-" + i;
+			a.Name = "invariant-at-least-one-" + i;
 			listAxioms.add(a);
 			//System.out.println(a.ToString("not"));
 			i++;
@@ -399,6 +400,7 @@ public class InternalTranslation extends Translation{
 		Action a_translated = new Action();
 		a_translated.Name = a.Name;
 		a_translated.cost = a.cost;
+		a_translated._IsNondeterministic = true;
 		
 		for(String precondition : a._precond){
 			a_translated._precond.add("K" + precondition);
@@ -471,7 +473,11 @@ public class InternalTranslation extends Translation{
 	}
 
 	private void translateObservations(Action a, Hashtable<String, HashSet<String>> deductions) {
+		addPredicate("K_need-post-for-" + a.Name);
+		domain_translated.state.put("K_not_need-post-for-" + a.Name, 1);
+		addPredicate("K_not_need-post-for-" + a.Name);
 		Action a_translated = new Action();
+		//a_translated._precond.add("Knormal-execution");
 		a_translated.IsObservation = true;
 		a_translated.Name = a.Name;
 		a_translated.cost = a.cost;
@@ -580,22 +586,17 @@ public class InternalTranslation extends Translation{
 
 	@SuppressWarnings("unchecked")
 	private Hashtable<String, HashSet<String>> getReasonedPredicates(Action a){
-		/*An observation is invalid if:
-		* 1- A branch of an observation entails an invalid state. Example, there are no wumpus when both outcomes
-		* means a wumpus is near.
-		* 2- There is no information added: an observation in a cell where there is no wumpus near.*/
 		Hashtable<String, HashSet<String>> entailedBy = new Hashtable<String, HashSet<String>>();
 		//HashSet<String> used = new HashSet<String>();
 		String predicate = a._Effects.get(0)._Effects.get(0);
 		String negPredicate = ParserHelper.complement(a._Effects.get(0)._Effects.get(0));
-		//HashSet<String> tempUsed = (HashSet<String>) usedAxioms.clone();
 
 		HashSet<String> used = new HashSet<String>();
 		entailedBy.put(predicate, fixedPointIterationReasoning(predicate, used));
 		entailedBy.put(negPredicate, fixedPointIterationReasoning(negPredicate, used));
 
 		if(((entailedBy.get(predicate).size()==1) && (entailedBy.get(negPredicate).size()==1))
-				|| (notInvalidConclussions(entailedBy))){
+				|| (notInvalidConclusions(entailedBy))){
 			System.out.println("Useless observation: " + a.Name);
 			used.clear();
 			uselessObs.add(predicate);
@@ -606,7 +607,7 @@ public class InternalTranslation extends Translation{
 		return entailedBy;
 	}
 
-	private boolean notInvalidConclussions(Hashtable<String, HashSet<String>> entailedBy) {
+	private boolean notInvalidConclusions(Hashtable<String, HashSet<String>> entailedBy) {
 		for(String key : entailedBy.keySet()){
 			for(Disjunction d : domain_to_translate.list_disjunctions){
 				if(d.entailsInvalid(entailedBy.get(key))){

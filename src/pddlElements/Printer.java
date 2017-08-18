@@ -19,18 +19,17 @@ import parser.ParserHelper;
 public class Printer {
 	
 	private static String negateString = "n_";
-	//private static Hashtable<String, Integer> predicates_initial = new Hashtable<String, Integer>();
-	/**Print domain
-	 * @param arrayList */
+
+	/**Print domain @param arrayList */
 	public static void print(String path1, String path2, Domain domain, ArrayList<Action> axioms){
 		long startTime = System.currentTimeMillis();
 		printDomain(path1, domain, axioms);
 		long endTime = System.currentTimeMillis();
-		//System.out.println("Time printing domain file: " + (endTime - startTime) + " milliseconds");
+		System.out.println("Time printing domain file: " + (endTime - startTime) + " milliseconds");
 		startTime = System.currentTimeMillis();		
 		printProblem(path2, domain);
 		endTime = System.currentTimeMillis();
-		//System.out.println("Time printing problem file: " + (endTime - startTime) + " milliseconds");
+		System.out.println("Time printing problem file: " + (endTime - startTime) + " milliseconds");
 	}
 	
 	private static void printProblem(String path, Domain domain) {
@@ -46,11 +45,13 @@ public class Printer {
 			bw.write("(define (problem " + domain.ProblemInstance + ")\n");
 			bw.write("(:domain " + domain.Name + ")\n");
 			//Init
+			domain.state.put("Knormal-execution", 1);
 			Enumeration<String> e = domain.state.keys();
 			bw.write("(:init \n");
 			if(domain.costFunction){
 				bw.write("(= (total-cost) 0)\n");
 			}
+
 			while(e.hasMoreElements()){
 				String pred = e.nextElement().toString();
 				bw.write("\t" + ParserHelper.createStringPredicate(pred, negateString) + "\n");
@@ -69,16 +70,6 @@ public class Printer {
 		}	
 	}
 
-	/*private static String printProblem(Domain domain) {
-		String auxStr = "";
-		auxStr = "(define (problem " + domain.ProblemInstance + ")\n";
-		auxStr = auxStr + "(:domain " + domain.Name + ")\n";
-		auxStr = auxStr + printInitSituation(domain);
-		auxStr = auxStr + printGoalSituation(domain);
-		auxStr = auxStr + "\n)\n";
-		return auxStr;
-	}*/
-
 	private static String printGoalSituation(Domain domain) {
 		String auxStr = "\n(:goal (and ";
 		for(String pred : domain.goalState){
@@ -91,23 +82,6 @@ public class Printer {
 		auxStr = auxStr + ")\n)";
 		return auxStr;
 	}
-
-	/*private static String printInitSituation(Domain domain) {
-		String auxStr = "";
-		Enumeration<String> e = domain.state.keys();
-		auxStr = auxStr + "(:init \n";
-		while(e.hasMoreElements()){
-			String pred = e.nextElement().toString();
-			if(pred.startsWith("~")){
-				auxStr = auxStr + "\t(not " + pred.replaceAll("~", negateString) + ")\n ";
-			}
-			else{
-				auxStr = auxStr + "\t" + ParserHelper.negateString(pred, negateString) + "\n";
-			}			
-		}
-		auxStr = auxStr + ") \n";
-		return auxStr;
-	}*/
 
 	private static void printDomain(String path, Domain domain, ArrayList<Action> axioms){
 		String actName = "";
@@ -124,6 +98,10 @@ public class Printer {
 			long startTime = System.currentTimeMillis();
 			//bw.write(printPredicates(domain));
 			bw.write("\n(:predicates ");
+			if(!domain.predicates_grounded.contains("Knormal-execution")){
+				domain.predicates_grounded.add("Knormal-execution");
+				domain.predicates_grounded.add("Kn_normal-execution");
+			}
 			for(String pred : domain.predicates_grounded){
 				bw.write("\n\t(" + pred.replaceAll("~", negateString) + ")");
 			}
@@ -132,21 +110,20 @@ public class Printer {
 				bw.write("(:functions (total-cost) ) \n");
 			}
 			long endTime = System.currentTimeMillis();
-			//System.out.println("Time printing predicates in domain file: " + (endTime - startTime) + " milliseconds");
-			//System.out.println("Predicates printed");
 			/*Print actions*/
 			startTime = System.currentTimeMillis();
 			Enumeration<String> e = domain.list_actions.keys();
 			while(e.hasMoreElements()){
 				Action action = domain.list_actions.get(e.nextElement().toString());
 				actName = action.Name;
+
 				//System.out.println("Printing action: " + action.Name);
-				bw.write(action.ToString(negateString));
+				bw.write(action.ToString(negateString, domain.costFunction));
 			}
 			/*Print axioms*/
 			for(Action action : axioms){
 				//System.out.println("Printing axiom: " + action.Name);
-				bw.write(action.ToString(negateString));
+				bw.write(action.ToString(negateString, domain.costFunction));
 			}
 			//auxStr = auxStr + printActions(domain);
 			bw.write("\n)\n");
