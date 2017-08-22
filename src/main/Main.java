@@ -31,6 +31,7 @@ public class Main {
 		options.addOption("r", "hidden", true, "Real World file.");
 		options.addOption("t", "trans", true, "Translation.");
 		options.addOption("c", "correction", true, "Correction actions in any place in the plan.");
+		options.addOption("s", "heuristic", true, "Heuristic used.");
 		
 		try {
 	        // parse the command line arguments
@@ -40,7 +41,7 @@ public class Main {
 			if (cmd.hasOption("h")){
 				help();
 			}else{
-				if(!cmd.hasOption("d") | !cmd.hasOption("p")){
+				if(!cmd.hasOption("d") | !cmd.hasOption("p") | !cmd.hasOption("s")){
 					System.out.println("Incorrect call. See help:");
 					help();
 				}
@@ -77,11 +78,28 @@ public class Main {
 				}else{
 					translationType = "linear";
 				}
+
+				String heuristicType = "ktype";
+				if(cmd.hasOption("s")){
+					switch(cmd.getOptionValue("s")){
+						case "1":
+							heuristicType = "ff";
+							break;
+						case "2":
+							heuristicType = "hmax";
+							break;
+					}
+				}else{
+					heuristicType = "ff";
+				}
+
+
 				String domainfile = cmd.getOptionValue("d");
 				String problemfile = cmd.getOptionValue("p");
 				String outputfile = cmd.getOptionValue("o");
 				String hiddenfile = cmd.getOptionValue("r");
-				Planner.startPlanner(domainfile, problemfile, hiddenfile, outputfile, translationType, ontop);
+				Planner.startPlanner(domainfile, problemfile, hiddenfile, outputfile,
+						translationType, ontop, heuristicType);
 				//Time for the planner:
 				//callPlanner();
 			}

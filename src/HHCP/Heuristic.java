@@ -13,28 +13,36 @@ public class Heuristic {
     Problem problem;
     private HashSet<Integer> landmarks;
     private RelaxedGraphH rp;
+    private String heuristic = "";
+    private JustificationGraph justGraph;
 
-    public Heuristic(Problem p, ArrayList<Integer> l){
+    public Heuristic(Problem p, ArrayList<Integer> l, JustificationGraph jG, String h){
         problem = p;
+        heuristic = h;
+        justGraph = jG;
         if(l != null) landmarks = new HashSet<Integer>(l);
     }
 
     public int getValue(Node node){
-        HashSet<Integer> landmarksNotReached;
-        if(landmarks != null) {
-            landmarksNotReached = new HashSet<>(landmarks);
-            for (Integer i : landmarks) {
-                if (node.getState().get(i)) {
-                    landmarksNotReached.remove(i);
+        if(heuristic.equals("ff")) {
+            HashSet<Integer> landmarksNotReached;
+            if (landmarks != null) {
+                landmarksNotReached = new HashSet<>(landmarks);
+                for (Integer i : landmarks) {
+                    if (node.getState().get(i)) {
+                        landmarksNotReached.remove(i);
+                    }
                 }
+                rp = new RelaxedGraphH(problem);
+                rp.calculateHeuristic(node.getState(), landmarks);
+                return returnValue(rp, node);
+            } else {
+                rp = new RelaxedGraphH(problem);
+                rp.calculateHeuristic(node.getState(), null);
+                return returnValue(rp, node);
             }
-            rp = new RelaxedGraphH(problem);
-            rp.calculateHeuristic(node.getState(), landmarks);
-            return returnValue(rp, node);
         }else{
-            rp = new RelaxedGraphH(problem);
-            rp.calculateHeuristic(node.getState(), null);
-            return returnValue(rp, node);
+            return landmarkCutH.getHMax(node.getState(), justGraph, problem.getGoal());
         }
     }
 

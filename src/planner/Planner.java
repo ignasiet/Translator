@@ -11,13 +11,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import HHCP.*;
-import causalgraph.UncertaintyGraph;
 import landmark.Landmarker;
 import parser.Parser;
 import parser.ParserHelper;
 import pddlElements.*;
 import pddlElements.Printer;
-import simulator.Simulator;
 import translating.*;
 import causalgraph.CausalGraph;
 
@@ -32,8 +30,9 @@ public class Planner {
 	private static CausalGraph cg;
 	private static ArrayList<String> _Plan = new ArrayList<>();
 	private static Hashtable<String, String> _ObservationSelected = new Hashtable<String, String>();
+	private static boolean changes = false;
 	
-	public static void startPlanner(String domain_file_path, String problem_file_path, String hidden_file, String file_out_path, String type, boolean ontop){
+	public static void startPlanner(String domain_file_path, String problem_file_path, String hidden_file, String file_out_path, String type, boolean ontop, String heuristic){
 		/*Define problem*/
 		if(!(file_out_path == null)){
 			outputPath = file_out_path;
@@ -46,10 +45,10 @@ public class Planner {
 
 		/*Time measure: translation*/
 		domain = ParserHelper.cleanProblem(domain);
-		cg = new CausalGraph(domain);
-		HashSet<String> relevants = cg.relevantLiterals(domain.goalState);
+		//cg = new CausalGraph(domain);
+		//HashSet<String> relevants = cg.relevantLiterals(domain.goalState);
 
-		UncertaintyGraph uG = new UncertaintyGraph(domain);
+		//UncertaintyGraph uG = new UncertaintyGraph(domain);
 		startTime = System.currentTimeMillis();
 		/*Set size of the ksets to 2*/
 		//Trapper tp = new Trapper(cg.getLiterals(), domain, cg, 2);
@@ -63,59 +62,65 @@ public class Planner {
 		domain_translated = tr.getDomainTranslated();
 		domain_translated.hidden_state = domain.hidden_state;
 
-		/*Planner: review grounded literals*/
-		HHCP.Problem p;
-		HHCP.Problem hP;
-		if(domain_translated.predicates_grounded.isEmpty()){
-			p = new Problem(new ArrayList<String>(domain_translated.predicates_posit.keySet()));
-			hP = new Problem(new ArrayList<String>(domain_translated.predicates_posit.keySet()));
-		}else{
-			p = new Problem(domain_translated.predicates_grounded);
-			hP = new Problem(domain_translated.predicates_grounded);
-		}
-		p.setInitState(domain_translated.state);
-		p.setGoalState(domain_translated.goalState);
-		hP.setInitState(domain_translated.state);
-		hP.setGoalState(domain_translated.goalState);
-		p.setActions(domain_translated.list_actions);
-		for(String name : domain_translated.list_actions.keySet()){
-			Action a = domain_translated.list_actions.get(name);
-			if(!a.IsObservation){
-				hP.insertAction(a, false);
-			}
-		}
-		hP.setDeterminizedObs(tr.getObsHeuristics());
-		p.setAxioms(tr.getListAxioms());
-		hP.setAxioms(tr.getListAxioms());
+		cg = new CausalGraph(domain_translated);
 
-		for(String pred : domain.UncertainPredicates){
-			hP.uncertainty.add(hP.getPredicate("K"+pred));
-			hP.uncertainty.add(hP.getPredicate("K~"+pred));
-		}
-		for(String pred : domain.obsPredicates){
-			hP.observables.add(hP.getPredicate("K"+pred));
-		}
-
-		p.setVectorCosts();
-		hP.setVectorCosts();
+		Problem p = transformToVectors(domain_translated, false, tr);
+		Problem hP = transformToVectors(domain_translated, true, tr);
 
 		System.out.println("Transformation to vectors completed. ");
 		//LANDMARKS
 		Landmarker l = new Landmarker(domain_translated.state, domain_translated.list_actions, domain_translated.goalState);
 
-
 		computeHeuristic(hP, ontop);
 
 		/*Print domain*/
-		if(!(file_out_path == null)) printDomain(tr);
+		//if(!(file_out_path == null)) printDomain(tr);
+
+		if(changes) {
+			p = transformToVectors(domain_translated, false, tr);
+			hP = transformToVectors(domain_translated, true, tr);
+		}
+		JustificationGraph jG = new JustificationGraph(hP);
 
 		System.out.println("Init Search. ");
 
 		//Simulator sim = new Simulator(null, p.getInitState(), p, hP);
-		//Searcher search = new Searcher(p, hP, l.getLandmarks());
+		Searcher search = new Searcher(p, hP, l.getLandmarks(), jG, heuristic);
 		//search.GenPlanPairs(p.getInitState());
-		
+	}
 
+	private static Problem transformToVectors(Domain domain_translated, boolean isHeuristic, Translation tr) {
+		/*Planner: review grounded literals*/
+		HHCP.Problem p;
+		if(domain_translated.predicates_grounded.isEmpty()){
+			p = new Problem(new ArrayList<String>(domain_translated.predicates_posit.keySet()));
+		}else{
+			p = new Problem(domain_translated.predicates_grounded);
+		}
+		p.setInitState(domain_translated.state);
+		p.setGoalState(domain_translated.goalState);
+
+		if(isHeuristic){
+			for(String name : domain_translated.list_actions.keySet()) {
+				Action a = domain_translated.list_actions.get(name);
+				if(!a.IsObservation){
+					p.insertAction(a, false);
+				}
+			}
+			p.setDeterminizedObs(tr.getObsHeuristics());
+			for(String pred : domain.UncertainPredicates){
+				p.uncertainty.add(p.getPredicate("K"+pred));
+				p.uncertainty.add(p.getPredicate("K~"+pred));
+			}
+			for(String pred : domain.obsPredicates){
+				p.observables.add(p.getPredicate("K"+pred));
+			}
+		}else{
+			p.setActions(domain_translated.list_actions);
+		}
+		p.setAxioms(tr.getListAxioms());
+		p.setVectorCosts();
+		return p;
 	}
 
 	private static void addFlags() {
@@ -123,6 +128,7 @@ public class Planner {
 		domain.state.put("not-started", 1);
 		for(String name : domain.list_actions.keySet()){
 			Action action = domain.list_actions.get(name);
+			if(action._Effects.isEmpty()) action._Effects.add(new Effect());
 			if(!action.IsObservation){
 				action._Effects.get(0)._Effects.add("~not-started");
 			}
@@ -158,6 +164,7 @@ public class Planner {
 			}
 		}
 		addObjectAction(replacingActions, cost);
+		domain_translated.costFunction = true;
 	}
 
 	private static void addObjectAction(ArrayList<String> replacingActions, int cost) {
@@ -165,7 +172,12 @@ public class Planner {
 			Action a_human = new Action();
 			a_human.Name = "Modify_human_" + element;
 			a_human.cost = 10*cost;
-			a_human._precond.add(ParserHelper.complement(element));
+			if(element.startsWith("K")){
+				a_human._precond.add("K~" + element.substring(1));
+			}
+			else {
+				a_human._precond.add(ParserHelper.complement(element));
+			}
 			a_human._precond.add("Knot-started");
 			Effect e = new Effect();
 			e._Effects.add(element);
@@ -182,11 +194,13 @@ public class Planner {
 				a._Effects.remove(ParserHelper.complement("Knot-started"));
 				for(Branch b :a._Branches){
 					if(b._Branches.contains(ParserHelper.complement(element))){
+						b._Branches.remove("K~not-started");
+						b._Branches.remove(ParserHelper.complement("Knot-started"));
 						b._Branches.add("Knot-started");
 						b._Branches.add(ParserHelper.complement("K~not-started"));
 					}else{
-						b._Branches.add("K~not-started");
-						b._Branches.add(ParserHelper.complement("Knot-started"));
+						//b._Branches.add("K~not-started");
+						//b._Branches.add(ParserHelper.complement("Knot-started"));
 					}
 				}
 			}
@@ -216,21 +230,22 @@ public class Planner {
 	}
 
 	private static void computeHeuristic(Problem p, boolean ontop) {
-		//boolean deadEndsFound = false;
-        Heuristic h = new Heuristic(p, null);
-        Node initNode = new Node(p.getInitState());
 		int cost = 10;
-        int hVal = h.getValue(initNode);
-        if(hVal >= Integer.MAX_VALUE || hVal < 0){
-			BitSet acts = new BitSet();
+		//boolean deadEndsFound = false;
+        //Heuristic h = new Heuristic(p, null, jG, heuristic);
+        //Node initNode = new Node(p.getInitState());
+        //int hVal = h.getValue(initNode);
+        //if(hVal >= Integer.MAX_VALUE || hVal < 0){
+			/*BitSet acts = new BitSet();
         	System.out.println("Dead-end!!!! of type 1 or 3");
-
 			addHumanInterventionActions(cost, ontop);
-			/*for(VAction obs : p.hObservations){
+			domain_translated.costFunction = true;
+			changes = true;
+			*//*for(VAction obs : p.hObservations){
 				acts.set(p.insertHumanObservation(obs, cost));
 				domain_translated.costFunction = true;
-			}*/
-			h = new Heuristic(p, null);
+			}*//*
+			h = new Heuristic(p, null, jG, heuristic);
 			h.useCosts();
 			initNode = new Node(p.getInitState());
 			hVal = h.getValueI(initNode,acts);
@@ -240,8 +255,10 @@ public class Planner {
 			}
         }else{
 			System.out.println("A priori there exists at least a weak solution.");
-			addHumanInterventionActions(cost, ontop);
-		}
+
+		}*/
+		changes = true;
+		addHumanInterventionActions(cost, ontop);
 	}
 
 	//TODO: before grounding, extract mutex free variables

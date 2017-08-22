@@ -18,6 +18,7 @@ import java.util.Stack;
 import org.apache.commons.math3.util.Combinations;
 import org.jgrapht.Graphs;
 import org.jgrapht.graph.ClassBasedEdgeFactory;
+import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 import org.jgrapht.graph.DirectedMultigraph;
 
 import parser.ParserHelper;
@@ -35,7 +36,7 @@ import pddlElements.Effect;
 public class Trapper {
 
 	private DirectedMultigraph<String, Edge> kTrapGraph;
-	private DirectedMultigraph<String, Edge> CausalGraph;
+	private DefaultDirectedWeightedGraph<String, Edge> CausalGraph;
 	private CausalGraph causal;
 	private ArrayList<String> goal;
 	private ArrayList<Disjunction> disjunctions;

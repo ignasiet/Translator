@@ -91,9 +91,15 @@ public class Action{
 		String auxStr = "";
 		//TODO:caution!
 		_precond.add("Knormal-execution");
-		if(IsObservation || _IsNondeterministic){
+		if(IsObservation){
 			auxStr =  printObservations(auxStr, negateString, useCosts);
 			auxStr = printObsDetupActions(auxStr, negateString);
+			return auxStr;
+		}else if(_IsNondeterministic){
+			auxStr = "\n(:action " + Name;
+			//Preconditions
+			auxStr = printPreconditions(auxStr, negateString);
+			auxStr = printBranches(auxStr, negateString, useCosts);
 			return auxStr;
 		}else{
 			auxStr = "\n(:action " + Name;
@@ -103,6 +109,26 @@ public class Action{
 			auxStr = auxStr + ")\n";
 			return auxStr;
 		}
+	}
+
+	private String printBranches(String auxStr, String negateString, boolean useCosts) {
+		auxStr = auxStr + "\n:effect (oneof \n";
+
+		for(Branch br : _Branches){
+			auxStr = auxStr + "(and ";
+			for(String effect : br._Branches){
+				auxStr = auxStr + ParserHelper.createStringPredicate(effect, negateString);
+			}
+			if(useCosts){
+				if(cost == 0) {
+					cost = 1;
+				}
+				auxStr = auxStr + "\n(increase (total-cost) " + cost + ")";
+			}
+			auxStr = auxStr + ")\n";
+		}
+		auxStr = auxStr + ")\n )";
+		return auxStr;
 	}
 
 	private String printObsDetupActions(String auxStr, String negateString) {

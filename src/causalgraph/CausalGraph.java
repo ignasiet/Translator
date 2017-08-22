@@ -16,11 +16,14 @@ import java.util.Stack;
 
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.Graphs;
+import org.jgrapht.alg.DijkstraShortestPath;
 import org.jgrapht.ext.DOTExporter;
 import org.jgrapht.ext.VertexNameProvider;
 import org.jgrapht.graph.ClassBasedEdgeFactory;
+import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 import org.jgrapht.graph.DirectedMultigraph;
 
+import org.jgrapht.graph.DirectedWeightedMultigraph;
 import parser.ParserHelper;
 import pddlElements.Action;
 import pddlElements.Axiom;
@@ -29,7 +32,7 @@ import pddlElements.Domain;
 import pddlElements.Effect;
 
 public class CausalGraph {
-	private DirectedMultigraph<String, Edge> graph;
+	private DefaultDirectedWeightedGraph<String, Edge> graph;
 	private Set<String> observables = new HashSet<String>();
 	private Integer index = 0;
 	private Set<String> literals = new HashSet<String>();
@@ -39,15 +42,17 @@ public class CausalGraph {
 	public CausalGraph(Domain d){
 		graph = createStringGraph();
 		predicateCount = new Hashtable<String, Integer>(d.count);
-		Enumeration<String> e = d.list_actions.keys();		
+		Enumeration<String> e = d.list_actions.keys();
 		while(e.hasMoreElements()){
 			Action a = d.list_actions.get(e.nextElement().toString());
 			feedLiterals(a);
 			if(a.IsObservation){
-				feedObservableLiterals(a);
-				continue;
+				feedObservations(a);
+			}else if(a._IsNondeterministic){
+				feedNonDetActions(a);
+			}else {
+				feedActions(a);
 			}
-			buildgraph(d,a);
 		}
 		checkliterals();
 		extractDisjunctions(d);
@@ -55,7 +60,7 @@ public class CausalGraph {
         exportGraph();
 	}
 	
-	protected DirectedMultigraph<String, Edge> getGraph(){
+	protected DefaultDirectedWeightedGraph<String, Edge> getGraph(){
 		return graph;
 	}
 	
@@ -176,51 +181,14 @@ public class CausalGraph {
 		return contentGraph + edgesGraph + "}";
 	}
 	
-	/*private DirectedGraph<String, DefaultEdge> createStringGraph(){
-        DirectedGraph<String, DefaultEdge> g = new DefaultDirectedGraph<>(DefaultEdge.class);
-        antecessors.keys();
-		while(e.hasMoreElements()){
-			String key = e.nextElement().toString();
-			g.addVertex(cleanStringDot(key));
-		}
-        Enumeration<String> e = antecessors.keys();
-		while(e.hasMoreElements()){
-			String to = e.nextElement().toString();
-			g.addVertex(cleanStringDot(to));
-			ArrayList<String> origins = antecessors.get(to);
-			for(String from : origins){
-				g.addVertex(cleanStringDot(from));
-				g.addEdge(cleanStringDot(from), cleanStringDot(to));
-			}
-		}        
-        String v1 = "v1";
-        String v2 = "v2";
-        String v3 = "v3";
-        String v4 = "v4";
-
-        // add the vertices
-        g.addVertex(v1);
-        g.addVertex(v2);
-        g.addVertex(v3);
-        g.addVertex(v4);
-
-        // add edges to create a circuit
-        g.addEdge(v1, v2);
-        g.addEdge(v2, v3);
-        g.addEdge(v3, v4);
-        g.addEdge(v4, v1);
-
-        return g;
-    }*/
-	
 	@SuppressWarnings("rawtypes")
-	private DirectedMultigraph<String, Edge> createStringGraph(){
-		DirectedMultigraph<String, Edge> g = new DirectedMultigraph<String, Edge>(
+	private DefaultDirectedWeightedGraph<String, Edge> createStringGraph(){
+		DefaultDirectedWeightedGraph<String, Edge> g = new DefaultDirectedWeightedGraph<String, Edge>(
 	                    new ClassBasedEdgeFactory<String, Edge>(Edge.class));
-		return g;		
+		return g;
     }
 	
-	private void buildgraph(Domain d, Action a) {
+	private void feedActions(Action a) {
 		for(Effect e : a._Effects){
 			for(String to : e._Effects){
 				graph.addVertex(cleanStringDot(to));
@@ -233,6 +201,7 @@ public class CausalGraph {
 						continue;
 					}
 					graph.addEdge(cleanStringDot(from), cleanStringDot(to), edge);
+					graph.setEdgeWeight(edge, a.cost);
 				}
 			}
 		}
@@ -256,7 +225,7 @@ public class CausalGraph {
 		exporter.export(new OutputStreamWriter(out), graph2); 
 	}
 	
-	private void feedObservableLiterals(Action a) {
+	private void feedObservations(Action a) {
 		for(Effect effect : a._Effects){
 			for(String observable : effect._Effects){
 				observables.add(observable);
@@ -268,6 +237,22 @@ public class CausalGraph {
 					graph.addEdge(cleanStringDot(precondition), cleanStringDot(observable), edge);
 					Edge<String> edgeComplement = new Edge<String>(cleanStringDot(precondition), cleanStringDot(ParserHelper.complement(observable)), a.Name);
 					graph.addEdge(cleanStringDot(precondition), cleanStringDot(ParserHelper.complement(observable)), edgeComplement);
+					graph.setEdgeWeight(edge, a.cost);
+					graph.setEdgeWeight(edgeComplement, a.cost);
+				}
+			}
+		}
+	}
+
+	private void feedNonDetActions(Action a){
+		for(Effect effect : a._Effects){
+			for(String pred : effect._Effects){
+				graph.addVertex(cleanStringDot(pred));
+				for(String precondition : a._precond){
+					graph.addVertex(cleanStringDot(precondition));
+					Edge<String> edge = new Edge<String>(cleanStringDot(precondition), cleanStringDot(pred), a.Name);
+					graph.addEdge(cleanStringDot(precondition), cleanStringDot(pred), edge);
+					graph.setEdgeWeight(edge, a.cost);
 				}
 			}
 		}
@@ -336,6 +321,14 @@ public class CausalGraph {
 			}
 		}
 		return cleanSetFluents(visited);
+	}
+
+	public HashSet<String> calculateCut(ArrayList<String> goalState){
+		HashSet<String> visited = new HashSet<String>(goalState);
+		for(String current : visited){
+			Set<Edge> edges = graph.incomingEdgesOf(current);
+		}
+		return null;
 	}
 
 	private HashSet<String> cleanSetFluents(HashSet<String> visited){

@@ -21,7 +21,7 @@ public class Searcher {
     private ArrayList<Integer> landmarks;
 
 
-    public Searcher(Problem p, Problem heuristicP, ArrayList<String> l){
+    public Searcher(Problem p, Problem heuristicP, ArrayList<String> l, JustificationGraph jG, String heuristic){
         problem = p;
         HProblem = heuristicP;
         boolean deadEndsFound = false;
@@ -33,7 +33,7 @@ public class Searcher {
                 }
             }
         }
-        h = new Heuristic(heuristicP, landmarks);
+        h = new Heuristic(heuristicP, landmarks, jG, heuristic);
         //Search starts!
         double startTime = System.currentTimeMillis();
         boolean modified = true;
@@ -253,7 +253,16 @@ public class Searcher {
                 RegressPlan(node);
                 break;
             }
-            if(!node.relaxedSolution.isEmpty()){
+            /*EHC: take the first action of the policy. Usually does not work.
+            * A* complete heuristic search.*/
+
+            for (VAction va : getApplicableActions(node)) {
+                if (forbiddenActions.containsKey(node.getState()) && forbiddenActions.get(node.getState()) == va.index)
+                    continue;
+                addToFringe(va, node);
+            }
+
+            /*if(!node.relaxedSolution.isEmpty()){
                 VAction va = problem.getAction(node.preferredAction);
                 addToFringe(va, node);
             }else {
@@ -262,7 +271,7 @@ public class Searcher {
                         continue;
                     addToFringe(va, node);
                 }
-            }
+            }*/
         }
         //Review termination conditions
         return true;
@@ -419,7 +428,7 @@ public class Searcher {
                 .filter(s -> ((s.getName().s) && (node.holds(s.getPreconditionArray()))))
                 .forEach(retList::add);*/
         for(VAction va : problem.getVaList()){
-        	if(va.getName().startsWith("K-axiom-")) continue;
+        	if(va.getName().startsWith("invariant-at")) continue;
             //if(node.holds(va.getPreconditionArray())){
             if(node.holds(va.getPreconditions())){
                 retList.add(va);

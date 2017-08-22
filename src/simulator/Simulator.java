@@ -11,17 +11,17 @@ import java.util.Scanner;
  */
 public class Simulator {
 
-    public Simulator(PartialPolicy policyP, BitSet initState, Problem problem, Problem heuristicProblem){
+    public Simulator(PartialPolicy policyP, BitSet initState, Problem problem, Problem heuristicProblem, JustificationGraph j, String h){
         if(policyP != null){
             simulatePolicy(policyP, initState, problem);
         }else{
-            simulateSearch(initState, problem, heuristicProblem);
+            simulateSearch(initState, problem, heuristicProblem, j, h);
         }
     }
 
-    private void simulateSearch(BitSet initState, Problem problem, Problem hproblem) {
+    private void simulateSearch(BitSet initState, Problem problem, Problem hproblem, JustificationGraph jG, String heuristic) {
         Scanner reader = new Scanner(System.in);  // Reading from System.in
-        Heuristic h = new Heuristic(hproblem, null);
+        Heuristic h = new Heuristic(hproblem, null, jG, heuristic);
         Node node = new Node(initState);
         node.setActionCounter(new int[problem.getVaList().size()]);
         node.setActionLayer(new int[problem.getVaList().size()]);
