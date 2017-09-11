@@ -12,9 +12,9 @@ public class Node {
 
     private BitSet State;
     //implement WA*?
-    private int w = 2;
+    //private int w = 2;
     private int h; //Heuristic
-    private int g; //Cost
+    private int g; //Cost to that node from root
     public Node parent;
     public String parentAction;
     //Index of the parent action

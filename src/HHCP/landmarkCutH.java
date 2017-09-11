@@ -38,6 +38,7 @@ public class landmarkCutH {
         for(int i = goal.nextSetBit(0); i>= 0; i = goal.nextSetBit(i+1)) {
             Set<Edge> hS = jG.getIncomingEdgesOf(String.valueOf(i));
             for (Edge e : hS) {
+                if(!jG.relevants.get(Integer.parseInt(e.getSource()))) continue;
                 if (reached.get(Integer.parseInt(e.getSource()))) continue;
                 level.set(Integer.parseInt(e.getSource()));
                 if (jG.getEdgeWeight(e) < min) min = jG.getEdgeWeight(e);

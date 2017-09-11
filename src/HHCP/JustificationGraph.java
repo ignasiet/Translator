@@ -11,6 +11,7 @@ import java.util.*;
 public class JustificationGraph {
 
     private DefaultDirectedWeightedGraph<String, Edge> graph;
+    public BitSet relevants = new BitSet();
 
     public JustificationGraph(Problem p){
         graph = createStringGraph();
@@ -85,5 +86,43 @@ public class JustificationGraph {
 
     public double getEdgeWeight(Edge e) {
         return graph.getEdgeWeight(e)*-1;
+    }
+
+    public void setRelevantLiterals(Problem p, HashSet<String> relevantList){
+        for(String lit : relevantList){
+            relevants.set(p.getPredicate(lit));
+        }
+    }
+
+    public BitSet getReachableLiterals(BitSet goalState, BitSet initial){
+        BitSet next = new BitSet();
+        BitSet current = (BitSet) initial.clone();
+        HashSet<String> visited = new HashSet<String>();
+        boolean reached = false;
+        while(!reached || !contained(current, goalState)){
+            if(current.equals(next)){
+                reached = true;
+            }
+            for(int i = current.nextSetBit(0); i>=0; i=current.nextSetBit(i+1)){
+                if(!graph.containsVertex(String.valueOf(i))) continue;
+                Set<Edge> edges = graph.outgoingEdgesOf(String.valueOf(i));
+                for(Edge e : edges){
+                    if(!visited.contains(e.getTarget())) {
+                        visited.add(e.getTarget());
+                        next.set(Integer.parseInt(e.getTarget()));
+                    }
+                }
+            }
+            current.or(next);
+        }
+        return current;
+    }
+
+    private boolean contained(BitSet current, BitSet goalState) {
+        BitSet aux = new BitSet();
+        aux.or(goalState);
+        aux.and(current);
+        if(goalState.equals(aux)) return true;
+        return false;
     }
 }

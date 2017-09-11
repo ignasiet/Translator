@@ -1,5 +1,6 @@
 package HHCP;
 
+import causalgraph.*;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.ext.DOTExporter;
 import org.jgrapht.ext.EdgeNameProvider;
@@ -7,11 +8,10 @@ import org.jgrapht.ext.StringEdgeNameProvider;
 import org.jgrapht.ext.VertexNameProvider;
 import org.jgrapht.graph.ClassBasedEdgeFactory;
 import org.jgrapht.graph.DirectedMultigraph;
-import causalgraph.Edge;
-import causalgraph.Vertex;
 
 import java.io.*;
 import java.util.BitSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Stack;
 
@@ -19,57 +19,70 @@ import java.util.Stack;
  * Created by ignasi on 19/05/17.
  */
 public class Solution {
-    private DirectedMultigraph<String, Edge> graph;
+    private DirectedMultigraph<VertexNode, Edge> graph;
+    private HashMap<BitSet, Integer> idStates = new HashMap<>();
     private int numberNodes = 0;
+    private int i = 2;
 
     public Solution(PartialPolicy policyP, BitSet initState, Problem problem) {
         graph = createStringGraph();
         Node n = new Node(initState);
+        String lastDivisor = "";
+        int[] factlayer = problem.initLayers(initState);
+        n.setActionCounterInc(problem);
+        n.setActionLayer(new int[problem.getVaList().size()]);
+        n.setFacts(factlayer);
         Stack<Node> open = new Stack<Node>();
         open.push(n);
-        String from = "root";
-        String to = "";
+        addVertex("root", 0);
+        addVertex("Goal", 1);
+
+        addNewState(n.getState());
         HashSet<BitSet> solved = new HashSet<BitSet>();
 
         while(!open.isEmpty()){
             Node s = open.pop();
             if(s.holds(problem.getGoal())){
-                from = cleanStringDot(s.parentAction);
-                graph.addVertex("Goal");
-                addEdge(from, "Goal", "");
+                VertexNode goalNode = getVertex("Goal");
+                VertexNode origin = getVertex(cleanStringDot(s.parentAction));
+                addEdge(origin, goalNode, "");
                 continue;
             }
+            //if(idStates.containsKey(s.getState())) continue;
+
             String label = "";
-            if(s.parentAction != null){
-            	if(problem.getAction(s.indexAction).isNondeterministic){
-                	label = problem.getPredicate(problem.getAction(s.indexAction).getEffects().get(s.indexEffect).getAddList().nextSetBit(0));
-                }
-                from = cleanStringDot(s.parentAction);
-            }
-            int act = -1;
-            /*if(policyP.action(s.getState()) == -1){
-            	System.out.println("WTF??");
-            	System.out.println(problem.printState(s.getState()));
-            	exportGraph();
-            	return;
+            VertexNode origin;
+            if(s.parentAction == null){
+                origin = getVertex("root");
             }else{
-            	act = policyP.action(s.getState());
-            }*/
-            act = policyP.action(s.getState());
+                if(problem.getAction(s.indexAction).isNondeterministic){
+                    label = problem.getPredicate(problem.getAction(s.indexAction)
+                            .getEffects().get(s.indexEffect).getAddList().nextSetBit(0));
+                }
+                origin = addVertex(cleanStringDot(s.parentAction), idStates.get(s.parent.getState()));
+                i++;
+            }
+
+            int act = policyP.action(s.getState());
             VAction a = problem.getAction(act);
-            to = cleanStringDot(a.getName());
-            graph.addVertex(from);
-            graph.addVertex(to);
+            VertexNode destiny = addVertex(cleanStringDot(a.getName()), idStates.get(s.getState()));
+            addEdge(origin, destiny, label);
+            //origin = getVertex(cleanStringDot(s.parentAction));
+            //VertexNode destiny = addVertex(cleanStringDot(a.getName()), idStates.get(s.getState()));
             //if(from.equals(to)) continue;
-            if(graph.getEdge(from, to) != null) continue;
-            addEdge(from, to, label);
+            //if(!(graph.getEdge(from, to) != null))
+            //addEdge(origin, destiny, label);
+
+
             if(a.isNondeterministic){
                 for(Node succ : s.applyNonDeterministicAction(a, problem)){
                     open.push(succ);
+                    addNewState(succ.getState());
                 }
             }else{
                 Node succ = s.applyDeterministicAction(a, problem);
                 open.push(succ);
+                addNewState(succ.getState());
             }
             solved.add(s.getState());
         }
@@ -77,31 +90,57 @@ public class Solution {
         System.out.println("Policy size: " + solved.size());
         exportGraph();
     }
-    
-    private void updateEdge(String from, String to, String label){
-    	Edge<String> edge = new Edge<String>(from, to, label);
-    	graph.removeEdge(edge);
-    	graph.addEdge(from, to, edge);
+
+    private void addNewState(BitSet state){
+        idStates.put(state, i);
+        i++;
     }
 
-    private void addEdge(String from, String to, String label){
-        Edge<String> edge = new Edge<String>(from, to, label);
+    private VertexNode getVertex(String vertex){
+        for(VertexNode v : graph.vertexSet()){
+            if(v.getLabel().equals(vertex)){
+                return v;
+            }
+        }
+        return null;
+    }
+
+    private VertexNode getVertex(int vertex){
+        for(VertexNode v : graph.vertexSet()){
+            if(v.getId() == vertex){
+                return v;
+            }
+        }
+        return null;
+    }
+
+    private void addEdge(VertexNode from, VertexNode to, String label){
+        Edge<VertexNode> edge = new Edge<VertexNode>(from, to, label);
+        if(!graph.containsEdge(edge)) graph.addEdge(from, to, edge);
         numberNodes++;
-        graph.addEdge(from, to, edge);
     }
 
-    private DirectedMultigraph<String, Edge> createStringGraph(){
-        DirectedMultigraph<String, Edge> g = new DirectedMultigraph<String, Edge>(
-                new ClassBasedEdgeFactory<String, Edge>(Edge.class));
+    private VertexNode addVertex(String vertex, int i){
+        VertexNode v = new VertexNode(vertex, i);
+        /*if(!graph.containsVertex(v)){
+
+        }*/
+        graph.addVertex(v);
+        return v;
+    }
+
+    private DirectedMultigraph<VertexNode, Edge> createStringGraph(){
+        DirectedMultigraph<VertexNode, Edge> g = new DirectedMultigraph<VertexNode, Edge>(
+                new ClassBasedEdgeFactory<VertexNode, Edge>(Edge.class));
         return g;
     }
 
-    public static void toDot(OutputStream out, DirectedGraph<String, Edge> graph2) {
+    public static void toDot(OutputStream out, DirectedGraph<VertexNode, Edge> graph2) {
         //VertexNameProvider<String> provider = new ActionNameProvider();
-        VertexNameProvider<String> p2 = new Vertex();
-        VertexNameProvider<String> p1 = new Vertex();
+        VertexNameProvider<VertexNode> p2 = new VertexNodeProvider();
+        VertexNameProvider<VertexNode> p1 = new VertexNodeId();
         EdgeNameProvider<Edge> edgeLabel = new StringEdgeNameProvider<Edge>();
-        DOTExporter<String, Edge> exporter = new DOTExporter<String, Edge>(p1, p2, edgeLabel);
+        DOTExporter<VertexNode, Edge> exporter = new DOTExporter<VertexNode, Edge>(p1, p2, edgeLabel);
         exporter.export(new OutputStreamWriter(out), graph2);
     }
 
@@ -114,10 +153,10 @@ public class Solution {
         // note directed edges are printed as: (<v1>,<v2>)
         //System.out.println(graph.toString());
         System.out.println("Nodes: " + numberNodes);
-        File file = new File("./plan.dot");
+        File file = new File("./solution.dot");
         try {
             toDot(new FileOutputStream(file), graph);
-            System.out.println("Dot file saved in plan.dot.\n Using graphviz: dot -Tpdf plan.dot -o plan.pdf");
+            System.out.println("Dot file saved in solution.dot.\n Using graphviz: dot -Tpdf solution.dot -o plan.pdf");
         } catch (FileNotFoundException e1) {
             e1.printStackTrace();
         }

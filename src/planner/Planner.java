@@ -45,8 +45,8 @@ public class Planner {
 
 		/*Time measure: translation*/
 		domain = ParserHelper.cleanProblem(domain);
-		//cg = new CausalGraph(domain);
-		//HashSet<String> relevants = cg.relevantLiterals(domain.goalState);
+		/*cg = new CausalGraph(domain);
+		HashSet<String> relevants = cg.relevantLiterals(domain.goalState);*/
 
 		//UncertaintyGraph uG = new UncertaintyGraph(domain);
 		startTime = System.currentTimeMillis();
@@ -62,30 +62,33 @@ public class Planner {
 		domain_translated = tr.getDomainTranslated();
 		domain_translated.hidden_state = domain.hidden_state;
 
-		cg = new CausalGraph(domain_translated);
 
 		Problem p = transformToVectors(domain_translated, false, tr);
 		Problem hP = transformToVectors(domain_translated, true, tr);
 
 		System.out.println("Transformation to vectors completed. ");
 		//LANDMARKS
-		Landmarker l = new Landmarker(domain_translated.state, domain_translated.list_actions, domain_translated.goalState);
+		//Landmarker l = new Landmarker(domain_translated.state, domain_translated.list_actions, domain_translated.goalState);
 
 		computeHeuristic(hP, ontop);
+		cg = new CausalGraph(domain_translated);
+		HashSet<String> relevants = cg.relevantLiterals(domain_translated.goalState);
 
 		/*Print domain*/
-		//if(!(file_out_path == null)) printDomain(tr);
+		if(!(file_out_path == null)) printDomain(tr);
 
 		if(changes) {
 			p = transformToVectors(domain_translated, false, tr);
 			hP = transformToVectors(domain_translated, true, tr);
 		}
 		JustificationGraph jG = new JustificationGraph(hP);
+		jG.setRelevantLiterals(hP, relevants);
 
 		System.out.println("Init Search. ");
 
 		//Simulator sim = new Simulator(null, p.getInitState(), p, hP);
-		Searcher search = new Searcher(p, hP, l.getLandmarks(), jG, heuristic);
+		Searcher search = new Searcher(p, hP, new ArrayList<String>(), jG, heuristic);
+
 		//search.GenPlanPairs(p.getInitState());
 	}
 
@@ -103,14 +106,15 @@ public class Planner {
 		if(isHeuristic){
 			for(String name : domain_translated.list_actions.keySet()) {
 				Action a = domain_translated.list_actions.get(name);
-				if(!a.IsObservation){
+				if(!a.IsObservation && !a._IsNondeterministic){
 					p.insertAction(a, false);
+				}else{
+					p.determinizeBranches(a);
 				}
 			}
-			p.setDeterminizedObs(tr.getObsHeuristics());
 			for(String pred : domain.UncertainPredicates){
-				p.uncertainty.add(p.getPredicate("K"+pred));
-				p.uncertainty.add(p.getPredicate("K~"+pred));
+				p.uncertainty.add(p.getPredicate("K" + pred));
+				p.uncertainty.add(p.getPredicate("K~" + pred));
 			}
 			for(String pred : domain.obsPredicates){
 				p.observables.add(p.getPredicate("K"+pred));
@@ -181,6 +185,7 @@ public class Planner {
 			a_human._precond.add("Knot-started");
 			Effect e = new Effect();
 			e._Effects.add(element);
+			e._Effects.add(ParserHelper.complement(element.replace("K", "K~")));
 			a_human._Effects.add(e);
 			domain_translated.list_actions.put(a_human.Name, a_human);
 			ArrayList<Action> aList = new ArrayList<>();

@@ -10,6 +10,9 @@ public class PartialPolicy {
     private TrieNode root = new TrieNode();
     public HashMap<BitSet, Boolean> marked = new HashMap<>();
     public HashMap<BitSet, Integer> partial = new HashMap<>();
+    private HashMap<BitSet, Integer> oldPolicy = new HashMap<>();
+    public int cost = Integer.MAX_VALUE;
+
 
     /**Returns action index or -1*/
     public int find(BitSet s){
@@ -17,6 +20,12 @@ public class PartialPolicy {
         //if(node == null) return -1;
         //return node.action;
     	return action(s);
+    }
+
+    public void setCost(int i){
+        if(i<cost){
+            cost = i;
+        }
     }
 
     public boolean exists(BitSet s){
@@ -131,5 +140,13 @@ public class PartialPolicy {
 
     public Set<BitSet> iteratorStatesActions() {
         return marked.keySet();
+    }
+
+    public boolean containsOldPolicy() {
+        return !oldPolicy.isEmpty();
+    }
+
+    public void copyPolicyOld() {
+        oldPolicy = new HashMap<BitSet, Integer>(partial);
     }
 }

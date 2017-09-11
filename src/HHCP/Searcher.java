@@ -1,6 +1,5 @@
 package HHCP;
 
-import simulator.Simulator;
 import java.util.*;
 
 /**
@@ -14,16 +13,22 @@ public class Searcher {
     private HashSet<BitSet> seen = new HashSet<BitSet>();
     private Stack<BitSet> open = new Stack<BitSet>();
     private HashSet<BitSet> DeadEnds = new HashSet<BitSet>();
-    private HashMap<BitSet, Integer> forbiddenActions = new HashMap<BitSet, Integer>();
+    private HashMap<BitSet, Integer> forbiddenStateActions = new HashMap<BitSet, Integer>();
+    private BitSet forbiddenHelp = new BitSet();
+    private BitSet forbiddenActions = new BitSet();
+    private HashMap<BitSet, Integer> expectedCost = new HashMap<BitSet, Integer>();
+    private HashMap<BitSet, BitSet> parent = new HashMap<BitSet, BitSet>();
     private PriorityQueue<Node> fringe;
     private Heuristic h;
     private PartialPolicy policyP = new PartialPolicy();
     private ArrayList<Integer> landmarks;
+    private int upperBound = Integer.MAX_VALUE;
 
 
     public Searcher(Problem p, Problem heuristicP, ArrayList<String> l, JustificationGraph jG, String heuristic){
         problem = p;
         HProblem = heuristicP;
+        int solCost = Integer.MAX_VALUE;
         boolean deadEndsFound = false;
         if(!l.isEmpty()){
             landmarks = new ArrayList<>();
@@ -34,6 +39,7 @@ public class Searcher {
             }
         }
         h = new Heuristic(heuristicP, landmarks, jG, heuristic);
+        h.useCosts(heuristicP.cost);
         //Search starts!
         double startTime = System.currentTimeMillis();
         boolean modified = true;
@@ -51,11 +57,14 @@ public class Searcher {
                         if(GenPlanPairs(s)){
                             modified = true;
                             //Mark State-Action Pairs
+                            updateCost(s);
+                            //System.out.println("Partial expected cost of the solution: " + expectedCost.get(p.getInitState()));
                             markStateActions();
                         }else {
                             System.out.println("Adding to Dead End Set the state: " + s.toString());
-                            if(parentAction.containsKey(s)) forbiddenActions.put(regressStateAction(s, parentAction.get(s)), parentAction.get(s));
+                            if(parentAction.containsKey(s)) forbiddenStateActions.put(regressStateAction(s, parentAction.get(s)), parentAction.get(s));
                             deadEndsFound=true;
+                            break;
                         }
                     }
                     int indexAction = policyP.find(s);
@@ -66,15 +75,31 @@ public class Searcher {
                     }
                 }
             }
-            //markStateActions();
-            //TODO: What to do with weak problems?
             if(deadEndsFound){
                 modified = true;
                 processDeadEnds();
                 deadEndsFound = false;
-                visited.clear();
-                seen.clear();
+                clear();
+                policyP.clear();
+                //return;
             }
+            //TODO: What to do with weak problems?
+            //Here the solution must be compared to test:
+            // * if there are other solutions without the human help actions used and best cost.
+            System.out.println("Expected cost of the solution: " + expectedCost.get(p.getInitState()));
+            /*BitSet bS = problem.humanUsed();
+            if(!bS.isEmpty()){
+                if(!previousSolution()){
+                    for(int i=bS.nextSetBit(0);i>=0;i=bS.nextSetBit(i+1)){
+                        forbiddenHelp.set(i);
+                        modified = true;
+                        System.out.println("Replanning: ");
+                        clear();
+                        problem.cleanActionsUsed();
+                        policyP.clear();
+                    }
+                }
+            }*/
         }
         //GenPlanPairs(problem.getInitState());
         double endTime = System.currentTimeMillis();
@@ -85,8 +110,26 @@ public class Searcher {
         System.out.println("Number of nodes: " + policyP.partial.size());
         System.out.println("Policy size: " + policyP.size());
         System.out.println("Number of states solved: " + policyP.marked.size());
-        //printPolicy(p.getInitState());
+        printPolicy(p.getInitState());
         //Simulator sim = new Simulator(policyP, p.getInitState(), problem, heuristicP);
+    }
+
+    private boolean previousSolution() {
+        boolean ret = true;
+        if(!policyP.containsOldPolicy()){
+            ret = false;
+            policyP.copyPolicyOld();
+        }
+        return ret;
+    }
+
+    private void clear(){
+        visited.clear();
+        seen.clear();
+    }
+
+    private void printPolicy(BitSet initState) {
+        Solution s = new Solution(policyP, initState, problem);
     }
 
     private BitSet regressStateAction(BitSet s, Integer action) {
@@ -128,7 +171,8 @@ public class Searcher {
                     for (VEffect e : a.getEffects()) {
                         BitSet s = (BitSet) bs.clone();
                         //applyEffect(s, e);
-                        successors.add(applyEffect(s, e));
+                        BitSet resultEffect = applyEffect(s, e);
+                        successors.add(resultEffect);
                     }
                 }else{
                     BitSet s = (BitSet) bs.clone();
@@ -159,6 +203,31 @@ public class Searcher {
         }
     }
 
+    private void updateCost(BitSet s) {
+        BitSet current = (BitSet) s.clone();
+        while(parent.containsKey(current)){
+            BitSet par = parent.get(current);
+            int cost1 = expectedCost.get(par);
+            int cost2 = expectedCost.get(current);
+            int cost3 = problem.cost[policyP.action(par)];
+            if(problem.getAction(policyP.action(par)).isNondeterministic){
+                //MAX criterion
+                //expectedCost.put(par, Math.max(cost1, cost2 + cost3));
+                //ADD criterion?
+                expectedCost.put(par, cost1 + cost2);
+                current = (BitSet) par.clone();
+            }else{
+                //MAX criterion for deterministic actions
+                expectedCost.put(par, Math.max(cost1, cost2 + cost3));
+                //ADD criterion?
+                //expectedCost.put(par, cost1 + cost2);
+                current = (BitSet) par.clone();
+            }
+
+        }
+
+    }
+
     private BitSet applyEffect(BitSet s, VEffect e){
         //TODO: Apply effects and non-deterministic points here!!!!
         /*s.or(e.getAddList());
@@ -178,23 +247,30 @@ public class Searcher {
 
     private void applyAction(int indexAction, BitSet s, HashMap<BitSet, Integer> parentAction){
         VAction a = problem.getAction(indexAction);
+        int costChild = 0;
+        BitSet sCopy = (BitSet) s.clone();
         if(a.isNondeterministic){
             for(VEffect e : a.getEffects()){
                 BitSet s2 = applyEffect((BitSet) s.clone(), e);
                 parentAction.put(s2, indexAction);
                 Node n = new Node(s2);
                 //n.fixedPoint(n, problem.vAxioms);
-                open.push(n.getState());
+                parent.put((BitSet) n.getState().clone(), (BitSet) s.clone());
+                open.push((BitSet) n.getState().clone());
+                if(expectedCost.containsKey(s2) && expectedCost.get(s2) > costChild){
+                    costChild = expectedCost.get(s2);
+                }
             }
+            expectedCost.put(sCopy, costChild + problem.cost[indexAction]);
         }else{
             for(VEffect e : a.getEffects()){
                 //applyEffect(s2, e);
-                s.or(e.getAddList());
+                sCopy.or(e.getAddList());
                 for(int i = e.getDelList().nextSetBit(0);i>=0;i=e.getDelList().nextSetBit(i+1)){
-                    s.set(i, false);
+                    sCopy.set(i, false);
                 }
             }
-            BitSet s2 = (BitSet) s.clone();
+            BitSet s2 = (BitSet) sCopy.clone();
             parentAction.put(s2, indexAction);
             open.push(s2);
         }
@@ -209,6 +285,12 @@ public class Searcher {
 
     private void processDeadEnds() {
         //Get generalized dead-end
+        for(BitSet s : DeadEnds) {
+            if (parent.containsKey(s)) {
+                forbiddenStateActions.put(parent.get(s), policyP.action(parent.get(s)));
+                forbiddenActions.set(policyP.action(parent.get(s)));
+            }
+        }
         policyP.clear();
     }
 
@@ -225,12 +307,12 @@ public class Searcher {
 
     public boolean GenPlanPairs(BitSet initState){
         boolean solution = false;
+        int solCost = 0;
         Comparator<Node> comparator = new NodeComparator();
         fringe = new PriorityQueue<Node>(100, comparator);
         Node initNode = new Node(initState);
         int[] factlayer = problem.initLayers(initState);
         initNode.setActionCounterInc(problem);
-
         initNode.setActionLayer(new int[problem.getVaList().size()]);
         initNode.setFacts(factlayer);
         //
@@ -240,7 +322,7 @@ public class Searcher {
         while(!solution) {
             if(fringe.isEmpty()){
                 System.out.println("No weak plan found.\nThe initial State for this search may have caused a Dead-end.");
-                printState(initState);
+                //printState(initState);
                 DeadEnds.add(initState);
                 return false;
             }
@@ -250,24 +332,25 @@ public class Searcher {
             if(node.holds(problem.getGoal()) || policyP.valid(node.getState()) ){
                 //solution = true;
                 System.out.println("Solution found");
+                //RegressPlan(node);
                 RegressPlan(node);
                 break;
             }
             /*EHC: take the first action of the policy. Usually does not work.
             * A* complete heuristic search.*/
-
             for (VAction va : getApplicableActions(node)) {
-                if (forbiddenActions.containsKey(node.getState()) && forbiddenActions.get(node.getState()) == va.index)
+                if (forbiddenStateActions.containsKey(node.getState()) && forbiddenStateActions.get(node.getState()) == va.index)
                     continue;
                 addToFringe(va, node);
             }
 
-            /*if(!node.relaxedSolution.isEmpty()){
+            /*EHC:
+            if(!node.relaxedSolution.isEmpty()){
                 VAction va = problem.getAction(node.preferredAction);
                 addToFringe(va, node);
             }else {
                 for (VAction va : getApplicableActions(node)) {
-                    if (forbiddenActions.containsKey(node.getState()) && forbiddenActions.get(node.getState()) == va.index)
+                    if (forbiddenStateActions.containsKey(node.getState()) && forbiddenStateActions.get(node.getState()) == va.index)
                         continue;
                     addToFringe(va, node);
                 }
@@ -280,18 +363,29 @@ public class Searcher {
     private void addToFringe(VAction va, Node node){
         if (va.isNondeterministic) {
             ArrayList<Node> getSuccessorNodes = node.applyNonDeterministicAction(va, problem);
+            int MaxH = 0;
             for (Node n : getSuccessorNodes) {
                 //Review condition of adding the new state:
                 if (!DeadEnds.contains(n.getState())) {
-                    /*if(visited.contains(n.getState())){
-                        System.out.println();
-                    }*/
                     updateHeuristic(n, node, va);
-                    fringe.add(n);
+                    if(n.getH() > MaxH){
+                        MaxH = n.getH();
+                    }
                 } else {
                     //Add this transition to the forbidden action state pair
-                    forbiddenActions.put(node.getState(), va.index);
+                    MaxH = Integer.MAX_VALUE;
+                    forbiddenStateActions.put(node.getState(), va.index);
                 }
+            }
+            //Adicionar valor heuristico para as duas acoes
+            String o1 = va.getName() + "#1";
+            String o2 = va.getName() + "#2";
+            h.updateValue(HProblem.getAction(o1).index,MaxH);
+            h.updateValue(HProblem.getAction(o2).index,MaxH);
+            for(Node n : getSuccessorNodes){
+                n.setHeuristic(MaxH);
+                n.setCost(MaxH);
+                fringe.add(n);
             }
         } else {
             Node n = node.applyDeterministicAction(va, problem);
@@ -305,7 +399,7 @@ public class Searcher {
                 fringe.add(n);
             } else {
                 //Add this transition to the forbidden action state pair
-                forbiddenActions.put(node.getState(), va.index);
+                forbiddenStateActions.put(node.getState(), va.index);
             }
         }
     }
@@ -320,24 +414,27 @@ public class Searcher {
     }
 
     private void RegressPlan(Node node){
-        //BitSet r = (BitSet) problem.getGoalSet().clone();
     	BitSet r = (BitSet) node.getState().clone();
+        expectedCost.put(node.getState(),0);
+        int PlanCost = 0;
         while(node.parent != null){
-            /*Regress the action here
-            Should we regress here?*/
+            parent.put(node.getState(), node.parent.getState());
             VAction a = problem.getAction(node.indexAction);
-            //TODO: verify how axioms are regressed
             if(node.axioms != null) regressAxioms(node, r);
             //1 regress preconditions: put them all 1
             r.or(a.preconditions);
-            /*for (int p = a.preconditions.nextSetBit(0); p >= 0; p = a.preconditions.nextSetBit(p+1)) {
-                r.set(p);
-            }*/
             //Regress effects
             regressNode(a,node,r);
             policyP.put((BitSet) r.clone(), node.indexAction);
+            PlanCost+=problem.cost[node.indexAction];
+            problem.setActionsUsed(node.indexAction);
+            //System.out.println(problem.getAction(node.indexAction).getName());
+            expectedCost.put(node.parent.getState(), PlanCost);
             node = node.parent;
         }
+        //PlanCost+=problem.cost[node.indexAction];
+        expectedCost.put(node.getState(), PlanCost);
+        return;
     }
 
     private void regressAxioms(Node node, BitSet r) {
@@ -428,7 +525,7 @@ public class Searcher {
                 .filter(s -> ((s.getName().s) && (node.holds(s.getPreconditionArray()))))
                 .forEach(retList::add);*/
         for(VAction va : problem.getVaList()){
-        	if(va.getName().startsWith("invariant-at")) continue;
+        	if(va.getName().startsWith("invariant-at") || forbiddenHelp.get(va.index) || forbiddenActions.get(va.index)) continue;
             //if(node.holds(va.getPreconditionArray())){
             if(node.holds(va.getPreconditions())){
                 retList.add(va);

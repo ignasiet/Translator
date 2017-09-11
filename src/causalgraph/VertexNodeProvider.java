@@ -1,7 +1,15 @@
 package causalgraph;
+import org.jgrapht.ext.VertexNameProvider;
 
 /**
- * Created by ignasi on 11/09/17.
+ * @author ignasi
+ *
  */
-public class VertexNodeProvider {
+public class VertexNodeProvider implements VertexNameProvider<VertexNode> {
+
+    @Override
+    public String getVertexName(VertexNode vertexNode) {
+        return vertexNode.getLabel();
+    }
 }
+

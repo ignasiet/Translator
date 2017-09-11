@@ -7,6 +7,7 @@ import pddlElements.Axiom;
 import pddlElements.Branch;
 import pddlElements.Effect;
 
+import java.lang.reflect.Array;
 import java.util.*;
 
 /**
@@ -17,6 +18,8 @@ public class Problem {
     private BiMap<Integer, String> Predicates;
 
     private BitSet initState;
+    private BitSet humanActions = new BitSet();
+    private BitSet actionsUsed = new BitSet();
     //private BitSet goalSet;
     //private int[] goal;
     private BitSet goal = new BitSet();
@@ -27,7 +30,7 @@ public class Problem {
     public ArrayList<VAction> hObservations = new ArrayList<VAction>();
     public HashSet<Integer> uncertainty = new HashSet<Integer>();
     public HashSet<Integer> observables = new HashSet<Integer>();
-    private int[] cost;
+    public int[] cost;
     public int indexAxioms = 0;
     private int size;
 
@@ -78,39 +81,36 @@ public class Problem {
 
     public VEffect createEffects(Effect e){
         VEffect v = new VEffect();
-        //int[] cond = new int[e._Condition.size()];
-        //int i = 0;
         BitSet cond = new BitSet();
         for(String condition : e._Condition){
             cond.set(Predicates.inverse().get(condition));
-            //i++;
         }
         v.setCondition(cond);
-        //ArrayList<Integer> addList = new ArrayList<Integer>();
-        //ArrayList<Integer> delList = new ArrayList<Integer>();
         BitSet add = new BitSet();
         BitSet del = new BitSet();
         for(String effect : e._Effects){
             if(effect.startsWith("~")){
-                //delList.add(Predicates.inverse().get(effect.substring(1)));
                 del.set(Predicates.inverse().get(effect.substring(1)));
             }else{
                 add.set(Predicates.inverse().get(effect));
-                //addList.add(Predicates.inverse().get(effect));
             }
         }
-        //int[] add = new int[addList.size()];
-        //int[] del = new int[delList.size()];
-        //int i = 0;
-        /*for(Integer in : addList){
-            add[i] = in;
-            i++;
+        v.setAddList(add);
+        v.setDelList(del);
+        return v;
+    }
+
+    private VEffect createEffectFromList(ArrayList<String> list){
+        VEffect v = new VEffect();
+        BitSet add = new BitSet();
+        BitSet del = new BitSet();
+        for(String effect : list){
+            if(effect.startsWith("~")){
+                del.set(Predicates.inverse().get(effect.substring(1)));
+            }else{
+                add.set(Predicates.inverse().get(effect));
+            }
         }
-        i = 0;*/
-        /*for(Integer in : delList){
-            del[i] = in;
-            i++;
-        }*/
         v.setAddList(add);
         v.setDelList(del);
         return v;
@@ -267,6 +267,7 @@ public class Problem {
     	vaList.add(va);
         //Set prec2act:
         va.index = vaList.indexOf(va);
+        if(a.Name.contains("Modify_human_")) humanActions.set(va.index);
         actionsIndex.put(va.getName(), va.index);
         setPrec2Act(va, prec);
         return va.index;
@@ -356,5 +357,65 @@ public class Problem {
             cost[i] = vaList.get(i).cost;
         }
 
+    }
+
+    public void determinizeBranches(Action a) {
+        VAction va0 = new VAction();
+        VAction va1 = new VAction();
+        va0.setName(a.Name + "#1");
+        va1.setName(a.Name + "#2");
+        va0.cost = a.cost;
+        va1.cost = a.cost;
+        va0.isNondeterministic = a._IsNondeterministic;
+        va1.isNondeterministic = a._IsNondeterministic;
+        va0.isObservation = a.IsObservation;
+        va1.isObservation = a.IsObservation;
+
+        int[] prec = new int[a._precond.size()];
+        int i = 0;
+        for(String s : a._precond){
+            va0.setBitPrecond(Predicates.inverse().get(s));
+            va1.setBitPrecond(Predicates.inverse().get(s));
+            prec[i] = Predicates.inverse().get(s);
+            i++;
+        }
+        /*Reading non deterministic branches.
+        * Limited to one nondeterministic effect per action!
+        * NOTE: In fact one non-deterministic effect means maximum 2 branches per action
+        * Plus the conditional effects
+        * I.e. conditional effects + (one of) in the same action.
+        * */
+        // Non deterministic actions:
+        //Branch 0
+        VEffect eff0 = createEffectFromList(a._Branches.get(0)._Branches);
+        va0.addEffect(eff0);
+        VEffect eff1 = createEffectFromList(a._Branches.get(1)._Branches);
+        va1.addEffect(eff1);
+
+        vaList.add(va0);
+        vaList.add(va1);
+
+        //Set prec2act:
+        va0.index = vaList.indexOf(va0);
+        va1.index = vaList.indexOf(va1);
+        actionsIndex.put(va0.getName(), va0.index);
+        actionsIndex.put(va1.getName(), va1.index);
+        setPrec2Act(va0, prec);
+        setPrec2Act(va1, prec);
+    }
+
+    public void setActionsUsed(int action) {
+        actionsUsed.set(action);
+    }
+
+    public void cleanActionsUsed() {
+        actionsUsed.clear();
+    }
+
+    public BitSet humanUsed(){
+        BitSet bS = (BitSet) actionsUsed.clone();
+        bS.and(humanActions);
+        //CAREFUL!
+        return bS;
     }
 }

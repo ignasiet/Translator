@@ -23,6 +23,7 @@ public class RelaxedGraphH {
     //Is predicate at i marked true?
     private BitSet goalMarked;
     private int value = 0;
+    public int solutionCost = 0;
     private ArrayList<Integer> relaxedSolution = new ArrayList<Integer>();
     public HashMap<Integer, ArrayList<Integer>> reSolution = new HashMap<Integer, ArrayList<Integer>>();
 
@@ -43,6 +44,21 @@ public class RelaxedGraphH {
     }
 
     public void calculateHeuristic(BitSet state, HashSet<Integer> l){
+        relaxedSolution = new ArrayList<Integer>();
+        reSolution = new HashMap<Integer, ArrayList<Integer>>();
+        scheduledActions = new BitSet();
+        value = 0;
+        solutionCost=0;
+        addedBy = new HashMap<Integer, Integer[]>();
+        m=0;
+        factsLayer = new int[problem.getSize()];
+        Arrays.fill(factsLayer, Integer.MAX_VALUE);
+        goalMembership = new HashMap<Integer, Integer[]>();
+        actionCounter = new int[problem.getVaList().size()];
+        actionLayer = new int[problem.getVaList().size()];
+        difficultyLayer = new int[problem.getVaList().size()];
+        goalMarked = new BitSet();
+
         initLayers(state);
         if(l != null) {
             landmarks = l;
@@ -56,6 +72,7 @@ public class RelaxedGraphH {
                     BitSet bsGoal = new BitSet();
                     bsGoal.set(landmark);
                     extractPlan(bsGoal);
+                    countSolution();
                     value = relaxedSolution.size();
                 }
             }
@@ -63,10 +80,23 @@ public class RelaxedGraphH {
             expandGraph();
             if(value==0){
                 extractPlan(problem.getGoal());
+                countSolution();
                 value = relaxedSolution.size();
             }
         }
 
+    }
+
+    private void countSolution(){
+        for(int i : relaxedSolution){
+            solutionCost+=cost[i];
+        }
+    }
+
+    public void updateCost(int index, int value){
+        if(cost[index] < value) {
+            cost[index] = value;
+        }
     }
 
     public void preScheduleActions(BitSet preacts){
@@ -103,8 +133,8 @@ public class RelaxedGraphH {
                     for(int j = e.getAddList().nextSetBit(0); j >= 0; j = e.getAddList().nextSetBit(j+1)){
                         //i: the action
                         //j: the predicate
-                        addRelation(j, i);
                         if(factsLayer[j] > layerNumber){
+                            addRelation(j, i);
                             factsLayer[j] = layerNumber;
                             //3 Update actions whose preconditions have been updated
                             updateActionCounter(j, layerNumber);
@@ -221,39 +251,39 @@ public class RelaxedGraphH {
             if(goals == null) continue;
             ArrayList<Integer> goalsLowerLayer = new ArrayList<Integer>();
             try{
-            for (int g : goals) {
-                if (solved.contains(g) || (factsLayer[g] == 0)) continue;
-                //Obtain the minimal difficulty action and add it to the relaxed solution
-                Integer minAct = addedBy.get(g)[0];
-                solved.add(g);
-                if (!relaxedSolution.contains(minAct)) relaxedSolution.add(minAct);
-                layerSolution(actionLayer[minAct], minAct);
-                //Add its preconditions to the goal of lower layers
-                //WARNING: only if not marked true already!
-                //TODO: if the fact is added after, then choose another fact
-                VAction a = problem.getAction(minAct);
-                for (int pr = a.preconditions.nextSetBit(0); pr >= 0; pr = a.preconditions.nextSetBit(pr + 1)) {
-                    if ((factsLayer[pr] == 0) || goalsLowerLayer.contains(pr)) continue;
-                    if (!(factsLayer[pr] >= i)) {
-                        //goalsLowerLayer.add(pr);
-                        if (problem.uncertainty.contains(pr) || problem.observables.contains(pr)) {
-                            clearAll();
-                            addGoalMembership(pr);
-                            break;
-                        } else {
-                            addGoalMembership(pr);
+                for (int g : goals) {
+                    if (solved.contains(g) || (factsLayer[g] == 0)) continue;
+                    //Obtain the minimal difficulty action and add it to the relaxed solution
+                    Integer minAct = addedBy.get(g)[0];
+                    solved.add(g);
+                    if (!relaxedSolution.contains(minAct)) relaxedSolution.add(minAct);
+                    layerSolution(actionLayer[minAct], minAct);
+                    //Add its preconditions to the goal of lower layers
+                    //WARNING: only if not marked true already!
+                    //TODO: if the fact is added after, then choose another fact
+                    VAction a = problem.getAction(minAct);
+                    for (int pr = a.preconditions.nextSetBit(0); pr >= 0; pr = a.preconditions.nextSetBit(pr + 1)) {
+                        if ((factsLayer[pr] == 0) || goalsLowerLayer.contains(pr)) continue;
+                        if (!(factsLayer[pr] >= i)) {
+                            //goalsLowerLayer.add(pr);
+                            if (problem.uncertainty.contains(pr) || problem.observables.contains(pr)) {
+                                clearAll();
+                                addGoalMembership(pr);
+                                break;
+                            } else {
+                                addGoalMembership(pr);
+                            }
+                        }
+                    }
+                    //Mark other effects true
+                    for (VEffect e : a.getEffects()) {
+                        if (e.getAddList().get(g)) {
+                            for (int j = e.getAddList().nextSetBit(0); j >= 0; j = e.getAddList().nextSetBit(j + 1)) {
+                                if (factsLayer[j] >= i) solved.add(j);
+                            }
                         }
                     }
                 }
-                //Mark other effects true
-                for (VEffect e : a.getEffects()) {
-                    if (e.getAddList().get(g)) {
-                        for (int j = e.getAddList().nextSetBit(0); j >= 0; j = e.getAddList().nextSetBit(j + 1)) {
-                            if (factsLayer[j] >= i) solved.add(j);
-                        }
-                    }
-                }
-            }
             }
             catch (Exception e){
                 System.out.println("Error" + e.toString());
@@ -289,9 +319,9 @@ public class RelaxedGraphH {
             l.add(action);
             reSolution.put(level, l);
         }else{
-            ArrayList<Integer> l = new ArrayList<Integer>(reSolution.get(level));
+            HashSet<Integer> l = new HashSet<>(reSolution.get(level));
             l.add(action);
-            reSolution.put(level, l);
+            reSolution.put(level, new ArrayList<>(l));
         }
     }
 
@@ -355,7 +385,8 @@ public class RelaxedGraphH {
     }
 
     public int getValue(){
-        return value;
+        //return value;
+        return solutionCost;
     }
 
     public ArrayList<Integer> getRelaxedSolution(){

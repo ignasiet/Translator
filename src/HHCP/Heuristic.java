@@ -21,9 +21,11 @@ public class Heuristic {
         heuristic = h;
         justGraph = jG;
         if(l != null) landmarks = new HashSet<Integer>(l);
+        rp = new RelaxedGraphH(problem);
     }
 
     public int getValue(Node node){
+        rp.solutionCost = 0;
         if(heuristic.equals("ff")) {
             HashSet<Integer> landmarksNotReached;
             if (landmarks != null) {
@@ -33,11 +35,9 @@ public class Heuristic {
                         landmarksNotReached.remove(i);
                     }
                 }
-                rp = new RelaxedGraphH(problem);
                 rp.calculateHeuristic(node.getState(), landmarks);
                 return returnValue(rp, node);
             } else {
-                rp = new RelaxedGraphH(problem);
                 rp.calculateHeuristic(node.getState(), null);
                 return returnValue(rp, node);
             }
@@ -51,6 +51,10 @@ public class Heuristic {
         rp.preScheduleActions(acts);
         rp.calculateHeuristic(node.getState(), null);
         return returnValue(rp, node);
+    }
+
+    public void updateValue(int index, int value){
+        rp.updateCost(index, value);
     }
 
     private int returnValue(RelaxedGraphH rp, Node node){
@@ -86,7 +90,7 @@ public class Heuristic {
         return problem.getAction(rp.getRelaxedSolution().get(rp.getRelaxedSolution().size() - 1)).getName();
     }
 
-    public void useCosts() {
-
+    public void useCosts(int[] costsVector) {
+        rp.setCost(costsVector);
     }
 }

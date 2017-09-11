@@ -301,6 +301,9 @@ public class CausalGraph {
 		//Start marking from node Dummy
 		Stack<String> fringe = new Stack<String>();
 		for(String goal : goalState){
+			fringe.add(cleanStringDot(goal));
+		}
+		/*for(String goal : goalState){
 			//Clean goal string (it is translated)
 			if(goal.startsWith("K") || goal.startsWith("Kn_")){
 				fringe.add(cleanStringDot(goal.replace("Kn_", "").replace("K", "")));
@@ -308,7 +311,7 @@ public class CausalGraph {
 			}else{
 				fringe.add(goal);
 			}
-		}
+		}*/
 		while(!fringe.isEmpty()){
 			String current = cleanStringDot(fringe.pop());
 			if(visited.contains(current)) continue;
@@ -335,7 +338,8 @@ public class CausalGraph {
 		HashSet<String> originalRelevantFluents = new HashSet<String>();
 		for(String fluent : visited){
 			String flCleaned = cleanBackDot(fluent);
-			originalRelevantFluents.add("K" + flCleaned);
+			//originalRelevantFluents.add("K" + flCleaned);
+			originalRelevantFluents.add(flCleaned);
 		}
 		return originalRelevantFluents;
 	}

@@ -36,4 +36,9 @@ public class Edge<V> extends DefaultWeightedEdge {
     public String getSource(){
         return v1.toString();
     }
+
+    public String getTarget(){
+        return v2.toString();
+    }
+
 }
