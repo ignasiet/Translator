@@ -27,6 +27,7 @@ public class Node {
     private BitSet scheduledActions;
     public int value = Integer.MAX_VALUE;
     public HashMap<Integer, ArrayList<Node>> successors = new HashMap<Integer, ArrayList<Node>>();
+    public int greedyAction;
 
     public Node(BitSet state){
         State = (BitSet) state.clone();
