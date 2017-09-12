@@ -2,9 +2,6 @@ package HHCP;
 
 import java.util.*;
 
-import pddlElements.Action;
-import pddlElements.Axiom;
-
 /**
  * Created by ignasi on 15/05/17.
  */
@@ -27,6 +24,9 @@ public class Node {
     private int[] factslayer;
     private int[] actionCounter;
     private int[] actionLayer;
+    private BitSet scheduledActions;
+    public int value = Integer.MAX_VALUE;
+    public HashMap<Integer, ArrayList<Node>> successors = new HashMap<Integer, ArrayList<Node>>();
 
     public Node(BitSet state){
         State = (BitSet) state.clone();
@@ -133,7 +133,13 @@ public class Node {
                 }
                 for(int i = v.getAddList().nextSetBit(0);i>=0;i=v.getAddList().nextSetBit(i+1)){
                     n.getState().set(i);
-                    updateActionCounter(i, p, n, scheduledActions);
+                    if(n.getFactslayer()[i] > 0){
+                        n.getFactslayer()[i] = 0;
+                        updateAxiomCounter(i, p, n, scheduledActions);
+                        //updateActionCounter(i,p,n,scheduledActions);
+                        n.scheduledActions = scheduledActions;
+                    }
+                    //updateAxiomCounter(i, p, n, scheduledActions);
                 }
             }
         }
@@ -147,33 +153,11 @@ public class Node {
     public ArrayList<Node> applyNonDeterministicAction(VAction a, Problem p){
         ArrayList<Node> successors = new ArrayList<Node>();
         for(VEffect v : a.getEffects()){
-            /*BitSet successor = (BitSet) State.clone();
-            Node n = new Node(successor);
-            n.setFacts(getFactslayer());
-            n.setActionLayer(getActionLayer());
-            n.setActionCounter(getActionCounter());
-            BitSet scheduledActions = new BitSet();
-
-            if(holds(v.getCondition())){
-                for(int i = v.getDelList().nextSetBit(0);i>=0;i=v.getDelList().nextSetBit(i+1)){
-                    n.getState().set(i, false);
-                }
-                for(int i = v.getAddList().nextSetBit(0);i>=0;i=v.getAddList().nextSetBit(i+1)){
-                    n.getState().set(i);
-                    updateActionCounter(i, p, n, scheduledActions);
-                }
-                //Add operation between bitsets:
-                //successor.or(v.getAddList());
-            }*/
             Node n = applyEffect(v, p);
             n.parent = this;
             n.indexAction = a.index;
             n.indexEffect = a.getEffects().indexOf(v);
             n.parentAction = a.getName();
-
-            //ArrayList<VAction> vAxioms
-            //fixedPoint(n, vAxioms);
-            //applyRules(n, scheduledActions, p);
             successors.add(n);
         }
         return successors;
@@ -185,7 +169,7 @@ public class Node {
         n.setFacts(getFactslayer());
         n.setActionLayer(getActionLayer());
         n.setActionCounter(getActionCounter());
-        BitSet scheduledActions = new BitSet();
+        BitSet scheduledAxioms = new BitSet();
 
         if(holds(v.getCondition())){
             for(int i = v.getDelList().nextSetBit(0);i>=0;i=v.getDelList().nextSetBit(i+1)){
@@ -195,11 +179,11 @@ public class Node {
                 n.getState().set(i);
                 if(n.getFactslayer()[i] > 0){
                     n.getFactslayer()[i] = 0;
-                    updateActionCounter(i, p, n, scheduledActions);
+                    updateAxiomCounter(i, p, n, scheduledAxioms);
                 }
             }
         }
-        applyRules(n, scheduledActions, p);
+        applyRules(n, scheduledAxioms, p);
         return n;
     }
 
@@ -283,7 +267,7 @@ public class Node {
                         if(n.getFactslayer()[j] > layerNumber){
                             n.getFactslayer()[j] = layerNumber;
                             //3 Update actions whose preconditions have been updated
-                            updateActionCounter(j, problem, n, scheduledActions);
+                            updateAxiomCounter(j, problem, n, scheduledActions);
                         }
                     }
                     for(int j = e.getDelList().nextSetBit(0); j >= 0; j = e.getDelList().nextSetBit(j+1)){
@@ -294,7 +278,7 @@ public class Node {
         }
     }
 
-    private void updateActionCounter(int predicate, Problem problem, Node node, BitSet scheduledAxioms){
+    public void updateAxiomCounter(int predicate, Problem problem, Node node, BitSet scheduledAxioms){
         if(!problem.prec2Act.containsKey(predicate)) {
             return;
         }
@@ -307,6 +291,30 @@ public class Node {
                 scheduledAxioms.set(actionIndex,true);
             }
         }
+    }
+
+
+    public void updateActionCounter(int predicate, Problem problem, Node node, BitSet scheduledActions){
+        if(!problem.prec2Act.containsKey(predicate)) {
+            return;
+        }
+        Integer[] actions = problem.prec2Act.get(predicate);
+        for(int index = 0; index< actions.length;index++){
+            int actionIndex = actions[index];
+            if(actionIndex >= problem.indexAxioms) continue;
+            node.actionCounter[actionIndex]++;
+            if(problem.getVaList().get(actionIndex).getPreconditions().cardinality() == node.actionCounter[actionIndex]){
+                scheduledActions.set(actionIndex,true);
+            }
+        }
+    }
+
+    public void setScheduledActions(BitSet actions){
+        scheduledActions = actions;
+    }
+
+    public BitSet getScheduledActions(){
+        return scheduledActions;
     }
 
 

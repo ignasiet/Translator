@@ -50,7 +50,7 @@ public class Searcher {
             HashMap<BitSet, Integer> parentAction = new HashMap<>();
             while(!open.isEmpty()){
                 BitSet s = open.pop();
-                if(!entails(s, problem.getGoal()) && !seen.contains(s)){
+                if(!searchHelper.entails(s, problem.getGoal()) && !seen.contains(s)){
                     seen.add(s);
                     if(policyP.find(s)<0){
                         //System.out.println("State with no solution found.");
@@ -162,7 +162,7 @@ public class Searcher {
         while(changed){
             changed = false;
             for(BitSet bs : policyP.iteratorStatesActions()){
-                if(entails(bs, problem.getGoal()) || !policyP.marked.get(bs)) continue;
+                if(searchHelper.entails(bs, problem.getGoal()) || !policyP.marked.get(bs)) continue;
                 int indexAction = policyP.find(bs);
                 VAction a = problem.getAction(indexAction);
                 //Verify for each effect 2 conditions:
@@ -191,7 +191,7 @@ public class Searcher {
                 If not children or goal nodes: remain marked true
                 */
                 for(BitSet successor : successors){
-                    if(entails(successor, problem.getGoal())) continue;
+                    if(searchHelper.entails(successor, problem.getGoal())) continue;
                     //if(!policyP.marked.containsKey(successor) || !policyP.marked.get(successor)){
                     if(!policyP.valid(successor)){
                         policyP.marked.put(bs, false);
@@ -294,16 +294,6 @@ public class Searcher {
         policyP.clear();
     }
 
-    private boolean entails(BitSet s, BitSet goal) {
-        BitSet A = (BitSet) goal.clone();
-        A.and(s);
-        return A.equals(goal);
-        /*boolean ret = true;
-        for(int i : goal){
-            if(!s.get(i)) return false;
-        }
-        return ret;*/
-    }
 
     public boolean GenPlanPairs(BitSet initState){
         boolean solution = false;
@@ -367,7 +357,7 @@ public class Searcher {
             for (Node n : getSuccessorNodes) {
                 //Review condition of adding the new state:
                 if (!DeadEnds.contains(n.getState())) {
-                    updateHeuristic(n, node, va);
+                    searchHelper.updateHeuristic(n, node, va, h);
                     if(n.getH() > MaxH){
                         MaxH = n.getH();
                     }
@@ -395,7 +385,7 @@ public class Searcher {
                     va = problem.getAction(va.getName());
                     if(!va.isNondeterministic) n = node.applyDeterministicAction(va);
                 }*/
-                updateHeuristic(n, node, va);
+                searchHelper.updateHeuristic(n, node, va, h);
                 fringe.add(n);
             } else {
                 //Add this transition to the forbidden action state pair
@@ -408,10 +398,10 @@ public class Searcher {
 		return policyP.valid(node.getState());
 	}
 
-	private void updateHeuristic(Node child, Node father, VAction va) {
+	/*private void updateHeuristic(Node child, Node father, VAction va) {
         child.setCost(father.getCost() + va.cost);
         child.setHeuristic(h.getValue(child));
-    }
+    }*/
 
     private void RegressPlan(Node node){
     	BitSet r = (BitSet) node.getState().clone();
@@ -511,11 +501,7 @@ public class Searcher {
     }
 
     private boolean visited(Node node) {
-        if(visited.contains(node.getState())){
-            return true;
-        }else{
-            return false;
-        }
+        return visited.contains(node.getState());
     }
 
     private ArrayList<VAction> getApplicableActions(Node node) {

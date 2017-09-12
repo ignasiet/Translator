@@ -87,6 +87,7 @@ public class Planner {
 		System.out.println("Init Search. ");
 
 		//Simulator sim = new Simulator(null, p.getInitState(), p, hP);
+		LRTDP lrtdp = new LRTDP(p, hP, new ArrayList<String>(), jG, heuristic);
 		Searcher search = new Searcher(p, hP, new ArrayList<String>(), jG, heuristic);
 
 		//search.GenPlanPairs(p.getInitState());

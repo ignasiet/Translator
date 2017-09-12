@@ -20,8 +20,6 @@ public class RelaxedGraphH {
     private HashSet<Integer> landmarks;
     private int m;
     private BitSet scheduledActions = new BitSet();
-    //Is predicate at i marked true?
-    private BitSet goalMarked;
     private int value = 0;
     public int solutionCost = 0;
     private ArrayList<Integer> relaxedSolution = new ArrayList<Integer>();
@@ -35,7 +33,7 @@ public class RelaxedGraphH {
         actionLayer = new int[p.getVaList().size()];
         difficultyLayer = new int[p.getVaList().size()];
         Arrays.fill(factsLayer, Integer.MAX_VALUE);
-        goalMarked = new BitSet();
+        //goalMarked = new BitSet();
     }
 
     public void setCost(int[] cost) {
@@ -57,7 +55,7 @@ public class RelaxedGraphH {
         actionCounter = new int[problem.getVaList().size()];
         actionLayer = new int[problem.getVaList().size()];
         difficultyLayer = new int[problem.getVaList().size()];
-        goalMarked = new BitSet();
+        //goalMarked = new BitSet();
 
         initLayers(state);
         if(l != null) {
