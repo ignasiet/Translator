@@ -1,10 +1,6 @@
 package pddlElements;
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Hashtable;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,6 +32,7 @@ public class Domain {
 	public Hashtable<String, Integer> predicates_never = new Hashtable<String, Integer>();
 	public Hashtable<String, Integer> predicates_invariants_grounded = new Hashtable<String, Integer>();
 	public ArrayList<String> goalState = new ArrayList<String>();
+	public Hashtable<String, ArrayList<String>> variables = new Hashtable<String, ArrayList<String>>();
 	public Action disjunctionAction = new Action();
 	public String ProblemInstance;
 	private Integer counter = 0;
@@ -62,6 +59,7 @@ public class Domain {
 	
 	public void addActions(Action a){
 		action_list.add(a);
+		initStateVariables(a);
 	}
 	
 	private void countPredicates(){
@@ -626,8 +624,25 @@ public class Domain {
 	}
 
 	//TODO: Identify variables
-	public void transformToVariables() {
-		
+	public void initStateVariables(Action a) {
+		for(Effect e : a._Effects){
+			for(String effect : e._Effects){
+				String eff = effect.substring(0, effect.indexOf("_"));
+				if(eff.startsWith("~")){
+					updateCounter(eff.substring(1), -1);
+				}else{
+					updateCounter(eff, 1);
+				}
+			}
+		}
+	}
+
+	private void updateCounter(String pred, int c){
+		if(count.containsKey(pred)){
+			count.put(pred, count.get(pred) + c);
+		}else{
+			count.put(pred, c);
+		}
 	}
 
 	public void getMutexFree() {
@@ -647,6 +662,28 @@ public class Domain {
 						freeVars.put(a.parameters_type.get(parameter), oldList);
 					}
 				}
+			}
+		}
+	}
+
+	public void reInitialState() {
+		HashMap<String, Integer> co = new HashMap<String, Integer>();
+		for(String c : state.keySet()){
+			String p = c.replace("~", "").substring(0, c.indexOf("_"));
+			if(!co.containsKey(p)){
+				co.put(p, 1);
+			}else{
+				co.put(p, co.get(p)+1);
+			}
+		}
+
+		for(String predicate : co.keySet()){
+			if(count.containsKey(predicate) && count.get(predicate)==0){
+				ArrayList<String> values = new ArrayList<String>();
+				for(String pred : predicates_grounded){
+					if(pred.startsWith(predicate)) values.add(pred);
+				}
+				variables.put(predicate, values);
 			}
 		}
 	}

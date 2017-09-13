@@ -1,5 +1,7 @@
 package HHCP;
 
+import pddlElements.Action;
+
 import java.util.*;
 
 /**
@@ -14,13 +16,19 @@ public class LRTDP {
     private PriorityQueue<Node> fringe;
     private HashMap<BitSet, ArrayList<Node>> nextStates = new HashMap<BitSet, ArrayList<Node>>();
     private HashMap<BitSet, Integer> values = new HashMap<BitSet, Integer>();
+    private PartialPolicy policyP = new PartialPolicy();
+    private HashMap<Integer, Integer> actionsCost = new HashMap<Integer, Integer>();
 
     public LRTDP(Problem p, Problem heuristicP, ArrayList<String> l, JustificationGraph jG, String heuristic) {
         problem = p;
         initHeuristic(heuristicP, l, jG, heuristic);
+        double startTime = System.currentTimeMillis();
         while(!solved.contains(p.getInitState())){
             trial(p.getInitState());
         }
+        double endTime = System.currentTimeMillis();
+        searchHelper.printStats(policyP, startTime, endTime, p);
+        searchHelper.printPolicy(p.getInitState(), policyP, p);
     }
 
     //TODO: dead-ends and cycles, what to do?
@@ -29,21 +37,21 @@ public class LRTDP {
         BitSet s = (BitSet) initState.clone();
         Comparator<Node> comparator = new NodeComparator();
         fringe = new PriorityQueue<Node>(100, comparator);
-        Node initialNode = searchHelper.initLayers(s, problem);
-        while(!initialNode.holds(problem.getGoal())){
+        Node initialNode = searchHelper.initLayers(new Node(s), problem);
+        while(!initialNode.holds(problem.getGoal()) && !solved(initialNode.getState())){
         	fringe.clear();
             if(visited.contains(initialNode.getState())) continue;
             //Insert into visited
             visited.push(initialNode);
             //Check termination at goal states
-            if(searchHelper.entails(s, problem.getGoal())) break;
+            if(initialNode.holds(problem.getGoal())) break;
             //Pick best action and update hash
             expandState(initialNode);
             initialNode.greedyAction = greedyAction(initialNode);
             update(initialNode);
             //Obtain the best (heuristic) successor
             Node greedySuccessor = pickNextState(initialNode);
-            initialNode = searchHelper.initLayers(greedySuccessor.getState(), problem);
+            initialNode = searchHelper.initLayers(greedySuccessor, problem);
         }
         solved.add((BitSet) initialNode.getState().clone());
         values.put((BitSet) initialNode.getState().clone(), 0);
@@ -51,7 +59,13 @@ public class LRTDP {
         while(!visited.isEmpty()){
             Node n = visited.pop();
             if(!checkSolved(n)) break;
+            policyP.put((BitSet) n.getState().clone(), n.greedyAction);
         }
+    }
+
+    private boolean solved(BitSet state) {
+        boolean b = solved.contains(state);
+        return b;
     }
 
     private boolean checkSolved(Node n) {
@@ -87,20 +101,20 @@ public class LRTDP {
         }else{
             //update states with residuals and ancestors
             while(!closed.isEmpty()){
-                Node s_prima = closed.pop();
-
+                Node sPrima = closed.pop();
+                update(sPrima);
             }
         }
-        return false;
+        return rv;
     }
     
     private int residual(Node n){
     	//Take the minimal action
-    	int greedyValue = Integer.MAX_VALUE;
     	int residual = 0;
     	for(int action : n.successors.keySet()){
     		int succValue = Integer.MAX_VALUE;
-    		for(Node successor : n.successors.get(action)){    			
+    		for(Node successor : n.successors.get(action)){
+                //Verify the child value has not been expanded
     			if(successor.value >= Integer.MAX_VALUE){
     				succValue = successor.getH();
     			}else{
@@ -110,12 +124,19 @@ public class LRTDP {
     		//Verify that it is still the same action
     		if((succValue + problem.cost[action]) < values.get(n.getState())){
     			residual = Math.abs((succValue + problem.cost[action]) - values.get(n.getState()));
-				n.greedyAction = action;
+				/*n.greedyAction = action;
 				n.value = succValue + problem.cost[action];
-				values.put(n.getState(), n.value);
+				values.put(n.getState(), n.value);*/
 			}
     	}
-    	return residual;    	
+    	return residual;
+    }
+
+    private int getValue(Node n){
+        if(values.containsKey(n.getState())){
+            return values.get(n.getState());
+        }
+        return Integer.MAX_VALUE;
     }
 
     private void initHeuristic(Problem heuristicP, ArrayList<String> l, JustificationGraph jG, String heuristic) {
@@ -140,13 +161,14 @@ public class LRTDP {
             if(vAct.isNondeterministic || vAct.isObservation){
                 ArrayList<Node> successors = n.applyNonDeterministicAction(vAct,problem);
                 for(Node succ : successors){
-                    searchHelper.updateHeuristic(succ, n, vAct, h);
+                    updateCostExpandedChild(succ, n, vAct);
                     listSucc.add(succ);
                     fringe.add(succ);
                 }
             }else{
                 Node child = n.applyDeterministicAction(vAct, problem);
-                searchHelper.updateHeuristic(child, n, vAct, h);
+                updateCostExpandedChild(child, n, vAct);
+                //searchHelper.updateHeuristic(child, n, vAct, h);
                 listSucc.add(child);
                 fringe.add(child);
             }
@@ -154,8 +176,19 @@ public class LRTDP {
         }
     }
 
+    private void updateCostExpandedChild(Node child, Node father, VAction vAct){
+        if(!values.containsKey(child.getState())) {
+            searchHelper.updateHeuristic(child, father, vAct, h);
+        }else{
+            searchHelper.updateCost(child, father,vAct,values.get(child.getState()));
+        }
+    }
+
     private void update(Node n){
     	n.value = problem.cost[n.greedyAction];
+        /*if(actionsCost.containsKey(n.greedyAction)){
+            n.value = actionsCost.get(n.greedyAction);
+        }*/
     	ArrayList<Node> succs = n.successors.get(n.greedyAction);
     	for(Node succ : succs){
     		n.value += succ.getH();

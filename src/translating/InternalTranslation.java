@@ -751,6 +751,25 @@ public class InternalTranslation extends Translation{
 			domain_translated.state.put("K" + key_state, 1);
 			addPredicate("K" + key_state);
 		}
+		for(String var : domain_to_translate.variables.keySet()){
+			for(String value : domain_to_translate.variables.get(var)){
+				if(!state.contains(value)){
+					domain_translated.state.put("K~" + value,1);
+				}
+			}
+		}
+		/*HashSet<String> p = new HashSet<String>(domain_to_translate.predicates_grounded);
+		p.removeAll(domain_to_translate.predicates_uncertain);
+		HashSet<String> s = new HashSet<String>(state.keySet());
+		p.removeAll(s);
+		p.remove(domain_to_translate.related);
+		for(String pred : p){
+			if(!domain_to_translate.isObservable(pred)){
+				if(!state.containsKey(pred)){
+					domain_translated.state.put("K" + pred, 1);
+				}
+			}
+		}*/
 	}
 
 	public Domain getDomainTranslated() {

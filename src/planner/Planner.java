@@ -88,7 +88,7 @@ public class Planner {
 
 		//Simulator sim = new Simulator(null, p.getInitState(), p, hP);
 		LRTDP lrtdp = new LRTDP(p, hP, new ArrayList<String>(), jG, heuristic);
-		Searcher search = new Searcher(p, hP, new ArrayList<String>(), jG, heuristic);
+		//Searcher search = new Searcher(p, hP, new ArrayList<String>(), jG, heuristic);
 
 		//search.GenPlanPairs(p.getInitState());
 	}
@@ -267,7 +267,6 @@ public class Planner {
 		addHumanInterventionActions(cost, ontop);
 	}
 
-	//TODO: before grounding, extract mutex free variables
 	private static void initDomain(String domain_file_path, String problem_file_path, String hidden_file) {
 		domain = initParsing(domain_file_path, problem_file_path);
 		domain.getMutexFree();
@@ -282,6 +281,7 @@ public class Planner {
 		//domain.eliminateInvalidObservations();
 		domain.eliminateUselessEffects();
 		//domain.transformToVariables();
+		domain.reInitialState();
 	}
 
 	private static Translation translate(String type, Domain domain){
@@ -414,39 +414,6 @@ public class Planner {
 		}		
 	}
 
-	/*private static void Readplan() {
-		try {
-			//String content1 = readFile("plan.txt", Charset.defaultCharset());
-			String content1 = new String(Files.readAllBytes(Paths.get("plan.txt")), Charset.defaultCharset());
-			//System.out.println("Actions in plan:");
-			//^(http|https|ftp)://.*$
-			Matcher m = Pattern.compile("(?m)^([0-9][0-9]*):(.*)$").matcher(content1);			
-		    while(m.find()) {
-		    	String aux = m.group(2).trim();
-		    	getPlan().add(aux);
-		    	//System.out.println(aux);
-		    }
-		    //Read observations selected:
-		    //Observation selected after action
-		    Matcher obs = Pattern.compile("Observation selected after action (.*):\\n.*\\.\\.\\s(K((N_)?.*))\\(\\)").matcher(content1);			
-		    while(obs.find()) {
-		    	String act = obs.group(1).trim();
-		    	String selected = obs.group(2).trim();
-		    	//System.out.println("Action: " + act + " observed: " + selected);
-		    	//TODO: using K-predicates beware of regex!
-		    	if(selected.startsWith("N_")){
-		    		getObservationSelected().put(act.toLowerCase(), "~" + selected.substring(2).toLowerCase());
-		    	}else{
-		    		getObservationSelected().put(act.toLowerCase(), selected.toLowerCase());
-		    	}
-		    	getObservationSelected().put(act.toLowerCase(), selected.toLowerCase());
-		    }
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}*/
 
 	public static ArrayList<String> getPlan() {
 		return _Plan;
