@@ -753,7 +753,7 @@ public class InternalTranslation extends Translation{
 		}
 		for(String var : domain_to_translate.variables.keySet()){
 			for(String value : domain_to_translate.variables.get(var)){
-				if(!state.contains(value)){
+				if(!state.containsKey(value)){
 					domain_translated.state.put("K~" + value,1);
 				}
 			}

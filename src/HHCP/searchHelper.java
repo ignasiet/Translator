@@ -20,7 +20,10 @@ public class searchHelper {
     }
 
     public static Node initLayers(Node state, Problem p) {
-        Node n = new Node(state.getState());
+        if(state.parent != null) {
+            //state.parent.greedyAction = state.indexAction;
+        }
+        Node n = new Node((BitSet) state.getState().clone());
         //1 Init list of scheduled actions: no action scheduled
         n.parent = state.parent;
         n.parentAction = state.parentAction;
@@ -29,6 +32,8 @@ public class searchHelper {
         n.setActionLayer(new int[p.getVaList().size()]);
         n.setFacts(new int[p.getSize()]);
         BitSet scheduledActions = new BitSet();
+        n.setCost(state.getCost());
+        n.setHeuristic(state.getH());
         //scheduledActions = new BitSet(problem.getVaList().size());
         //2 For every predicate that is in the current state, update facts layer to put a 0 value
         for (int i = state.getState().nextSetBit(0); i >= 0; i = state.getState().nextSetBit(i+1)) {
@@ -49,6 +54,7 @@ public class searchHelper {
     public static void updateCost(Node child, Node father, VAction va, int cost) {
         child.setCost(father.getCost() + va.cost);
         child.setHeuristic(cost);
+        child.value = cost;
     }
 
     public static void printPolicy(BitSet initState, PartialPolicy policyP, Problem problem) {
