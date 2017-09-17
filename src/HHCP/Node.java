@@ -175,9 +175,10 @@ public class Node {
         if(holds(v.getCondition())){
             for(int i = v.getDelList().nextSetBit(0);i>=0;i=v.getDelList().nextSetBit(i+1)){
                 n.getState().set(i, false);
-            }
+            }            
             for(int i = v.getAddList().nextSetBit(0);i>=0;i=v.getAddList().nextSetBit(i+1)){
                 n.getState().set(i);
+                n.getFactslayer()[i] = 1;
                 if(n.getFactslayer()[i] > 0){
                     n.getFactslayer()[i] = 0;
                     updateAxiomCounter(i, p, n, scheduledAxioms);
@@ -265,7 +266,7 @@ public class Node {
                         //j: the predicate
                         n.getState().set(j);
                         if(!n.axioms.contains(a.index)) n.axioms.add(a.index);
-                        if(n.getFactslayer()[j] > layerNumber){
+                        if(n.getState().get(j)){                        	
                             n.getFactslayer()[j] = layerNumber;
                             //3 Update actions whose preconditions have been updated
                             updateAxiomCounter(j, problem, n, scheduledActions);
@@ -302,8 +303,9 @@ public class Node {
         Integer[] actions = problem.prec2Act.get(predicate);
         for(int index = 0; index< actions.length;index++){
             int actionIndex = actions[index];
-            if(actionIndex >= problem.indexAxioms) continue;
             node.actionCounter[actionIndex]++;
+            if(actionIndex >= problem.indexAxioms) continue;
+            //node.actionCounter[actionIndex]++;
             if(problem.getVaList().get(actionIndex).getPreconditions().cardinality() == node.actionCounter[actionIndex]){
                 scheduledActions.set(actionIndex,true);
             }

@@ -48,7 +48,9 @@ public class searchHelper {
 
     public static void updateHeuristic(Node child, Node father, VAction va, Heuristic h) {
         child.setCost(father.getCost() + va.cost);
-        child.setHeuristic(h.getValue(child));
+        int heuristic = h.getValue(child);
+        if(va.isNondeterministic) heuristic += 1;
+        child.setHeuristic(heuristic);
     }
 
     public static void updateCost(Node child, Node father, VAction va, int cost) {

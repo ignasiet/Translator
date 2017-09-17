@@ -24,7 +24,8 @@ public class NodeComparator implements Comparator<Node>{
             return 1;
         }
         return 0;*/
-    	return Integer.compare(x.getFunction(), y.getFunction());
+    	//return Integer.compare(x.getFunction(), y.getFunction());
+    	return Integer.compare(x.getH(), y.getH());
     }
 
 }

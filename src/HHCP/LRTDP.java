@@ -87,7 +87,7 @@ public class LRTDP {
                 System.out.println("No weak plan found.\nThe initial State for this search may have caused a Dead-end.");
             }
             Node node = searchHelper.initLayers(fringe.poll(), problem);
-            if (visited.contains(node)) continue;
+            if (visited.contains(node.getState())) continue;
             visited.add(node.getState());
             if (node.holds(problem.getGoal()) || solved(node.getState()) ) {
                 System.out.println("Solution found");
@@ -95,10 +95,12 @@ public class LRTDP {
                 break;
             }
             expand(node);
+            updateParent(node);
         }
     }
 
     private void regressPlan(Node node) {
+    	//boolean flag = true;
         if(node.holds(problem.getGoal())){
             node.value = 0;
             solved.add((BitSet) node.getState().clone());
@@ -108,10 +110,13 @@ public class LRTDP {
             node.parent.greedyAction = node.indexAction;
             node = node.parent;
             update(node);
+            //if(!flag) continue;
             if(!checkSolved(node)){
                 break;
+            	//flag = false;
+            }else{
+            	policyP.put((BitSet) node.getState().clone(), node.greedyAction);
             }
-            policyP.put((BitSet) node.getState().clone(), node.greedyAction);
         }
     }
 
@@ -135,11 +140,13 @@ public class LRTDP {
             	rv = false;
             	continue;
             }
-            //Expand state
+            //Expand state:
+            /*Problem encountered: state s has a residual of 0 calculated with the
+             * greedy action, however has a child that is not solved.
+             * Approach: get out of this function and keep searching a solution.*/
             ArrayList<Node> succs = s.successors.get(s.greedyAction);
         	for(Node succ : succs){
-        		//TODO: verify if contains is better than search
-        		if(!solved.contains(succ.getState()) && (!open.contains(succ) || !closed.contains(succ))){
+        		if(!solved(succ.getState()) && !open.contains(succ) && !closed.contains(succ)){
         			open.push(succ);
         		}
         	}
@@ -163,10 +170,12 @@ public class LRTDP {
     private int residual(Node n){
     	//Take the minimal action
     	int residual = 0;
-    	for(int action : n.successors.keySet()){
+    	int action = n.greedyAction;
+    	if(!n.successors.containsKey(action)) return 1;
+    	//for(int action : n.successors.keySet()){
     		//int succValue = Integer.MAX_VALUE;
             int succValue = qValue(n, action);
-            if(succValue >= Integer.MAX_VALUE) continue;
+            //if(succValue >= Integer.MAX_VALUE) continue;
     		//Verify that it is still the same action
             //REVISAR AQUI O CUSTO DA ACAO!
     		if((succValue + problem.cost[action]) < values.get(n.getState())){
@@ -175,7 +184,7 @@ public class LRTDP {
 				n.value = succValue + problem.cost[action];
 				values.put(n.getState(), n.value);*/
 			}
-    	}
+    	//}
     	return residual;
     }
 
@@ -203,7 +212,6 @@ public class LRTDP {
     
     private void expandState(Node n){
         //PriorityQueue<Node> childrenFringe = new PriorityQueue<Node>(100, comparator);
-
     	for(int action = n.getScheduledActions().nextSetBit(0); action >= 0; action = n.getScheduledActions().nextSetBit(action+1)){
             VAction vAct = problem.getAction(action);
             ArrayList<Node> listSucc = new ArrayList<Node>();
@@ -277,10 +285,12 @@ public class LRTDP {
     }
 
     private void updateCostExpandedChild(Node child, Node father, VAction vAct){
-        if(!values.containsKey(child.getState())) {
+        if(!values.containsKey(child.getState())) {        	
             searchHelper.updateHeuristic(child, father, vAct, h);
         }else{
-            searchHelper.updateCost(child, father,vAct,values.get(child.getState()) + vAct.cost);
+        	int cost = vAct.cost;
+        	if(vAct.isNondeterministic) cost += 1;
+            searchHelper.updateCost(child, father,vAct,values.get(child.getState()) + cost);
         }
     }
 
@@ -289,6 +299,7 @@ public class LRTDP {
         /*if(actionsCost.containsKey(n.greedyAction)){
             n.value = actionsCost.get(n.greedyAction);
         }*/
+    	if(!n.successors.containsKey(n.greedyAction)) return;
     	ArrayList<Node> succs = n.successors.get(n.greedyAction);
         //Add costs of the descendants
     	for(Node succ : succs){
@@ -299,6 +310,29 @@ public class LRTDP {
             }
     	}
     	values.put(n.getState(), n.value);
+    }
+    
+    private void updateParent(Node n){
+    	//n.value = problem.cost[n.greedyAction];
+        /*if(actionsCost.containsKey(n.greedyAction)){
+            n.value = actionsCost.get(n.greedyAction);
+        }*/
+    	int value = Integer.MAX_VALUE;
+    	for(int action : n.successors.keySet()){
+    		ArrayList<Node> succs = n.successors.get(action);
+            //Add costs of the descendants
+    		int aux = 0;
+        	for(Node succ : succs){
+                if(values.containsKey(succ.getState())){
+                	aux += values.get(succ.getState());
+                }else{
+                	aux += succ.getH();
+                }
+        	}
+        	if(aux < value) value = aux;
+        	n.value = value;
+        	values.put(n.getState(), value);
+    	}    	
     }
 
     private int qValue(Node n, int action){
@@ -319,6 +353,9 @@ public class LRTDP {
     public Node pickNextState(Node n){
         Random r = new Random();
         ArrayList<Node> succs = n.successors.get(n.greedyAction);
+        for(Node succ : succs){
+        	if(!solved(succ.getState())) return succ;
+        }
         return succs.get(r.nextInt(succs.size()));
     }
 
