@@ -28,7 +28,7 @@ public class LRTDP {
         double endTime = System.currentTimeMillis();
         System.out.println("Expected cost of the solution: " + values.get(p.getInitState()));
         searchHelper.printStats(policyP, startTime, endTime, p);
-        //searchHelper.printPolicy(p.getInitState(), policyP, p);
+        searchHelper.printPolicy(p.getInitState(), policyP, p);
     }
 
     //TODO: dead-ends and cycles, what to do?
