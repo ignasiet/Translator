@@ -9,12 +9,7 @@ import java.util.Comparator;
 public class NodeComparator implements Comparator<Node>{
 
     @Override
-    public int compare(Node x, Node y)
-    {
-        // Assume neither node is null. Real code should
-        // probably be more robust
-        // You could also just return x.length() - y.length(),
-        // which would be more efficient.
+    public int compare(Node x, Node y){
         /*if (x.getFunction() < y.getFunction())
         {
             return -1;
