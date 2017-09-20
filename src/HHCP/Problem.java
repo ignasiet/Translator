@@ -53,6 +53,7 @@ public class Problem {
 
     public void setInitState(Hashtable<String, Integer> state){
         for(String predicate : new ArrayList<String>(state.keySet())){
+            if(!Predicates.inverse().containsKey(predicate)) continue;
             initState.set(Predicates.inverse().get(predicate),true);
         }
     }
@@ -234,7 +235,11 @@ public class Problem {
     public Integer insertAction(Action a, boolean isAxiom){
         VAction va = new VAction();
         va.setName(a.Name);
-        va.cost = a.cost;
+        if(a.cost == 0){
+            va.cost = 1;
+        }else {
+            va.cost = a.cost;
+        }
         int[] prec = new int[a._precond.size()];
         int i = 0;
         for(String s : a._precond){
@@ -364,8 +369,13 @@ public class Problem {
         VAction va1 = new VAction();
         va0.setName(a.Name + "#1");
         va1.setName(a.Name + "#2");
-        va0.cost = a.cost;
-        va1.cost = a.cost;
+        if(a.cost == 0){
+            va0.cost = 1;
+            va1.cost = 1;
+        }else{
+            va0.cost = a.cost;
+            va1.cost = a.cost;
+        }
         va0.isNondeterministic = a._IsNondeterministic;
         va1.isNondeterministic = a._IsNondeterministic;
         va0.isObservation = a.IsObservation;

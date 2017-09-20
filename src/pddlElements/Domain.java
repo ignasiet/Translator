@@ -146,16 +146,19 @@ public class Domain {
 		}
 	}
 
-	public void ground_all_actions() {
+	public boolean ground_all_actions() {
 		countPredicates();
+		boolean grounded = false;
 		for(Action a : action_list){
 			if(!a._parameters.isEmpty()){
 				ground_actions(a);			
 			}else{
+				grounded = true;
 				System.out.println("Action already instantiated: " + a.Name);
 				list_actions.put(a.Name, a);
 			}
 		}
+		return grounded;
 	}
 	
 	private void getNeverHappen() {

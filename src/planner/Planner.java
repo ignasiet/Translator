@@ -23,9 +23,6 @@ import causalgraph.CausalGraph;
 public class Planner {
 	public static Domain domain = new Domain();
 	public static Domain domain_translated = new Domain();
-	public static int num_replans = 0;
-	public static int actions_executed = 0;
-	public static int actions_left = 0;
 	private static String outputPath = "";
 	private static CausalGraph cg;
 	private static ArrayList<String> _Plan = new ArrayList<>();
@@ -41,15 +38,42 @@ public class Planner {
 		initDomain(domain_file_path, problem_file_path, hidden_file);
 		long endTime = System.currentTimeMillis();
 		System.out.println("Preprocessing time: " + (endTime - startTime) + " milliseconds");
-		
-
 		/*Time measure: translation*/
 		domain = ParserHelper.cleanProblem(domain);
+		if(domain.UncertainPredicates.isEmpty()){
+			fondPlanner(heuristic);
+		}else{
+			contingentPlanner(ontop, type, file_out_path, heuristic);
+		}
+	}
+
+	private static void fondPlanner(String heuristic) {
+		Problem p = transformToVectors(domain, false, null);
+		Problem hP = transformToVectors(domain, true, null);
+
+		System.out.println("Transformation to vectors completed. ");
+		cg = new CausalGraph(domain_translated);
+		HashSet<String> relevants = cg.relevantLiterals(domain_translated.goalState);
+
+		if(changes) {
+			p = transformToVectors(domain_translated, false, null);
+			hP = transformToVectors(domain_translated, true, null);
+		}
+		JustificationGraph jG = new JustificationGraph(hP);
+		jG.setRelevantLiterals(hP, relevants);
+
+		System.out.println("Init Search. ");
+
+		//Simulator sim = new Simulator(null, p.getInitState(), p, hP);
+		LRTDP lrtdp = new LRTDP(p, hP, new ArrayList<String>(), jG, heuristic);
+	}
+
+	private static void contingentPlanner(boolean ontop, String type, String file_out_path, String heuristic){
 		/*cg = new CausalGraph(domain);
 		HashSet<String> relevants = cg.relevantLiterals(domain.goalState);*/
 
 		//UncertaintyGraph uG = new UncertaintyGraph(domain);
-		startTime = System.currentTimeMillis();
+		long startTime = System.currentTimeMillis();
 		/*Set size of the ksets to 2*/
 		//Trapper tp = new Trapper(cg.getLiterals(), domain, cg, 2);
 		if(ontop){
@@ -57,14 +81,14 @@ public class Planner {
 		}
 		Translation tr = translate(type, domain);
 		//LinearTranslation tr = new LinearTranslation(domain);
-		endTime = System.currentTimeMillis();
+		long endTime = System.currentTimeMillis();
 		System.out.println("Translation time: " + (endTime - startTime) + " Milliseconds");
 		domain_translated = tr.getDomainTranslated();
 		domain_translated.hidden_state = domain.hidden_state;
 
 
-		Problem p = transformToVectors(domain_translated, false, tr);
-		Problem hP = transformToVectors(domain_translated, true, tr);
+		Problem p = transformToVectors(domain_translated, false, tr.getListAxioms());
+		Problem hP = transformToVectors(domain_translated, true, tr.getListAxioms());
 
 		System.out.println("Transformation to vectors completed. ");
 		//LANDMARKS
@@ -78,8 +102,8 @@ public class Planner {
 		if(!(file_out_path == null)) printDomain(tr);
 
 		if(changes) {
-			p = transformToVectors(domain_translated, false, tr);
-			hP = transformToVectors(domain_translated, true, tr);
+			p = transformToVectors(domain_translated, false, tr.getListAxioms());
+			hP = transformToVectors(domain_translated, true, tr.getListAxioms());
 		}
 		JustificationGraph jG = new JustificationGraph(hP);
 		jG.setRelevantLiterals(hP, relevants);
@@ -93,7 +117,7 @@ public class Planner {
 		//search.GenPlanPairs(p.getInitState());
 	}
 
-	private static Problem transformToVectors(Domain domain_translated, boolean isHeuristic, Translation tr) {
+	private static Problem transformToVectors(Domain domain_translated, boolean isHeuristic, ArrayList<Action> listAxioms) {
 		/*Planner: review grounded literals*/
 		HHCP.Problem p;
 		if(domain_translated.predicates_grounded.isEmpty()){
@@ -123,7 +147,9 @@ public class Planner {
 		}else{
 			p.setActions(domain_translated.list_actions);
 		}
-		p.setAxioms(tr.getListAxioms());
+		if(listAxioms != null) {
+			p.setAxioms(listAxioms);
+		}
 		p.setVectorCosts();
 		return p;
 	}
@@ -271,17 +297,38 @@ public class Planner {
 		domain = initParsing(domain_file_path, problem_file_path);
 		domain.getMutexFree();
 		/*Ground conditional effects*/
-		domain.ground_all_actions();
+		boolean areGrounded = domain.ground_all_actions();
 		if(!(hidden_file == null)){
 			parseHidden(hidden_file);
 		}		
 		/*Process entry*/
-		domain.getInvariantPredicates();
-		domain.eliminateInvalidActions();
-		//domain.eliminateInvalidObservations();
-		domain.eliminateUselessEffects();
+		if(!areGrounded) {
+			domain.getInvariantPredicates();
+			domain.eliminateInvalidActions();
+			//domain.eliminateInvalidObservations();
+			domain.eliminateUselessEffects();
+		}
+		if(domain.predicates_grounded.isEmpty()){
+			HashSet<String> listPredicatesGrounded = new HashSet<String>();
+			for(String action : domain.list_actions.keySet()){
+				for(String prec : domain.list_actions.get(action)._precond){
+					if(!prec.startsWith("~")) listPredicatesGrounded.add(prec);
+				}
+				for(Effect eff : domain.list_actions.get(action)._Effects){
+					for(String effect : eff._Effects){
+						if(!effect.startsWith("~")) listPredicatesGrounded.add(effect);
+					}
+				}
+				for(Branch br : domain.list_actions.get(action)._Branches){
+					for(String branch : br._Branches){
+						if(!branch.startsWith("~")) listPredicatesGrounded.add(branch);
+					}
+				}
+			}
+			domain.predicates_grounded.addAll(listPredicatesGrounded);
+		}
 		//domain.transformToVariables();
-		domain.reInitialState();
+		if(!domain.UncertainPredicates.isEmpty())	domain.reInitialState();
 	}
 
 	private static Translation translate(String type, Domain domain){
@@ -311,25 +358,6 @@ public class Planner {
 		//System.out.println("Printing time: " + (endTime - startTime) + " Milliseconds");
 	}
 
-	public static void replan(){
-		//Replanning:
-		//1- clean current plan:
-		_Plan.clear();
-		//2- translate again! (updated initial state)
-		//Translator_Kt tr = new Translator_Kt(domain);
-		//Printer.print(outputPath + "Kdomain.pddl", outputPath + "Kproblem.pddl", domain_translated);
-	}
-	
-	public static int randInt(int min, int max) {
-	    // NOTE: Usually this should be a field rather than a method
-	    // variable so that it is not re-seeded every call.
-	    Random rand = new Random();
-	    // nextInt is normally exclusive of the top value,
-	    // so add 1 to make it inclusive
-	    int randomNum = rand.nextInt((max - min) + 1) + min;
-	    return randomNum;
-	}
-	
 	public static Domain initParsing(String pathDomain, String pathProblem){
 		Parser p = new Parser(pathDomain, pathProblem);
 		Domain domain_completed = p.getDomain();
@@ -413,7 +441,6 @@ public class Planner {
 			e.printStackTrace();
 		}		
 	}
-
 
 	public static ArrayList<String> getPlan() {
 		return _Plan;

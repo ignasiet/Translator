@@ -80,6 +80,8 @@ public class RelaxedGraphH {
                 extractPlan(problem.getGoal());
                 countSolution();
                 value = relaxedSolution.size();
+            }else{
+                solutionCost = value;
             }
         }
 

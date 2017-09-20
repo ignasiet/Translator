@@ -64,9 +64,26 @@ public class Solution {
             }
 
             int act = policyP.action(s.getState());
-            VAction a = problem.getAction(act);
-            VertexNode destiny = addVertex(cleanStringDot(a.getName()), idStates.get(s.getState()));
-            addEdge(origin, destiny, label);
+            if(act == -1){
+                VertexNode destiny = addVertex("DEAD-END!", idStates.get(s.getState()));
+                addEdge(origin, destiny, label);
+            }else{
+                VAction a = problem.getAction(act);
+                VertexNode destiny = addVertex(cleanStringDot(a.getName()), idStates.get(s.getState()));
+                addEdge(origin, destiny, label);
+                if(a.isNondeterministic){
+                    for(Node succ : s.applyNonDeterministicAction(a, problem)){
+                        open.push(succ);
+                        addNewState(succ.getState());
+                    }
+                }else{
+                    Node succ = s.applyDeterministicAction(a, problem);
+                    open.push(succ);
+                    addNewState(succ.getState());
+                }
+                solved.add(s.getState());
+            }
+
             //origin = getVertex(cleanStringDot(s.parentAction));
             //VertexNode destiny = addVertex(cleanStringDot(a.getName()), idStates.get(s.getState()));
             //if(from.equals(to)) continue;
@@ -74,17 +91,7 @@ public class Solution {
             //addEdge(origin, destiny, label);
 
 
-            if(a.isNondeterministic){
-                for(Node succ : s.applyNonDeterministicAction(a, problem)){
-                    open.push(succ);
-                    addNewState(succ.getState());
-                }
-            }else{
-                Node succ = s.applyDeterministicAction(a, problem);
-                open.push(succ);
-                addNewState(succ.getState());
-            }
-            solved.add(s.getState());
+
         }
         System.out.println("Graph created.");
         System.out.println("Policy size: " + solved.size());

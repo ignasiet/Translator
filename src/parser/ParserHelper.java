@@ -146,8 +146,6 @@ public class ParserHelper {
 		return branches;
 	}
 
-	
-
 	public static String cleanString(String a){
 		a = a.replace("and", "").replaceAll("\\n", "").replaceAll("\\s+", " ").trim();
 		if(a.startsWith("not")){
