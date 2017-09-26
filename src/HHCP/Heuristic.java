@@ -24,7 +24,7 @@ public class Heuristic {
         rp = new RelaxedGraphH(problem);
     }
 
-    public int getValue(Node node){
+    public long getValue(Node node){
         rp.solutionCost = 0;
         if(heuristic.equals("ff")) {
             HashSet<Integer> landmarksNotReached;
@@ -46,7 +46,7 @@ public class Heuristic {
         }
     }
 
-    public int getValueI(Node node, BitSet acts){
+    public long getValueI(Node node, BitSet acts){
         rp = new RelaxedGraphH(problem);
         rp.preScheduleActions(acts);
         rp.calculateHeuristic(node.getState(), null);
@@ -57,9 +57,9 @@ public class Heuristic {
         rp.updateCost(index, value);
     }
 
-    private int returnValue(RelaxedGraphH rp, Node node){
+    private long returnValue(RelaxedGraphH rp, Node node){
         try {
-            if (rp.getValue() != 0 && rp.getValue() < Integer.MAX_VALUE) {
+            if (rp.getValue() != 0 && rp.getValue() < Long.MAX_VALUE) {
                 node.setRelaxedSolution(rp.getRelaxedSolution());
                 //node.setBestRelaxedAction(problem.getAction(extractPreferredAction(rp.reSolution)).getName());
                 node.setBestRelaxedAction(problem.getAction(rp.getRelaxedSolution().get(rp.getRelaxedSolution().size() - 1)).getName());

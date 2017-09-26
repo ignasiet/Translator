@@ -630,7 +630,10 @@ public class Domain {
 	public void initStateVariables(Action a) {
 		for(Effect e : a._Effects){
 			for(String effect : e._Effects){
-				String eff = effect.substring(0, effect.indexOf("_"));
+				String eff = effect;
+				if(effect.contains("_")){
+					eff = effect.substring(0, effect.indexOf("_"));
+				}
 				if(eff.startsWith("~")){
 					updateCounter(eff.substring(1), -1);
 				}else{
@@ -672,6 +675,7 @@ public class Domain {
 	public void reInitialState() {
 		HashMap<String, Integer> co = new HashMap<String, Integer>();
 		for(String c : state.keySet()){
+			if(!c.contains("_")) continue;
 			String p = c.replace("~", "").substring(0, c.indexOf("_"));
 			if(!co.containsKey(p)){
 				co.put(p, 1);

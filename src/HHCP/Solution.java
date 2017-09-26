@@ -21,6 +21,7 @@ import java.util.Stack;
 public class Solution {
     private DirectedMultigraph<VertexNode, Edge> graph;
     private HashMap<BitSet, Integer> idStates = new HashMap<>();
+    private HashSet<BitSet> visitedStates = new HashSet<BitSet>();
     private int numberNodes = 0;
     private int i = 2;
 
@@ -42,6 +43,7 @@ public class Solution {
 
         while(!open.isEmpty()){
             Node s = open.pop();
+            visitedStates.add(s.getState());
             if(s.holds(problem.getGoal())){
                 VertexNode goalNode = getVertex("Goal");
                 VertexNode origin = getVertex(cleanStringDot(s.parentAction));
@@ -70,15 +72,18 @@ public class Solution {
             }else{
                 VAction a = problem.getAction(act);
                 VertexNode destiny = addVertex(cleanStringDot(a.getName()), idStates.get(s.getState()));
+                if(origin.getId() == destiny.getId()){
+                    continue;
+                }
                 addEdge(origin, destiny, label);
                 if(a.isNondeterministic){
                     for(Node succ : s.applyNonDeterministicAction(a, problem)){
-                        open.push(succ);
+                        if(!visitedStates.contains(succ.getState())) open.push(succ);
                         addNewState(succ.getState());
                     }
                 }else{
                     Node succ = s.applyDeterministicAction(a, problem);
-                    open.push(succ);
+                    if(!visitedStates.contains(succ.getState())) open.push(succ);
                     addNewState(succ.getState());
                 }
                 solved.add(s.getState());

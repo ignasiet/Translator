@@ -20,8 +20,8 @@ public class RelaxedGraphH {
     private HashSet<Integer> landmarks;
     private int m;
     private BitSet scheduledActions = new BitSet();
-    private int value = 0;
-    public int solutionCost = 0;
+    private long value = 0;
+    public long solutionCost = 0;
     private ArrayList<Integer> relaxedSolution = new ArrayList<Integer>();
     public HashMap<Integer, ArrayList<Integer>> reSolution = new HashMap<Integer, ArrayList<Integer>>();
 
@@ -145,7 +145,7 @@ public class RelaxedGraphH {
         }
         //System.out.println("Relaxed graph expanded.");
         if(!goalReached()){
-            value = Integer.MAX_VALUE;
+            value = Long.MAX_VALUE;
         }
         m=layerNumber;
     }
@@ -184,7 +184,7 @@ public class RelaxedGraphH {
         }
         //System.out.println("Relaxed graph expanded.");
         if(!landmarkReached(landmark)){
-            value = Integer.MAX_VALUE;
+            value = Long.MAX_VALUE;
         }
         m=layerNumber;
     }
@@ -354,7 +354,7 @@ public class RelaxedGraphH {
     }
 
     private boolean landmarkReached(Integer i){
-        if(factsLayer[i] == Integer.MAX_VALUE){
+        if(factsLayer[i] == Long.MAX_VALUE){
             return false;
         }
         return true;
@@ -384,7 +384,7 @@ public class RelaxedGraphH {
         }
     }
 
-    public int getValue(){
+    public long getValue(){
         //return value;
         return solutionCost;
     }

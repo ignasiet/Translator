@@ -349,7 +349,7 @@ public class Searcher {
                 if (!DeadEnds.contains(n.getState())) {
                     searchHelper.updateHeuristic(n, node, va, h);
                     if(n.getH() > MaxH){
-                        MaxH = n.getH();
+                        MaxH = Math.toIntExact(n.getH());
                     }
                 } else {
                     //Add this transition to the forbidden action state pair

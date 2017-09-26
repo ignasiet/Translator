@@ -2,6 +2,7 @@ package HHCP;
 
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.HashSet;
 
 /**
  * Created by ignasi on 12/09/17.
@@ -28,6 +29,12 @@ public class searchHelper {
         n.parent = state.parent;
         n.parentAction = state.parentAction;
         n.indexAction = state.indexAction;
+        if(state.visited == null){
+            n.visited = new HashSet<BitSet>();
+        }else {
+            n.addVisited(state.visited);
+        }
+        n.visited.add(state.getState());
         n.setActionCounter(new int[p.getVaList().size()]);
         n.setActionLayer(new int[p.getVaList().size()]);
         n.setFacts(new int[p.getSize()]);
@@ -48,12 +55,12 @@ public class searchHelper {
 
     public static void updateHeuristic(Node child, Node father, VAction va, Heuristic h) {
         child.setCost(father.getCost() + va.cost);
-        int heuristic = h.getValue(child);
+        long heuristic = h.getValue(child);
         //if(va.isNondeterministic) heuristic += 1;
         child.setHeuristic(heuristic);
     }
 
-    public static void updateCost(Node child, Node father, VAction va, int cost) {
+    public static void updateCost(Node child, Node father, VAction va, long cost) {
         child.setCost(father.getCost() + va.cost);
         child.setHeuristic(cost);
         child.value = cost;

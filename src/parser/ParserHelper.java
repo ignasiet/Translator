@@ -148,7 +148,7 @@ public class ParserHelper {
 
 	public static String cleanString(String a){
 		a = a.replace("and", "").replaceAll("\\n", "").replaceAll("\\s+", " ").trim();
-		if(a.startsWith("not")){
+		if(a.startsWith("not") && !a.startsWith("not-")){
 			a = a.replaceAll("[()]", "").replace("not ", "").trim();
 			a = a.replace(" ", "_");
 			a = "~" + a;

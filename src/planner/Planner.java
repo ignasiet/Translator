@@ -328,7 +328,9 @@ public class Planner {
 			domain.predicates_grounded.addAll(listPredicatesGrounded);
 		}
 		//domain.transformToVariables();
-		if(!domain.UncertainPredicates.isEmpty())	domain.reInitialState();
+		if(!domain.UncertainPredicates.isEmpty()){
+			domain.reInitialState();
+		}
 	}
 
 	private static Translation translate(String type, Domain domain){

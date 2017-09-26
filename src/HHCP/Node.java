@@ -10,8 +10,8 @@ public class Node {
     private BitSet State;
     //implement WA*?
     //private int w = 2;
-    private int h; //Heuristic
-    private int g; //Cost to that node from root
+    private long h; //Heuristic
+    private long g; //Cost to that node from root
     public Node parent;
     public String parentAction;
     //Index of the parent action
@@ -25,12 +25,17 @@ public class Node {
     private int[] actionCounter;
     private int[] actionLayer;
     private BitSet scheduledActions;
-    public int value = Integer.MAX_VALUE;
+    public long value = Long.MAX_VALUE;
     public HashMap<Integer, ArrayList<Node>> successors = new HashMap<Integer, ArrayList<Node>>();
     public int greedyAction;
+    public HashSet<BitSet> visited;
 
     public Node(BitSet state){
         State = (BitSet) state.clone();
+    }
+
+    public void addVisited(HashSet<BitSet> visiteds){
+        visited = new HashSet<>(visiteds);
     }
 
     public int[] getFactslayer() {
@@ -95,23 +100,23 @@ public class Node {
         return true;*/
     }
 
-    public void setCost(int cost) {
+    public void setCost(long cost) {
         this.g = cost;
     }
 
-    public void setHeuristic(int h) {
+    public void setHeuristic(long h) {
         this.h = h;
     }
 
-    public int getH() {
+    public long getH() {
         return h;
     }
 
-    public int getCost() {
+    public long getCost() {
         return g;
     }
 
-    public int getFunction() {
+    public long getFunction() {
         return h + g;
     }
 
