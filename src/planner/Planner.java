@@ -65,7 +65,8 @@ public class Planner {
 		System.out.println("Init Search. ");
 
 		//Simulator sim = new Simulator(null, p.getInitState(), p, hP);
-		LRTDP lrtdp = new LRTDP(p, hP, new ArrayList<String>(), jG, heuristic, cost);
+		//LRTDP lrtdp = new LRTDP(p, hP, new ArrayList<String>(), jG, heuristic, cost);
+		LCGRTDP lcrtdp = new LCGRTDP(p, hP, new ArrayList<String>(), jG, heuristic, cost);
 	}
 
 	private static void contingentPlanner(boolean ontop, String type, String file_out_path, String heuristic, long cost){
@@ -111,7 +112,8 @@ public class Planner {
 		System.out.println("Init Search. ");
 
 		//Simulator sim = new Simulator(null, p.getInitState(), p, hP);
-		LRTDP lrtdp = new LRTDP(p, hP, new ArrayList<String>(), jG, heuristic, cost);
+		//LRTDP lrtdp = new LRTDP(p, hP, new ArrayList<String>(), jG, heuristic, cost);
+		LCGRTDP lcrtdp = new LCGRTDP(p, hP, new ArrayList<String>(), jG, heuristic, cost);
 		//Searcher search = new Searcher(p, hP, new ArrayList<String>(), jG, heuristic);
 
 		//search.GenPlanPairs(p.getInitState());
