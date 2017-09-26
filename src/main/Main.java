@@ -21,17 +21,19 @@ public class Main {
 	public static void main(String[] args){
 		// create Options object
 		boolean ontop = true;
+		long cost = 0l;
 
 		// add options
 		options.addOption("h", "help", false, "Show help.");
-		options.addOption("on", "online", false, "Performs an online search (default is false)");
+		//options.addOption("on", "online", false, "Performs an online search (default is false)");
 		options.addOption("o", "output",  true, "Output folder for translated problems.");
 		options.addOption("d", "domain", true, "Domain file.");
 		options.addOption("p", "problem", true, "Problem file.");
-		options.addOption("r", "hidden", true, "Real World file.");
+		//options.addOption("r", "hidden", true, "Real World file.");
 		options.addOption("t", "trans", true, "Translation.");
 		options.addOption("c", "correction", true, "Correction actions in any place in the plan.");
-		options.addOption("s", "heuristic", true, "Heuristic used.");
+		//options.addOption("s", "heuristic", true, "Heuristic used.");
+		options.addOption("e", "cost", true, "Cost of a dead-end (Default 400000000000l).");
 		
 		try {
 	        // parse the command line arguments
@@ -41,18 +43,17 @@ public class Main {
 			if (cmd.hasOption("h")){
 				help();
 			}else{
-				if(!cmd.hasOption("d") | !cmd.hasOption("p") | !cmd.hasOption("s")){
+				if(!cmd.hasOption("d") | !cmd.hasOption("p")){
 					System.out.println("Incorrect call. See help:");
 					help();
 				}
-				
 				if(!cmd.hasOption("o")){
 					System.out.println("No output of files");
 				}
-				if(!cmd.hasOption("r")){
+				/*if(!cmd.hasOption("r")){
 					System.out.println("No simulation");
 					simulateFlag = false;
-				}
+				}*/
 				if(!cmd.hasOption("c")){
 					System.out.println("Correction actions on top (Default).");
 				}else{
@@ -78,9 +79,15 @@ public class Main {
 				}else{
 					translationType = "linear";
 				}
-
-				String heuristicType = "ktype";
-				if(cmd.hasOption("s")){
+				String heuristicType = "";
+				if(cmd.hasOption("e")){
+					System.out.println("Cost of a dead-end: " + cmd.getOptionValue("e"));
+					cost = Long.parseLong(cmd.getOptionValue("e"));
+				}else{
+					cost = 400000000000l;
+					System.out.println("Default cost: " + cost);
+				}
+				/*if(cmd.hasOption("s")){
 					switch(cmd.getOptionValue("s")){
 						case "1":
 							heuristicType = "ff";
@@ -91,15 +98,15 @@ public class Main {
 					}
 				}else{
 					heuristicType = "ff";
-				}
+				}*/
 
 
 				String domainfile = cmd.getOptionValue("d");
 				String problemfile = cmd.getOptionValue("p");
 				String outputfile = cmd.getOptionValue("o");
-				String hiddenfile = cmd.getOptionValue("r");
-				Planner.startPlanner(domainfile, problemfile, hiddenfile, outputfile,
-						translationType, ontop, heuristicType);
+				//String hiddenfile = cmd.getOptionValue("r");
+				Planner.startPlanner(domainfile, problemfile, outputfile,
+						translationType, ontop, "ff", cost);
 				//Time for the planner:
 				//callPlanner();
 			}

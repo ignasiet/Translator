@@ -29,25 +29,25 @@ public class Planner {
 	private static Hashtable<String, String> _ObservationSelected = new Hashtable<String, String>();
 	private static boolean changes = false;
 	
-	public static void startPlanner(String domain_file_path, String problem_file_path, String hidden_file, String file_out_path, String type, boolean ontop, String heuristic){
+	public static void startPlanner(String domain_file_path, String problem_file_path, String file_out_path, String type, boolean ontop, String heuristic, long cost){
 		/*Define problem*/
 		if(!(file_out_path == null)){
 			outputPath = file_out_path;
 		}
 		long startTime = System.currentTimeMillis();
-		initDomain(domain_file_path, problem_file_path, hidden_file);
+		initDomain(domain_file_path, problem_file_path);
 		long endTime = System.currentTimeMillis();
 		System.out.println("Preprocessing time: " + (endTime - startTime) + " milliseconds");
 		/*Time measure: translation*/
 		domain = ParserHelper.cleanProblem(domain);
 		if(domain.UncertainPredicates.isEmpty()){
-			fondPlanner(heuristic);
+			fondPlanner(heuristic, cost);
 		}else{
-			contingentPlanner(ontop, type, file_out_path, heuristic);
+			contingentPlanner(ontop, type, file_out_path, heuristic, cost);
 		}
 	}
 
-	private static void fondPlanner(String heuristic) {
+	private static void fondPlanner(String heuristic, long cost) {
 		Problem p = transformToVectors(domain, false, null);
 		Problem hP = transformToVectors(domain, true, null);
 
@@ -65,10 +65,10 @@ public class Planner {
 		System.out.println("Init Search. ");
 
 		//Simulator sim = new Simulator(null, p.getInitState(), p, hP);
-		LRTDP lrtdp = new LRTDP(p, hP, new ArrayList<String>(), jG, heuristic);
+		LRTDP lrtdp = new LRTDP(p, hP, new ArrayList<String>(), jG, heuristic, cost);
 	}
 
-	private static void contingentPlanner(boolean ontop, String type, String file_out_path, String heuristic){
+	private static void contingentPlanner(boolean ontop, String type, String file_out_path, String heuristic, long cost){
 		/*cg = new CausalGraph(domain);
 		HashSet<String> relevants = cg.relevantLiterals(domain.goalState);*/
 
@@ -111,7 +111,7 @@ public class Planner {
 		System.out.println("Init Search. ");
 
 		//Simulator sim = new Simulator(null, p.getInitState(), p, hP);
-		LRTDP lrtdp = new LRTDP(p, hP, new ArrayList<String>(), jG, heuristic);
+		LRTDP lrtdp = new LRTDP(p, hP, new ArrayList<String>(), jG, heuristic, cost);
 		//Searcher search = new Searcher(p, hP, new ArrayList<String>(), jG, heuristic);
 
 		//search.GenPlanPairs(p.getInitState());
@@ -293,14 +293,14 @@ public class Planner {
 		addHumanInterventionActions(cost, ontop);
 	}
 
-	private static void initDomain(String domain_file_path, String problem_file_path, String hidden_file) {
+	private static void initDomain(String domain_file_path, String problem_file_path) {
 		domain = initParsing(domain_file_path, problem_file_path);
 		domain.getMutexFree();
 		/*Ground conditional effects*/
 		boolean areGrounded = domain.ground_all_actions();
-		if(!(hidden_file == null)){
+		/*if(!(hidden_file == null)){
 			parseHidden(hidden_file);
-		}		
+		}*/
 		/*Process entry*/
 		if(!areGrounded) {
 			domain.getInvariantPredicates();

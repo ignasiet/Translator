@@ -22,8 +22,9 @@ public class LRTDP {
     //private HashMap<BitSet, Integer> GreedyEnvelope = new HashMap<BitSet, Integer>();
     private long dValue = 400000000000l;
 
-    public LRTDP(Problem p, Problem heuristicP, ArrayList<String> l, JustificationGraph jG, String heuristic) {
+    public LRTDP(Problem p, Problem heuristicP, ArrayList<String> l, JustificationGraph jG, String heuristic, long cost) {
         problem = p;
+        dValue = cost;
         initHeuristic(heuristicP, l, jG, heuristic);
         double startTime = System.currentTimeMillis();
         while(!solved.contains(p.getInitState())){

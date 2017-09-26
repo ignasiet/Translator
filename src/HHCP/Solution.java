@@ -22,6 +22,8 @@ public class Solution {
     private DirectedMultigraph<VertexNode, Edge> graph;
     private HashMap<BitSet, Integer> idStates = new HashMap<>();
     private HashSet<BitSet> visitedStates = new HashSet<BitSet>();
+    private HashSet<BitSet> deadEnds = new HashSet<BitSet>();
+    private int numberDeadEnds = 0;
     private int numberNodes = 0;
     private int i = 2;
 
@@ -69,6 +71,8 @@ public class Solution {
             if(act == -1){
                 VertexNode destiny = addVertex("DEAD-END!", idStates.get(s.getState()));
                 addEdge(origin, destiny, label);
+                deadEnds.add(s.getState());
+                numberDeadEnds++;
             }else{
                 VAction a = problem.getAction(act);
                 VertexNode destiny = addVertex(cleanStringDot(a.getName()), idStates.get(s.getState()));
@@ -99,7 +103,8 @@ public class Solution {
 
         }
         System.out.println("Graph created.");
-        System.out.println("Policy size: " + solved.size());
+        System.out.println("Size of the solution: " + visitedStates.size());
+        System.out.println("Number of dead ends: " + numberDeadEnds);
         exportGraph();
     }
 
