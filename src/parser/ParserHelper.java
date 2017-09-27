@@ -171,6 +171,14 @@ public class ParserHelper {
 		}
 	}
 	
+	public static String extractRoot(String a){
+		if(!a.contains("_")){
+			return a;
+		}else{
+			return a.substring(0, a.indexOf("_"));
+		}
+	}
+	
 	public static String complement(String a){
 		if(a.startsWith("~")){
 			return a.substring(1);

@@ -299,6 +299,7 @@ public class Planner {
 		domain = initParsing(domain_file_path, problem_file_path);
 		domain.getMutexFree();
 		/*Ground conditional effects*/
+		domain.detectInvariants();
 		boolean areGrounded = domain.ground_all_actions();
 		/*if(!(hidden_file == null)){
 			parseHidden(hidden_file);

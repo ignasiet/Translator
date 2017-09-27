@@ -118,6 +118,13 @@ public class LCGRTDP {
             update(node);
             //if(!flag) continue;
             if(!checkSolved(node)){
+            	//if dead-end found, update all the way back to the parent
+            	/*if(deadEndSuccessors(node)){
+            		while(node.parent != null){
+            			updateWave(node);
+            			node = node.parent;
+            		}
+            	}*/
                 break;
             }else{
                 policyP.put((BitSet) node.getState().clone(), node.greedyAction);
@@ -171,13 +178,7 @@ public class LCGRTDP {
                 Node sPrima = closed.pop();
                 update(sPrima);
                 solved.add((BitSet) sPrima.getState().clone());
-                if(zeroCostSuccessors(sPrima)){
-                    values.put((BitSet) sPrima.getState().clone(), 0l);
-                }else if(deadEndSuccessors(sPrima)) {
-                    values.put((BitSet) sPrima.getState().clone(), sPrima.value);
-                }else{
-                    values.put((BitSet) sPrima.getState().clone(), maxQValue(sPrima));
-                }
+                //updateWave(sPrima);
             }
         }else{
             //update states with residuals and ancestors
@@ -187,6 +188,14 @@ public class LCGRTDP {
             }
         }
         return rv;
+    }
+    
+    private void updateWave(Node node){
+    	if(deadEndSuccessors(node)) {
+        	values.put((BitSet) node.getState().clone(), node.value);
+        }else{
+        	values.put((BitSet) node.getState().clone(), maxQValue(node));
+        }
     }
 
     private Long maxQValue(Node node) {
@@ -347,7 +356,7 @@ public class LCGRTDP {
         if(!n.successors.containsKey(act)){
             return;
         }
-        long nValue = qValue(n, act);
+        long nValue = qDead(n, act);
     	/*if(!n.successors.containsKey(act)) return;
     	ArrayList<Node> succs = n.successors.get(act);
         //Add costs of the descendants
@@ -377,6 +386,30 @@ public class LCGRTDP {
             }
         }
         return nValue;
+    }
+    
+    private long qValueMax(Node n, int act){
+        long nValue = 0;
+        ArrayList<Node> succs = n.successors.get(act);
+        nValue += problem.cost[act];
+        //Add costs of the descendants
+        for(Node succ : succs){
+            if(values.containsKey(succ.getState())){
+                succ.value= values.get(succ.getState());
+                if(nValue < succ.value) nValue = succ.value;
+            }else{
+                if(nValue < succ.getH()) nValue = succ.getH();
+            }
+        }
+        return nValue;
+    }
+    
+    private long qDead(Node n, int act){
+    	if(deadEndSuccessors(n)){
+    		return qValue(n, act);
+    	}else{
+    		return qValueMax(n,act);
+    	}
     }
 
     public void pickNextState(Node n){

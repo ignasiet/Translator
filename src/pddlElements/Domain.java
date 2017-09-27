@@ -47,6 +47,7 @@ public class Domain {
 	public Hashtable<String, ArrayList<ArrayList<String>>> ruleSet = new Hashtable<>();
 	public Hashtable<String, ArrayList<ArrayList<String>>> relevanceSet = new Hashtable<>();
 	public Hashtable<String,ArrayList<String>> freeVars = new Hashtable<String,ArrayList<String>>();
+	private HashSet<String> invariants = new HashSet<String>();
 
 
 	public void parsePredicates(String predicates_list){
@@ -100,6 +101,32 @@ public class Domain {
 			int maxval = Math.max(count.get(key), value);
 			count.put(key, maxval);
 		}
+	}
+	
+	public void detectInvariants(){
+		ArrayList<String> invar = new ArrayList<String>();
+		for(String p : predicates){
+			int aux = p.indexOf(" ");
+			if(aux > 0){
+				invar.add(p.substring(0, aux));
+			}else{
+				invar.add(p);
+			}
+		}
+		for(Action action : action_list){
+			HashSet<String> inv = new HashSet<String>(action._precond);
+			for(Effect eff : action._Effects){
+				for(String s : eff._Effects){
+					if(invar.contains(ParserHelper.extractRoot(s))) invar.remove(ParserHelper.extractRoot(s));
+				}
+			}
+			for(Branch br : action._Branches){
+				for(String s : br._Branches){
+					if(invar.contains(ParserHelper.extractRoot(s))) invar.remove(ParserHelper.extractRoot(s));
+				}
+			}
+		}
+		invariants.addAll(invar);
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -339,7 +366,8 @@ public class Domain {
 			result = product(constantes.get(action.parameters_type.get(element)), result);
 		}
 		for(String combination : result){
-			boolean validAction = true;
+			boolean validAction = validCombination(combination, action._precond, action._parameters);
+			if(!validAction) continue;
 			Action act_grounded = new Action();
 			act_grounded.cost = action.cost;
 			if(action.IsObservation){
@@ -385,6 +413,22 @@ public class Domain {
 		}
 	}
 	
+	private boolean validCombination(String combination, ArrayList<String> Precond, ArrayList<String> Parameters){
+		for(String p : Precond){
+			if(invariants.contains(ParserHelper.extractRoot(p))){
+				String[] params = combination.split(";");
+				int i = 0;
+				String aux = p;
+				for(String pr : Parameters){
+					aux = aux.replace(pr, params[i]);
+					i++;
+				}
+				if(!state.containsKey(aux)) return false;
+			}
+		}
+		return true;
+	}
+	
 	private Branch groundBranches(Branch br, Action act_grounded){
 		Branch b = new Branch();
 		ArrayList<String> lista_objetos = new ArrayList<String>(Arrays.asList(act_grounded.combination.split(";")));
@@ -397,6 +441,10 @@ public class Domain {
 		}
 		for(String item : Arrays.asList(eff_effect.split(","))){
 			list_effects.add(item.trim());
+			if(!predicates_count.containsKey(item.trim())){
+				predicates_grounded.add(item.trim());
+				predicates_count.put(item.trim(), 1);
+			}
 		}		
 		b._Branches = list_effects;
 		return b;
