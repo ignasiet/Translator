@@ -34,6 +34,7 @@ public class Main {
 		options.addOption("c", "correction", true, "Correction actions in any place in the plan.");
 		//options.addOption("s", "heuristic", true, "Heuristic used.");
 		options.addOption("e", "cost", true, "Cost of a dead-end (Default 400000000000l).");
+		options.addOption("a", "algorithm", true, "Selected algorithm (LRTDP or ADDMAXL).");
 		
 		try {
 	        // parse the command line arguments
@@ -79,7 +80,7 @@ public class Main {
 				}else{
 					translationType = "linear";
 				}
-				String heuristicType = "";
+				String algorithm = "";
 				if(cmd.hasOption("e")){
 					System.out.println("Cost of a dead-end: " + cmd.getOptionValue("e"));
 					cost = Long.parseLong(cmd.getOptionValue("e"));
@@ -87,6 +88,24 @@ public class Main {
 					cost = 400000000000l;
 					System.out.println("Default cost: " + cost);
 				}
+
+				if(cmd.hasOption("a")){
+					switch(cmd.getOptionValue("a")){
+						case "1":
+							algorithm = "lrtdp";
+							break;
+						case "2":
+							algorithm = "addmax";
+							break;
+						default:
+							algorithm = "lrtdp";
+							break;
+					}
+				}else{
+					algorithm = "lrtdp";
+				}
+				System.out.println("Algorithm selected: " + algorithm);
+
 				/*if(cmd.hasOption("s")){
 					switch(cmd.getOptionValue("s")){
 						case "1":
@@ -106,7 +125,7 @@ public class Main {
 				String outputfile = cmd.getOptionValue("o");
 				//String hiddenfile = cmd.getOptionValue("r");
 				Planner.startPlanner(domainfile, problemfile, outputfile,
-						translationType, ontop, "ff", cost);
+						translationType, ontop, "ff", cost, algorithm);
 				//Time for the planner:
 				//callPlanner();
 			}

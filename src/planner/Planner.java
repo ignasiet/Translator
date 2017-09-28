@@ -28,12 +28,16 @@ public class Planner {
 	private static ArrayList<String> _Plan = new ArrayList<>();
 	private static Hashtable<String, String> _ObservationSelected = new Hashtable<String, String>();
 	private static boolean changes = false;
+	private static String algorithm = "";
 	
-	public static void startPlanner(String domain_file_path, String problem_file_path, String file_out_path, String type, boolean ontop, String heuristic, long cost){
+	public static void startPlanner(String domain_file_path, String problem_file_path,
+									String file_out_path, String type, boolean ontop, String heuristic,
+									long cost, String alg){
 		/*Define problem*/
 		if(!(file_out_path == null)){
 			outputPath = file_out_path;
 		}
+		algorithm = alg;
 		long startTime = System.currentTimeMillis();
 		initDomain(domain_file_path, problem_file_path);
 		long endTime = System.currentTimeMillis();
@@ -65,8 +69,11 @@ public class Planner {
 		System.out.println("Init Search. ");
 
 		//Simulator sim = new Simulator(null, p.getInitState(), p, hP);
-		//LRTDP lrtdp = new LRTDP(p, hP, new ArrayList<String>(), jG, heuristic, cost);
-		LCGRTDP lcrtdp = new LCGRTDP(p, hP, new ArrayList<String>(), jG, heuristic, cost);
+		if(algorithm.equals("addmax")) {
+			LCGRTDP lcrtdp = new LCGRTDP(p, hP, new ArrayList<String>(), jG, heuristic, cost);
+		}else{
+			LRTDP lrtdp = new LRTDP(p, hP, new ArrayList<String>(), jG, heuristic, cost);
+		}
 	}
 
 	private static void contingentPlanner(boolean ontop, String type, String file_out_path, String heuristic, long cost){
@@ -111,11 +118,13 @@ public class Planner {
 
 		System.out.println("Init Search. ");
 
-		//Simulator sim = new Simulator(null, p.getInitState(), p, hP);
-		//LRTDP lrtdp = new LRTDP(p, hP, new ArrayList<String>(), jG, heuristic, cost);
-		LCGRTDP lcrtdp = new LCGRTDP(p, hP, new ArrayList<String>(), jG, heuristic, cost);
+		if(algorithm.equals("addmax")) {
+			LCGRTDP lcrtdp = new LCGRTDP(p, hP, new ArrayList<String>(), jG, heuristic, cost);
+		}else{
+			LRTDP lrtdp = new LRTDP(p, hP, new ArrayList<String>(), jG, heuristic, cost);
+		}
 		//Searcher search = new Searcher(p, hP, new ArrayList<String>(), jG, heuristic);
-
+		//Searcher search = new Searcher(p, hP, new ArrayList<String>(), jG, heuristic);
 		//search.GenPlanPairs(p.getInitState());
 	}
 
