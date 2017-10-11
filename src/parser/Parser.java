@@ -144,8 +144,8 @@ public class Parser {
 				System.out.println("Observation " + a.Name + " has cost: " + c);
 				a.cost = c;
 			}
-			_Domain.addObservable(predicate);
 			a.parseEffects(predicate);
+			_Domain.addObservable(a._Effects.get(0)._Effects.get(0));
 			break;
 		case "effect":
 			/*Tirar parentesis*/

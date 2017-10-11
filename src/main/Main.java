@@ -95,14 +95,12 @@ public class Main {
 							algorithm = "lrtdp";
 							break;
 						case "2":
-							algorithm = "addmax";
-							break;
 						default:
-							algorithm = "lrtdp";
+							algorithm = "addmax";
 							break;
 					}
 				}else{
-					algorithm = "lrtdp";
+					algorithm = "addmax";
 				}
 				System.out.println("Algorithm selected: " + algorithm);
 

@@ -48,6 +48,7 @@ public class Domain {
 	public Hashtable<String, ArrayList<ArrayList<String>>> relevanceSet = new Hashtable<>();
 	public Hashtable<String,ArrayList<String>> freeVars = new Hashtable<String,ArrayList<String>>();
 	private HashSet<String> invariants = new HashSet<String>();
+	private HashSet<String> negatInvariants = new HashSet<String>();
 
 
 	public void parsePredicates(String predicates_list){
@@ -114,14 +115,16 @@ public class Domain {
 			}
 		}
 		for(Action action : action_list){
-			HashSet<String> inv = new HashSet<String>(action._precond);
+			if(action.IsObservation) continue;
 			for(Effect eff : action._Effects){
 				for(String s : eff._Effects){
+					if(s.startsWith("~")) continue;
 					if(invar.contains(ParserHelper.extractRoot(s))) invar.remove(ParserHelper.extractRoot(s));
 				}
 			}
 			for(Branch br : action._Branches){
 				for(String s : br._Branches){
+					if(s.startsWith("~")) continue;
 					if(invar.contains(ParserHelper.extractRoot(s))) invar.remove(ParserHelper.extractRoot(s));
 				}
 			}
@@ -412,6 +415,10 @@ public class Domain {
 			}			
 		}
 	}
+
+	/*private boolean consistenObservation(String combination, ArrayList<String> Parameters){
+		return UncertainPredicates.contains()
+	}*/
 	
 	private boolean validCombination(String combination, ArrayList<String> Precond, ArrayList<String> Parameters){
 		for(String p : Precond){
@@ -423,7 +430,7 @@ public class Domain {
 					aux = aux.replace(pr, params[i]);
 					i++;
 				}
-				if(!state.containsKey(aux)) return false;
+				if(!state.containsKey(aux) && !UncertainPredicates.contains(aux)) return false;
 			}
 		}
 		return true;
@@ -441,9 +448,9 @@ public class Domain {
 		}
 		for(String item : Arrays.asList(eff_effect.split(","))){
 			list_effects.add(item.trim());
-			if(!predicates_count.containsKey(item.trim())){
-				predicates_grounded.add(item.trim());
-				predicates_count.put(item.trim(), 1);
+			if(!predicates_count.containsKey(item.replace("~", "").trim())){
+				predicates_grounded.add(item.replace("~", "").trim());
+				predicates_count.put(item.replace("~", "").trim(), 1);
 			}
 		}		
 		b._Branches = list_effects;
@@ -622,7 +629,8 @@ public class Domain {
 	}
 
 	public void addObservable(String predicate) {
-		observables.add(predicate.substring(0, predicate.indexOf(" ")).replace("(", ""));
+		//observables.add(predicate.substring(0, predicate.indexOf(" ")).replace("(", ""));
+		observables.add(predicate.substring(0, predicate.indexOf("_")));
 	}
 
 	/*TODO: implement function Related to, where every threat (pit_X or wumpus_X)

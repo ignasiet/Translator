@@ -2,12 +2,11 @@ package HHCP;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import parser.ParserHelper;
 import pddlElements.Action;
-import pddlElements.Axiom;
 import pddlElements.Branch;
 import pddlElements.Effect;
 
-import java.lang.reflect.Array;
 import java.util.*;
 
 /**
@@ -34,7 +33,7 @@ public class Problem {
     public int indexAxioms = 0;
     private int size;
 
-    public Problem(ArrayList<String> predicates) {
+    public Problem(ArrayList<String> predicates, Hashtable<String, ArrayList<String>> variables) {
         Predicates = HashBiMap.create();
         size = predicates.size();
         //initState = new BitSet(size);
@@ -42,8 +41,18 @@ public class Problem {
         //goalSet = new BitSet();
         int i = 0;
         for(String predicate : predicates){
-            Predicates.put(i, predicate);
-            i++;
+            String aux = ParserHelper.extractKRoot(predicate);
+            //Predicates specials for the translation to PRP must be cleaned here
+            if(predicate.contains("need-post-for-sense") || predicate.startsWith("K~not-observed-")) continue;
+            if(variables.containsKey(aux)){
+                 if(!predicate.startsWith("K~")) {
+                     Predicates.put(i, predicate);
+                     i++;
+                 }
+            }else {
+                Predicates.put(i, predicate);
+                i++;
+            }
         }
     }
 
@@ -91,8 +100,10 @@ public class Problem {
         BitSet del = new BitSet();
         for(String effect : e._Effects){
             if(effect.startsWith("~")){
+                if(!Predicates.inverse().containsKey(effect.substring(1))) continue;
                 del.set(Predicates.inverse().get(effect.substring(1)));
             }else{
+                if(!Predicates.inverse().containsKey(effect)) continue;
                 add.set(Predicates.inverse().get(effect));
             }
         }
@@ -107,8 +118,10 @@ public class Problem {
         BitSet del = new BitSet();
         for(String effect : list){
             if(effect.startsWith("~")){
+                if(!Predicates.inverse().containsKey(effect.substring(1))) continue;
                 del.set(Predicates.inverse().get(effect.substring(1)));
             }else{
+                if(!Predicates.inverse().containsKey(effect)) continue;
                 add.set(Predicates.inverse().get(effect));
             }
         }
@@ -286,8 +299,10 @@ public class Problem {
             ArrayList<Integer> delBranch = new ArrayList<Integer>();
             for(String bnondet : b._Branches){
                 if(bnondet.startsWith("~")){
+                    if(!Predicates.inverse().containsKey(bnondet.substring(1))) continue;
                     delBranch.add(Predicates.inverse().get(bnondet.substring(1)));
                 }else{
+                    if(!Predicates.inverse().containsKey(bnondet)) continue;
                     addBranch.add(Predicates.inverse().get(bnondet));
                 }
             }

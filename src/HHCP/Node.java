@@ -182,6 +182,7 @@ public class Node {
                 n.getState().set(i, false);
             }            
             for(int i = v.getAddList().nextSetBit(0);i>=0;i=v.getAddList().nextSetBit(i+1)){
+                if(n.getState().get(i)) continue;
                 n.getState().set(i);
                 n.getFactslayer()[i] = 1;
                 if(n.getFactslayer()[i] > 0){
@@ -269,6 +270,7 @@ public class Node {
                     for(int j = e.getAddList().nextSetBit(0); j >= 0; j = e.getAddList().nextSetBit(j+1)){
                         //i: the action
                         //j: the predicate
+                        if(n.getState().get(j)) continue;
                         n.getState().set(j);
                         if(!n.axioms.contains(a.index)) n.axioms.add(a.index);
                         if(n.getState().get(j)){                        	

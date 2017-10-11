@@ -11,7 +11,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import HHCP.*;
-import landmark.Landmarker;
 import parser.Parser;
 import parser.ParserHelper;
 import pddlElements.*;
@@ -52,16 +51,16 @@ public class Planner {
 	}
 
 	private static void fondPlanner(String heuristic, long cost) {
-		Problem p = transformToVectors(domain, false, null);
-		Problem hP = transformToVectors(domain, true, null);
+		Problem p = transformToVectors(domain, false, null, domain.variables);
+		Problem hP = transformToVectors(domain, true, null, domain.variables);
 
 		System.out.println("Transformation to vectors completed. ");
 		cg = new CausalGraph(domain_translated);
 		HashSet<String> relevants = cg.relevantLiterals(domain_translated.goalState);
 
 		if(changes) {
-			p = transformToVectors(domain_translated, false, null);
-			hP = transformToVectors(domain_translated, true, null);
+			p = transformToVectors(domain_translated, false, null, domain.variables);
+			hP = transformToVectors(domain_translated, true, null, domain.variables);
 		}
 		JustificationGraph jG = new JustificationGraph(hP);
 		jG.setRelevantLiterals(hP, relevants);
@@ -95,14 +94,14 @@ public class Planner {
 		domain_translated.hidden_state = domain.hidden_state;
 
 
-		Problem p = transformToVectors(domain_translated, false, tr.getListAxioms());
-		Problem hP = transformToVectors(domain_translated, true, tr.getListAxioms());
+		Problem p = transformToVectors(domain_translated, false, tr.getListAxioms(), domain.variables);
+		Problem hP = transformToVectors(domain_translated, true, tr.getListAxioms(), domain.variables);
 
 		System.out.println("Transformation to vectors completed. ");
 		//LANDMARKS
 		//Landmarker l = new Landmarker(domain_translated.state, domain_translated.list_actions, domain_translated.goalState);
 
-		computeHeuristic(hP, ontop);
+		addSpecialActions(hP, ontop);
 		cg = new CausalGraph(domain_translated);
 		HashSet<String> relevants = cg.relevantLiterals(domain_translated.goalState);
 
@@ -110,8 +109,8 @@ public class Planner {
 		if(!(file_out_path == null)) printDomain(tr);
 
 		if(changes) {
-			p = transformToVectors(domain_translated, false, tr.getListAxioms());
-			hP = transformToVectors(domain_translated, true, tr.getListAxioms());
+			p = transformToVectors(domain_translated, false, tr.getListAxioms(), domain.variables);
+			hP = transformToVectors(domain_translated, true, tr.getListAxioms(), domain.variables);
 		}
 		JustificationGraph jG = new JustificationGraph(hP);
 		jG.setRelevantLiterals(hP, relevants);
@@ -128,13 +127,13 @@ public class Planner {
 		//search.GenPlanPairs(p.getInitState());
 	}
 
-	private static Problem transformToVectors(Domain domain_translated, boolean isHeuristic, ArrayList<Action> listAxioms) {
+	private static Problem transformToVectors(Domain domain_translated, boolean isHeuristic, ArrayList<Action> listAxioms, Hashtable<String, ArrayList<String>> variables) {
 		/*Planner: review grounded literals*/
 		HHCP.Problem p;
 		if(domain_translated.predicates_grounded.isEmpty()){
-			p = new Problem(new ArrayList<String>(domain_translated.predicates_posit.keySet()));
+			p = new Problem(new ArrayList<String>(domain_translated.predicates_posit.keySet()), variables);
 		}else{
-			p = new Problem(domain_translated.predicates_grounded);
+			p = new Problem(domain_translated.predicates_grounded, variables);
 		}
 		p.setInitState(domain_translated.state);
 		p.setGoalState(domain_translated.goalState);
@@ -253,7 +252,7 @@ public class Planner {
 	private static void addHumanObservation(Action a, Action a_old, int cost, boolean ontop) {
 		Action a_human = new Action();
 		a_human.IsObservation = true;
-		a_human.Name = a.Name + "_human";
+		a_human.Name = a.Name + "_humansensor";
 		a_human.cost = cost;
 		for(String precondition : a._precond){
 			if(precondition.startsWith("Knot-observed-")){
@@ -272,7 +271,7 @@ public class Planner {
 		domain_translated.list_actions.put(a_human.Name, a_human);
 	}
 
-	private static void computeHeuristic(Problem p, boolean ontop) {
+	private static void addSpecialActions(Problem p, boolean ontop) {
 		int cost = 10;
 		//boolean deadEndsFound = false;
         //Heuristic h = new Heuristic(p, null, jG, heuristic);

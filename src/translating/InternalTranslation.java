@@ -516,6 +516,12 @@ public class InternalTranslation extends Translation{
 				branch2._Branches.add("~Knot-observed-" + p);
 			}
 		}
+
+		/*Tirar quando descomentar a parte de abaixo*/
+		/*branch1._Branches.add("K" + obs);
+		branch1._Branches.add("~K" + negObs);
+		branch2._Branches.add("K" + negObs);
+		branch2._Branches.add("~K" + obs);*/
 		
 		//Get all deducted literals for obs 1
 		for(String deducted : deductions.get(obs)) {
@@ -546,7 +552,6 @@ public class InternalTranslation extends Translation{
 		branch2._Branches.add(newNegatPrecond);
 		branch1._Branches.add("~" + newPrecond);
 		branch2._Branches.add("~" + newPrecond);
-
 
 		createDeterminizedObs(a, a_translated._precond, branch1._Branches, branch2._Branches);
 		//a_translated._Effects.add(e);
@@ -600,6 +605,8 @@ public class InternalTranslation extends Translation{
 			System.out.println("Useless observation: " + a.Name);
 			used.clear();
 			uselessObs.add(predicate);
+			//domain_translated.predicates_grounded.remove("K"+a._Effects.get(0)._Effects.get(0));
+			//domain_translated.predicates_grounded.remove("K~"+a._Effects.get(0)._Effects.get(0));
 			return null;
 		}
 		usedAxioms.addAll(used);

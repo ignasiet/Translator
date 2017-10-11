@@ -135,9 +135,6 @@ public class Action{
 		String auxStr1 = "\n(:action sensor-" + Name + "-obs0_DETDUP_0";
 		String auxStr2 = "\n(:action sensor-" + Name + "-obs0_DETDUP_1";
 
-		//auxStr1 = auxStr1 + "\n:precondition (and " + ParserHelper.createStringPredicate("K_need-post-for-" + Name, negateString);
-		//auxStr2 = auxStr2 + "\n:precondition (and " + ParserHelper.createStringPredicate("K_need-post-for-" + Name, negateString);
-
 		auxStr1 = auxStr1 + "\n:effect " + "(when (and " + ParserHelper.createStringPredicate("K_need-post-for-" + Name, negateString);
 		auxStr2 = auxStr2 + "\n:effect " + "(when (and " + ParserHelper.createStringPredicate("K_need-post-for-" + Name, negateString);
 
@@ -148,15 +145,8 @@ public class Action{
 			}
 		}
 		auxStr1 = auxStr1 + ")\n";
-
-
 		auxStr2 = auxStr2 + ")\n";
-
-		//auxStr1 = auxStr1 + ParserHelper.createStringPredicate("K_need-post-for-" + Name, negateString);
-		//auxStr2 = auxStr2 + ParserHelper.createStringPredicate("K_need-post-for-" + Name, negateString);
-
 		auxStr1 = auxStr1 + _Branches.get(0).toString(negateString) + "\n)\n)\n";
-
 		auxStr2 = auxStr2 + _Branches.get(1).toString(negateString)+ "\n)\n)\n";
 		return auxStr + auxStr1 + auxStr2;
 	}

@@ -26,6 +26,8 @@ public class Solution {
     private int numberDeadEnds = 0;
     private int numberNodes = 0;
     private int i = 2;
+    private int counterHumanObs = 0;
+    private int counterHumanAct = 0;
 
     public Solution(PartialPolicy policyP, BitSet initState, Problem problem) {
         graph = createStringGraph();
@@ -82,25 +84,29 @@ public class Solution {
                 addEdge(origin, destiny, label);
                 if(a.isNondeterministic){
                     for(Node succ : s.applyNonDeterministicAction(a, problem)){
-                        if(!visitedStates.contains(succ.getState())) open.push(succ);
-                        addNewState(succ.getState());
+                        if(visitedStates.contains(succ.getState())){
+                            continue;
+                        }else{
+                            open.push(succ);
+                            addNewState(succ.getState());
+                        }
                     }
                 }else{
                     Node succ = s.applyDeterministicAction(a, problem);
-                    if(!visitedStates.contains(succ.getState())) open.push(succ);
-                    addNewState(succ.getState());
+                    if(visitedStates.contains(succ.getState())){
+                        continue;
+                    }else{
+                        open.push(succ);
+                        addNewState(succ.getState());
+                    }
                 }
                 solved.add(s.getState());
             }
-
             //origin = getVertex(cleanStringDot(s.parentAction));
             //VertexNode destiny = addVertex(cleanStringDot(a.getName()), idStates.get(s.getState()));
             //if(from.equals(to)) continue;
             //if(!(graph.getEdge(from, to) != null))
             //addEdge(origin, destiny, label);
-
-
-
         }
         System.out.println("Graph created.");
         System.out.println("Size of the solution: " + visitedStates.size());

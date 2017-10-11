@@ -178,6 +178,16 @@ public class ParserHelper {
 			return a.substring(0, a.indexOf("_"));
 		}
 	}
+
+	public static String extractKRoot(String a){
+		String aux;
+		if(!a.contains("_")){
+			aux = a;
+		}else{
+			aux = a.substring(0, a.indexOf("_"));
+		}
+		return aux.substring(1).replace("~", "");
+	}
 	
 	public static String complement(String a){
 		if(a.startsWith("~")){

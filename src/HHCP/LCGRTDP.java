@@ -29,9 +29,7 @@ public class LCGRTDP {
         initHeuristic(heuristicP, l, jG, heuristic);
         double startTime = System.currentTimeMillis();
         while(!solved.contains(p.getInitState())){
-            //trial(p.getInitState());
             genWeakSolution(p.getInitState());
-            //driver(p.getInitState());
         }
         double endTime = System.currentTimeMillis();
         System.out.println("Expected cost of the solution: " + values.get(p.getInitState()));
@@ -118,13 +116,6 @@ public class LCGRTDP {
             update(node);
             //if(!flag) continue;
             if(!checkSolved(node)){
-            	//if dead-end found, update all the way back to the parent
-            	/*if(deadEndSuccessors(node)){
-            		while(node.parent != null){
-            			updateWave(node);
-            			node = node.parent;
-            		}
-            	}*/
                 break;
             }else{
                 policyP.put((BitSet) node.getState().clone(), node.greedyAction);
@@ -189,41 +180,15 @@ public class LCGRTDP {
         }
         return rv;
     }
-    
-    private void updateWave(Node node){
-    	if(deadEndSuccessors(node)) {
-        	values.put((BitSet) node.getState().clone(), node.value);
-        }else{
-        	values.put((BitSet) node.getState().clone(), maxQValue(node));
-        }
-    }
 
-    private Long maxQValue(Node node) {
-        long max = 0;
-        for(Node successor : node.successors.get(node.greedyAction)){
-            if(max < successor.value){
-                max = successor.value;
-            }
+    private void updateFinal(Node n) {
+        int act = n.greedyAction;
+        if(!n.successors.containsKey(act)){
+            return;
         }
-        return max;
-    }
-
-    private long minQValue(Node node) {
-        long min = Long.MAX_VALUE;
-        for(Node successor : node.successors.get(node.greedyAction)){
-            if(min > successor.value){
-                min = successor.value;
-            }
-        }
-        return min;
-    }
-
-    private boolean zeroCostSuccessors(Node node) {
-        boolean sSolved = true;
-        for(Node successor : node.successors.get(node.greedyAction)){
-            if(!solved(successor.getState()) || deadEnds.contains(successor.getState()) || successor.value > 0) return false;
-        }
-        return sSolved;
+        long nValue = qDead(n, act);
+        n.value = nValue;
+        values.put(n.getState(), nValue);
     }
 
     private boolean deadEndSuccessors(Node node) {
@@ -247,6 +212,7 @@ public class LCGRTDP {
         long residual = 0L;
         int action = greedyAction(n);
         if(!n.successors.containsKey(action)) return 1;
+        //Verify next line!!!!
         long succValue = qValue(n, action);
         if((succValue + problem.cost[action]) < values.get(n.getState())){
             residual = Math.abs((succValue + problem.cost[action]) - values.get(n.getState()));
@@ -334,12 +300,6 @@ public class LCGRTDP {
         return false;
     }
 
-    private void setParent(Node child, Node ancestor, VAction action) {
-        child.parent = ancestor;
-        child.parentAction = action.getName();
-        child.indexAction = action.index;
-    }
-
     private void updateCostExpandedChild(Node child, Node father, VAction vAct){
         if(!values.containsKey(child.getState())) {
             searchHelper.updateHeuristic(child, father, vAct, h);
@@ -401,6 +361,7 @@ public class LCGRTDP {
                 if(nValue < succ.getH()) nValue = succ.getH();
             }
         }
+        //nValue += problem.cost[act];
         return nValue;
     }
     
@@ -408,6 +369,7 @@ public class LCGRTDP {
     	if(deadEndSuccessors(n)){
     		return qValue(n, act);
     	}else{
+            //return qValue(n, act);
     		return qValueMax(n,act);
     	}
     }
