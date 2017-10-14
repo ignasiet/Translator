@@ -67,11 +67,24 @@ public class LCGRTDP {
                 regressPlan(node);
                 break;
             }
+            int size = fringe.size();
             expand(node);
-            if(node.successors.isEmpty()){
+            if(node.successors.isEmpty() || size == fringe.size()){
                 //node.value = Math.min();
                 update(node);
-                continue;
+                if(!node.successors.isEmpty() && successorsSolved(node)){
+                    System.out.println("Leaf states found.");
+                    update(node);
+                    regressPlan(node);
+                    break;
+                }
+                while(node.parent != null){
+                    solved.add((BitSet) node.getState().clone());
+                    values.put((BitSet) node.getState().clone(), dValue);
+                    node = node.parent;
+                }
+                break;
+                //continue;
             }
             update(node);
             //pickNextState(node);
@@ -167,7 +180,7 @@ public class LCGRTDP {
             //label relevant states
             while(!closed.isEmpty()){
                 Node sPrima = closed.pop();
-                update(sPrima);
+                updateFinal(sPrima);
                 solved.add((BitSet) sPrima.getState().clone());
                 //updateWave(sPrima);
             }
@@ -213,7 +226,7 @@ public class LCGRTDP {
         int action = greedyAction(n);
         if(!n.successors.containsKey(action)) return 1;
         //Verify next line!!!!
-        long succValue = qValue(n, action);
+        long succValue = qDead(n, action);
         if((succValue + problem.cost[action]) < values.get(n.getState())){
             residual = Math.abs((succValue + problem.cost[action]) - values.get(n.getState()));
         }
@@ -351,7 +364,7 @@ public class LCGRTDP {
     private long qValueMax(Node n, int act){
         long nValue = 0;
         ArrayList<Node> succs = n.successors.get(act);
-        nValue += problem.cost[act];
+        //nValue += problem.cost[act];
         //Add costs of the descendants
         for(Node succ : succs){
             if(values.containsKey(succ.getState())){
@@ -361,17 +374,25 @@ public class LCGRTDP {
                 if(nValue < succ.getH()) nValue = succ.getH();
             }
         }
-        //nValue += problem.cost[act];
+        nValue += problem.cost[act];
         return nValue;
     }
     
     private long qDead(Node n, int act){
-    	if(deadEndSuccessors(n)){
+    	if(deadEndChild(n, act)){
     		return qValue(n, act);
     	}else{
             //return qValue(n, act);
     		return qValueMax(n,act);
     	}
+    }
+
+    private boolean deadEndChild(Node node, int act) {
+        boolean deadchild = false;
+        for(Node successor : node.successors.get(act)){
+            if(deadEnds.contains(successor.getState())) return true;
+        }
+        return deadchild;
     }
 
     public void pickNextState(Node n){
@@ -384,6 +405,19 @@ public class LCGRTDP {
     }
 
     private int greedyAction(Node n){
+        int action = n.greedyAction;
+        long value = n.value;
+        for(int act : n.successors.keySet()){
+            long aux = qDead(n, act);
+            if(aux + problem.cost[act] < value){
+                value = aux + problem.cost[act];
+                action = act;
+            }
+        }
+        return action;
+    }
+
+    private int greedyActionDepr(Node n){
         int action = n.greedyAction;
         /*Problem: two nondet successors are goal...and the other action also minimizes the value*/
         long value = n.value;
