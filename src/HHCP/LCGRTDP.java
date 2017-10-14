@@ -78,11 +78,14 @@ public class LCGRTDP {
                     regressPlan(node);
                     break;
                 }
-                while(node.parent != null){
+                solved.add((BitSet) node.getState().clone());
+                values.put((BitSet) node.getState().clone(), dValue);
+                /*while(node.parent != null){
+                    if(problem.getAction(node.greedyAction).isNondeterministic) break;
                     solved.add((BitSet) node.getState().clone());
                     values.put((BitSet) node.getState().clone(), dValue);
                     node = node.parent;
-                }
+                }*/
                 break;
                 //continue;
             }
@@ -128,11 +131,17 @@ public class LCGRTDP {
             node = node.parent;
             update(node);
             //if(!flag) continue;
-            if(!checkSolved(node)){
-                break;
-            }else{
+            //if(problem.getAction(node.indexAction).isNondeterministic) {
+                if (!checkSolved(node)) {
+                    break;
+                } else {
+                    policyP.put((BitSet) node.getState().clone(), node.greedyAction);
+                }
+            /*}else{
+                solved.add((BitSet) node.getState().clone());
+                values.put((BitSet) node.getState().clone(), node.value);
                 policyP.put((BitSet) node.getState().clone(), node.greedyAction);
-            }
+            }*/
         }
     }
 
