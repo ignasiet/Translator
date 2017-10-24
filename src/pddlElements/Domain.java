@@ -371,6 +371,7 @@ public class Domain {
 		for(String combination : result){
 			boolean validAction = validCombination(combination, action._precond, action._parameters);
 			if(!validAction) continue;
+			action.cleanEqualityPred();
 			Action act_grounded = new Action();
 			act_grounded.cost = action.cost;
 			if(action.IsObservation){
@@ -422,7 +423,18 @@ public class Domain {
 	
 	private boolean validCombination(String combination, ArrayList<String> Precond, ArrayList<String> Parameters){
 		for(String p : Precond){
-			if(invariants.contains(ParserHelper.extractRoot(p))){
+			if(p.contains("=")){
+				String[] params = combination.split(";");
+				if(p.startsWith("~")){
+					if(params[0].equals(params[1])){
+						return false;
+					}
+				}else{
+					if(!params[0].equals(params[1])){
+						return false;
+					}
+				}
+			}else if(invariants.contains(ParserHelper.extractRoot(p))){
 				String[] params = combination.split(";");
 				int i = 0;
 				String aux = p;

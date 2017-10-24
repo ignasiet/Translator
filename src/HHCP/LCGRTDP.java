@@ -44,6 +44,7 @@ public class LCGRTDP {
         //HashSet<BitSet> visited = new HashSet<BitSet>();
         visited = new HashSet<BitSet>();
         Node initialNode = searchHelper.initLayers(new Node(s), problem);
+        initialNode.setHeuristic(searchHelper.getHeuristic(initialNode, h));
         fringe.add(initialNode);
         while(!initialNode.holds(problem.getGoal()) && !solved(initialNode.getState())) {
             if (fringe.isEmpty()) {

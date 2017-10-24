@@ -21,9 +21,9 @@ public class searchHelper {
     }
 
     public static Node initLayers(Node state, Problem p) {
-        if(state.parent != null) {
+        /*if(state.parent != null) {
             //state.parent.greedyAction = state.indexAction;
-        }
+        }*/
         Node n = new Node((BitSet) state.getState().clone());
         //1 Init list of scheduled actions: no action scheduled
         n.parent = state.parent;
@@ -58,6 +58,10 @@ public class searchHelper {
         long heuristic = h.getValue(child);
         //if(va.isNondeterministic) heuristic += 1;
         child.setHeuristic(heuristic);
+    }
+
+    public static long getHeuristic(Node state, Heuristic h){
+        return h.getValue(state);
     }
 
     public static void updateCost(Node child, Node father, VAction va, long cost) {

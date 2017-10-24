@@ -309,4 +309,14 @@ public class Action{
 		}
 		return false;
 	}
+
+	public void cleanEqualityPred() {
+		int pos = -1;
+		for(String precond : _precond){
+			if(precond.contains("=")){
+				pos = _precond.indexOf(precond);
+			}
+		}
+		if(pos > -1) _precond.remove(pos);
+	}
 }
