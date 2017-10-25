@@ -11,6 +11,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import HHCP.*;
+import landmark.Landmarker;
 import parser.Parser;
 import parser.ParserHelper;
 import pddlElements.*;
@@ -55,6 +56,11 @@ public class Planner {
 		Problem hP = transformToVectors(domain, true, null, domain.variables);
 
 		System.out.println("Transformation to vectors completed. ");
+
+		//LANDMARKS
+		Landmarker l = new Landmarker(domain.state, domain.list_actions, domain.goalState);
+
+
 		cg = new CausalGraph(domain_translated);
 		HashSet<String> relevants = cg.relevantLiterals(domain_translated.goalState);
 

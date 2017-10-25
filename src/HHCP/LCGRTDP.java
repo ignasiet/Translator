@@ -11,7 +11,7 @@ public class LCGRTDP {
     private HashSet<BitSet> solved = new HashSet<BitSet>();
     private Problem problem;
     private Heuristic h;
-    private HashSet<BitSet> visited;
+    private HashMap<BitSet, Long> visited;
     private HashSet<BitSet> deadEnds = new HashSet<BitSet>();
     private ArrayList<Integer> landmarks;
     private PriorityQueue<Node> fringe;
@@ -21,6 +21,7 @@ public class LCGRTDP {
     private PartialPolicy policyP = new PartialPolicy();
     //private HashMap<BitSet, Integer> GreedyEnvelope = new HashMap<BitSet, Integer>();
     private long dValue = 400000000000l;
+    private BitSet pendentState;
     private HashMap<BitSet, Integer> numberDE = new HashMap<>();
 
     public LCGRTDP(Problem p, Problem heuristicP, ArrayList<String> l, JustificationGraph jG, String heuristic, long cost) {
@@ -29,6 +30,7 @@ public class LCGRTDP {
         initHeuristic(heuristicP, l, jG, heuristic);
         double startTime = System.currentTimeMillis();
         while(!solved.contains(p.getInitState())){
+            //trial(p.getInitState());
             genWeakSolution(p.getInitState());
         }
         double endTime = System.currentTimeMillis();
@@ -37,12 +39,60 @@ public class LCGRTDP {
         searchHelper.printPolicy(p.getInitState(), policyP, p);
     }
 
+    private void trial(BitSet initState){
+        BitSet s = (BitSet) initState.clone();
+        Comparator<Node> comparator = new NodeComparator();
+        fringe = new PriorityQueue<Node>(100, comparator);
+        //HashSet<BitSet> visited = new HashSet<BitSet>();
+        visited = new HashMap<BitSet, Long>();
+        Node initialNode = searchHelper.initLayers(new Node(s), problem);
+        initialNode.setHeuristic(searchHelper.getHeuristic(initialNode, h));
+        //fringe.add(initialNode);
+        while(!initialNode.holds(problem.getGoal()) && !solved(initialNode.getState())) {
+            fringe.clear();
+            if (visited.containsKey(initialNode.getState())){
+                solved.add((BitSet) initialNode.getState().clone());
+                values.put((BitSet) initialNode.getState().clone(), dValue);
+            }
+            visited.put(initialNode.getState(), initialNode.getCost());
+            if (initialNode.holds(problem.getGoal()) || solved(initialNode.getState()) ) {
+                System.out.println("Solution found");
+                regressPlan(initialNode);
+                break;
+            }
+            expand(initialNode);
+            if(initialNode.successors.isEmpty()){
+                //node.value = Math.min();
+                update(initialNode);
+                if(!initialNode.successors.isEmpty() && successorsSolved(initialNode)){
+                    System.out.println("Leaf states found.");
+                    update(initialNode);
+                    regressPlan(initialNode);
+                    break;
+                }
+                solved.add((BitSet) initialNode.getState().clone());
+                values.put((BitSet) initialNode.getState().clone(), dValue);
+                break;
+                //continue;
+            }
+            update(initialNode);
+            pickNextState(initialNode);
+            if(successorsSolved(initialNode)){
+                System.out.println("Leaf states found.");
+                update(initialNode);
+                regressPlan(initialNode);
+                break;
+            }
+            initialNode = searchHelper.initLayers(fringe.poll(), problem);
+        }
+    }
+
     private void genWeakSolution(BitSet initState) {
         BitSet s = (BitSet) initState.clone();
         Comparator<Node> comparator = new NodeComparator();
         fringe = new PriorityQueue<Node>(100, comparator);
         //HashSet<BitSet> visited = new HashSet<BitSet>();
-        visited = new HashSet<BitSet>();
+        visited = new HashMap<BitSet, Long>();
         Node initialNode = searchHelper.initLayers(new Node(s), problem);
         initialNode.setHeuristic(searchHelper.getHeuristic(initialNode, h));
         fringe.add(initialNode);
@@ -59,10 +109,18 @@ public class LCGRTDP {
             Node node = searchHelper.initLayers(fringe.poll(), problem);
             //Node node = searchHelper.initLayers(pickNextState(n)), problem)-
             //if(node.parent != null) node.parent.greedyAction = node.indexAction;
-            if (visited.contains(node.getState())){
-                continue;
+            if(visited.containsKey(node.getState())){
+                if(solved.contains(node.getState())){
+                    System.out.println("Solution found");
+                    regressPlan(node);
+                    break;
+                }
+                if(visited.get(node.getState()) <= node.getCost()){
+                    update(node);
+                    continue;
+                }
             }
-            visited.add(node.getState());
+            visited.put(node.getState(), node.getCost());
             if (node.holds(problem.getGoal()) || solved(node.getState()) ) {
                 System.out.println("Solution found");
                 regressPlan(node);
@@ -101,6 +159,10 @@ public class LCGRTDP {
         }
     }
 
+    private boolean someChildrenSolved(int sizeNode, int size){
+        return sizeNode + size > fringe.size();
+    }
+
     private boolean successorsSolved(Node node) {
         /*TODO: must test all descendants or only the greedy action descendants?*/
         /*boolean sSolved = true;
@@ -119,6 +181,7 @@ public class LCGRTDP {
 
     private void regressPlan(Node node) {
         //boolean flag = true;
+        pendentState = null;
         if(node.holds(problem.getGoal())){
             node.value = 0;
             solved.add((BitSet) node.getState().clone());
@@ -180,6 +243,7 @@ public class LCGRTDP {
                         solved.add((BitSet) succ.getState().clone());
                         values.put((BitSet) succ.getState().clone(), 0L);
                     }else {
+                        pendentState = (BitSet) succ.getState().clone();
                         return false;
                         //open.push(succ);
                     }
@@ -276,7 +340,9 @@ public class LCGRTDP {
                         processDeadEnds(succ, n, vAct);
                     }
                     listSucc.add(succ);
-                    if(!solved(succ.getState())) fringe.add(succ);
+                    if(!solved(succ.getState())){
+                        fringe.add(succ);
+                    }
                     succ.addVisited(n.visited);
                 }
                 /*for(Node succ : listSucc){
@@ -295,9 +361,16 @@ public class LCGRTDP {
                 //child.setHeuristic(Math.min(dValue, child.getH()));
                 child.setHeuristic(Math.min(Long.MAX_VALUE, child.getH()));
                 listSucc.add(child);
-                if(!solved(child.getState())) fringe.add(child);
+                if(!solved(child.getState())){
+                    fringe.add(child);
+                }
+                child.addVisited(n.visited);
+                //fringe.add(child);
             }
-            n.successors.put(action, listSucc);
+            n.numberSuccessors += listSucc.size();
+            if(!listSucc.isEmpty()){
+                n.successors.put(action, listSucc);
+            }
         }
     }
 

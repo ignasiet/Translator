@@ -311,12 +311,14 @@ public class Action{
 	}
 
 	public void cleanEqualityPred() {
-		int pos = -1;
+		ArrayList<String> pos = new ArrayList<String>();
 		for(String precond : _precond){
 			if(precond.contains("=")){
-				pos = _precond.indexOf(precond);
+				pos.add(precond);
 			}
 		}
-		if(pos > -1) _precond.remove(pos);
+		for(String position : pos){
+			_precond.remove(position);
+		}
 	}
 }

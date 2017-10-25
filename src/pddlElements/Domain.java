@@ -371,7 +371,6 @@ public class Domain {
 		for(String combination : result){
 			boolean validAction = validCombination(combination, action._precond, action._parameters);
 			if(!validAction) continue;
-			action.cleanEqualityPred();
 			Action act_grounded = new Action();
 			act_grounded.cost = action.cost;
 			if(action.IsObservation){
@@ -392,12 +391,14 @@ public class Domain {
 			ArrayList<String> lista_precond = new ArrayList<String>();
 			for(String item : Arrays.asList(precond.split(","))){
 				lista_precond.add(item.trim());
+				if(item.contains("=")) continue;
 				if(!predicates_count.containsKey(item.trim())){
 					predicates_grounded.add(item.trim());
 					predicates_count.put(item.trim(), 1);
 				}
 			}
 			act_grounded._precond = lista_precond;
+			act_grounded.cleanEqualityPred();
 			if(validAction){
 				act_grounded._parameters.addAll(action._parameters);
 				for(Effect effect : action._Effects){
@@ -425,12 +426,22 @@ public class Domain {
 		for(String p : Precond){
 			if(p.contains("=")){
 				String[] params = combination.split(";");
+				int i = 0;
+				int j = 0;
+				String[] aux = new String[2];
+				for(String pr : Parameters){
+					if(p.contains(pr)){
+						aux[j] = params[i];
+						j++;
+					}
+					i++;
+				}
 				if(p.startsWith("~")){
-					if(params[0].equals(params[1])){
+					if(aux[0].equals(aux[1])){
 						return false;
 					}
 				}else{
-					if(!params[0].equals(params[1])){
+					if(!aux[0].equals(aux[1])){
 						return false;
 					}
 				}

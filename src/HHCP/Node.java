@@ -29,6 +29,7 @@ public class Node {
     public HashMap<Integer, ArrayList<Node>> successors = new HashMap<Integer, ArrayList<Node>>();
     public int greedyAction;
     public HashSet<BitSet> visited;
+    public int numberSuccessors;
 
     public Node(BitSet state){
         State = (BitSet) state.clone();
