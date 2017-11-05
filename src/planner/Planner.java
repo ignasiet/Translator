@@ -60,7 +60,6 @@ public class Planner {
 		//LANDMARKS
 		Landmarker l = new Landmarker(domain.state, domain.list_actions, domain.goalState);
 
-
 		cg = new CausalGraph(domain_translated);
 		HashSet<String> relevants = cg.relevantLiterals(domain_translated.goalState);
 
@@ -74,10 +73,12 @@ public class Planner {
 		System.out.println("Init Search. ");
 
 		//Simulator sim = new Simulator(null, p.getInitState(), p, hP);
-		if(algorithm.equals("addmax")) {
-			LCGRTDP lcrtdp = new LCGRTDP(p, hP, new ArrayList<String>(), jG, heuristic, cost);
-		}else{
+		if(algorithm.equals("lrtdp")) {
 			LRTDP lrtdp = new LRTDP(p, hP, new ArrayList<String>(), jG, heuristic, cost);
+		}else if(algorithm.equals("maxprob")){
+			MaxProb mprob = new MaxProb(p, hP, new ArrayList<String>(), jG, heuristic, cost);
+		}else{
+			LCGRTDP lcrtdp = new LCGRTDP(p, hP, new ArrayList<String>(), jG, heuristic, cost);
 		}
 	}
 
@@ -107,7 +108,7 @@ public class Planner {
 		//LANDMARKS
 		//Landmarker l = new Landmarker(domain_translated.state, domain_translated.list_actions, domain_translated.goalState);
 
-		addSpecialActions(hP, ontop);
+		//addSpecialActions(hP, ontop);
 		cg = new CausalGraph(domain_translated);
 		HashSet<String> relevants = cg.relevantLiterals(domain_translated.goalState);
 
@@ -123,14 +124,14 @@ public class Planner {
 
 		System.out.println("Init Search. ");
 
-		if(algorithm.equals("addmax")) {
-			LCGRTDP lcrtdp = new LCGRTDP(p, hP, new ArrayList<String>(), jG, heuristic, cost);
-		}else{
+
+		if(algorithm.equals("lrtdp")) {
 			LRTDP lrtdp = new LRTDP(p, hP, new ArrayList<String>(), jG, heuristic, cost);
+		}else if(algorithm.equals("maxprob")){
+			MaxProb mprob = new MaxProb(p, hP, new ArrayList<String>(), jG, heuristic, cost);
+		}else{
+			LCGRTDP lcrtdp = new LCGRTDP(p, hP, new ArrayList<String>(), jG, heuristic, cost);
 		}
-		//Searcher search = new Searcher(p, hP, new ArrayList<String>(), jG, heuristic);
-		//Searcher search = new Searcher(p, hP, new ArrayList<String>(), jG, heuristic);
-		//search.GenPlanPairs(p.getInitState());
 	}
 
 	private static Problem transformToVectors(Domain domain_translated, boolean isHeuristic, ArrayList<Action> listAxioms, Hashtable<String, ArrayList<String>> variables) {
@@ -202,6 +203,7 @@ public class Planner {
 				for(String obj : replaceObjects){
 					if(a.Name.contains("_" + obj)){
 						for(String prec : a._precond){
+							if(domain_translated.inGoal(prec)) continue;
 							if(prec.contains(obj) && !replacingActions.contains(prec)){
 								replacingActions.add(prec);
 							}
@@ -221,11 +223,10 @@ public class Planner {
 			a_human.cost = 10*cost;
 			if(element.startsWith("K")){
 				a_human._precond.add("K~" + element.substring(1));
-			}
-			else {
+			}else{
 				a_human._precond.add(ParserHelper.complement(element));
 			}
-			a_human._precond.add("Knot-started");
+			//a_human._precond.add("Knot-started");
 			Effect e = new Effect();
 			e._Effects.add(element);
 			e._Effects.add(ParserHelper.complement(element.replace("K", "K~")));

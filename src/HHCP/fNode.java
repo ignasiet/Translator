@@ -5,14 +5,14 @@ import java.util.*;
 /**
  * Created by ignasi on 15/05/17.
  */
-public class Node {
+public class fNode {
 
     private BitSet State;
     //implement WA*?
     //private int w = 2;
-    private long h; //Heuristic
+    private float h; //Heuristic
     private long g; //Cost to that node from root
-    public Node parent;
+    public fNode parent;
     public String parentAction;
     //Index of the parent action
     public int indexAction = -1;
@@ -25,13 +25,14 @@ public class Node {
     private int[] actionCounter;
     //private int[] actionLayer;
     private BitSet scheduledActions;
-    public long value = Long.MAX_VALUE;
-    public HashMap<Integer, ArrayList<Node>> successors = new HashMap<Integer, ArrayList<Node>>();
+    public float value = Float.MAX_VALUE;
+    public HashMap<Integer, ArrayList<fNode>> successors = new HashMap<Integer, ArrayList<fNode>>();
     public int greedyAction;
     public HashSet<BitSet> visited;
     public int numberSuccessors;
 
-    public Node(BitSet state){
+
+    public fNode(BitSet state){
         State = (BitSet) state.clone();
     }
 
@@ -105,11 +106,11 @@ public class Node {
         this.g = cost;
     }
 
-    public void setHeuristic(long h) {
+    public void setHeuristic(float h) {
         this.h = h;
     }
 
-    public long getH() {
+    public float getH() {
         return h;
     }
 
@@ -117,7 +118,7 @@ public class Node {
         return g;
     }
 
-    public long getFunction() {
+    public float getFunction() {
         return h + g;
     }
 
@@ -125,9 +126,9 @@ public class Node {
         return State;
     }
 
-    public Node applyDeterministicAction(VAction a, Problem p){
+    public fNode applyDeterministicAction(VAction a, Problem p){
         BitSet successor = (BitSet) State.clone();
-        Node n = new Node(successor);
+        fNode n = new fNode(successor);
         n.setFacts(getFactslayer());
         //n.setActionLayer(getActionLayer());
         n.setActionCounter(getActionCounter());
@@ -157,10 +158,10 @@ public class Node {
         return n;
     }
 
-    public ArrayList<Node> applyNonDeterministicAction(VAction a, Problem p){
-        ArrayList<Node> successors = new ArrayList<Node>();
+    public ArrayList<fNode> applyNonDeterministicAction(VAction a, Problem p){
+        ArrayList<fNode> successors = new ArrayList<fNode>();
         for(VEffect v : a.getEffects()){
-            Node n = applyEffect(v, p);
+            fNode n = applyEffect(v, p);
             n.parent = this;
             n.indexAction = a.index;
             n.indexEffect = a.getEffects().indexOf(v);
@@ -170,9 +171,9 @@ public class Node {
         return successors;
     }
 
-    public Node applyEffect(VEffect v, Problem p){
+    public fNode applyEffect(VEffect v, Problem p){
         BitSet successor = (BitSet) State.clone();
-        Node n = new Node(successor);
+        fNode n = new fNode(successor);
         n.setFacts(getFactslayer());
         //n.setActionLayer(getActionLayer());
         n.setActionCounter(getActionCounter());
@@ -234,7 +235,7 @@ public class Node {
         }
     }
 
-	public void fixedPoint(Node n, ArrayList<VAction> vAxioms) {
+	public void fixedPoint(fNode n, ArrayList<VAction> vAxioms) {
 		n.axioms = new ArrayList<>();
 		BitSet oldState = (BitSet) n.getState().clone();
 		boolean fix = false;
@@ -256,7 +257,7 @@ public class Node {
 		}
 	}
 
-    private void applyRules(Node n, BitSet scheduledActions, Problem problem) {
+    private void applyRules(fNode n, BitSet scheduledActions, Problem problem) {
         int layerNumber = 0;
         BitSet oldScheduledActions = new BitSet();
         while(!oldScheduledActions.equals(scheduledActions)){
@@ -288,7 +289,7 @@ public class Node {
         }
     }
 
-    public void updateAxiomCounter(int predicate, Problem problem, Node node, BitSet scheduledAxioms){
+    public void updateAxiomCounter(int predicate, Problem problem, fNode node, BitSet scheduledAxioms){
         if(!problem.prec2Act.containsKey(predicate)) {
             return;
         }
@@ -304,7 +305,7 @@ public class Node {
     }
 
 
-    public void updateActionCounter(int predicate, Problem problem, Node node, BitSet scheduledActions){
+    public void updateActionCounter(int predicate, Problem problem, fNode node, BitSet scheduledActions){
         if(!problem.prec2Act.containsKey(predicate)) {
             return;
         }

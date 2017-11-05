@@ -35,7 +35,7 @@ public class Solution {
         String lastDivisor = "";
         int[] factlayer = problem.initLayers(initState);
         n.setActionCounterInc(problem);
-        n.setActionLayer(new int[problem.getVaList().size()]);
+        //n.setActionLayer(new int[problem.getVaList().size()]);
         n.setFacts(factlayer);
         Stack<Node> open = new Stack<Node>();
         open.push(n);

@@ -1,11 +1,13 @@
 package HHCP;
 
+import simulator.Simulator;
+
 import java.util.*;
 
 /**
  * Created by ignasi on 11/09/17.
  */
-public class LCGRTDP {
+public class MaxProb {
 
     private HashSet<BitSet> solved = new HashSet<BitSet>();
     private Problem problem;
@@ -13,124 +15,100 @@ public class LCGRTDP {
     private HashMap<BitSet, Long> visited;
     private HashSet<BitSet> deadEnds = new HashSet<BitSet>();
     private ArrayList<Integer> landmarks;
-    private PriorityQueue<Node> fringe;
+    private PriorityQueue<fNode> fringe;
     private HashMap<BitSet, Integer> forbiddenActionPairs = new HashMap<BitSet, Integer>();
-    private HashMap<BitSet, ArrayList<Node>> nextStates = new HashMap<BitSet, ArrayList<Node>>();
-    private HashMap<BitSet, Long> values = new HashMap<BitSet, Long>();
+    private HashMap<BitSet, Float> values = new HashMap<BitSet, Float>();
     private PartialPolicy policyP = new PartialPolicy();
     //private HashMap<BitSet, Integer> GreedyEnvelope = new HashMap<BitSet, Integer>();
-    private long dValue = 400000000000l;
-    private BitSet pendentState;
+    private float dValue = 400000000000f;
     private HashMap<BitSet, Integer> numberDE = new HashMap<>();
+    private float epsilon = 0.5f;
 
-    public LCGRTDP(Problem p, Problem heuristicP, ArrayList<String> l, JustificationGraph jG, String heuristic, long cost) {
+    public MaxProb(Problem p, Problem heuristicP, ArrayList<String> l, JustificationGraph jG, String heuristic, long cost) {
         problem = p;
         dValue = cost;
         initHeuristic(heuristicP, l, jG, heuristic);
         double startTime = System.currentTimeMillis();
         while(!solved.contains(p.getInitState())){
-            //trial(p.getInitState());
             genWeakSolution(p.getInitState());
+            //trial(p.getInitState());
         }
         double endTime = System.currentTimeMillis();
         System.out.println("Expected cost of the solution: " + values.get(p.getInitState()));
         searchHelper.printStats(policyP, startTime, endTime, p);
         searchHelper.printPolicy(p.getInitState(), policyP, p);
+        //Simulator sim = new Simulator(policyP, p.getInitState(), problem, heuristicP);
     }
 
     private void trial(BitSet initState){
         BitSet s = (BitSet) initState.clone();
-        Comparator<Node> comparator = new NodeComparator();
-        fringe = new PriorityQueue<Node>(100, comparator);
+        Comparator<fNode> comparator = new fNodeComparator();
+        fringe = new PriorityQueue<fNode>(100, comparator);
         //HashSet<BitSet> visited = new HashSet<BitSet>();
         visited = new HashMap<BitSet, Long>();
-        Node initialNode = searchHelper.initLayers(new Node(s), problem);
-        initialNode.setHeuristic(searchHelper.getHeuristic(initialNode, h));
+        fNode node = searchHelper.initLayers(new fNode(s), problem);
+        node.setHeuristic(searchHelper.getHeuristic(node, h));
         //fringe.add(initialNode);
-        while(!initialNode.holds(problem.getGoal()) && !solved(initialNode.getState())) {
+        while(!node.holds(problem.getGoal()) && !solved(node.getState())) {
             fringe.clear();
-            if (visited.containsKey(initialNode.getState())){
-                solved.add((BitSet) initialNode.getState().clone());
-                values.put((BitSet) initialNode.getState().clone(), dValue);
+            if (visited.containsKey(node.getState())){
+                //solved.add((BitSet) node.getState().clone());
+                //values.put((BitSet) node.getState().clone(), dValue);
+                node = node.parent;
+                continue;
             }
-            visited.put(initialNode.getState(), initialNode.getCost());
-            if (initialNode.holds(problem.getGoal()) || solved(initialNode.getState()) ) {
-                System.out.println("Solution found");
-                regressPlan(initialNode);
-                break;
-            }
-            expand(initialNode);
-            if(initialNode.successors.isEmpty()){
+            visited.put(node.getState(), node.getCost());
+            expand(node);
+            if(node.successors.isEmpty()){
                 //node.value = Math.min();
-                update(initialNode);
-                if(!initialNode.successors.isEmpty() && successorsSolved(initialNode)){
+                update(node);
+                if(!node.successors.isEmpty() && successorsSolved(node)){
                     System.out.println("Leaf states found.");
-                    update(initialNode);
-                    regressPlan(initialNode);
+                    update(node);
+                    regressPlan(node);
                     break;
                 }
-                solved.add((BitSet) initialNode.getState().clone());
-                values.put((BitSet) initialNode.getState().clone(), dValue);
+                solved.add((BitSet) node.getState().clone());
+                values.put((BitSet) node.getState().clone(), dValue);
                 break;
                 //continue;
             }
-            update(initialNode);
-            pickNextState(initialNode);
-            if(successorsSolved(initialNode)){
+            update(node);
+            pickNextState(node);
+            if(successorsSolved(node)){
                 System.out.println("Leaf states found.");
-                update(initialNode);
-                regressPlan(initialNode);
+                update(node);
+                regressPlan(node);
                 break;
             }
-            initialNode = searchHelper.initLayers(fringe.poll(), problem);
+            node = searchHelper.initLayers(fringe.poll(), problem);
+            if (node.holds(problem.getGoal()) || solved(node.getState()) ) {
+                System.out.println("Solution found");
+                regressPlan(node);
+                break;
+            }
         }
     }
 
     private void genWeakSolution(BitSet initState) {
         BitSet s = (BitSet) initState.clone();
-        Comparator<Node> comparator = new NodeComparator();
-        fringe = new PriorityQueue<Node>(100, comparator);
+        Comparator<fNode> comparator = new fNodeComparator();
+        fringe = new PriorityQueue<fNode>(100, comparator);
         //HashSet<BitSet> visited = new HashSet<BitSet>();
         visited = new HashMap<BitSet, Long>();
-        Node initialNode = searchHelper.initLayers(new Node(s), problem);
+        fNode initialNode = searchHelper.initLayers(new fNode(s), problem);
         initialNode.setHeuristic(searchHelper.getHeuristic(initialNode, h));
         fringe.add(initialNode);
         while(!initialNode.holds(problem.getGoal()) && !solved(initialNode.getState())) {
             if (fringe.isEmpty()) {
                 System.out.println("No weak plan found.\nThe initial State for this search may have caused a Dead-end.");
                 update(initialNode);
-                //solved.add((BitSet) initialNode.getState().clone());
-                //Settle for the best children solved
-                //settleSolution(initialNode);
                 break;
             }
-            Node node = searchHelper.initLayers(fringe.poll(), problem);
-            //Node node = searchHelper.initLayers(pickNextState(n)), problem)-
-            //if(node.parent != null) node.parent.greedyAction = node.indexAction;
-
-            /*if(visited.containsKey(node.getState())){
-                if(solved.contains(node.getState())){
-                    fringe.clear();
-                    System.out.println("Solution found");
-                    regressPlan(node);
-                    break;
-                }
-                //Here a repeated node is found with higher cost than before...discard
-                if(visited.get(node.getState()) < node.getCost()){
-                    //solved.add((BitSet) node.getState().clone());
-                    values.put((BitSet) node.getState().clone(), dValue);
-                    continue;
-                }
-            }*/
-
-            /*if (visited.containsKey(node.getState())) {
-                if(visited.get(node.getState()) < node.getCost()){
-                    //solved.add((BitSet) node.getState().clone());
-                    values.put((BitSet) node.getState().clone(), dValue);
-                    continue;
-                }
+            fNode node = searchHelper.initLayers(fringe.poll(), problem);
+            if(visited.containsKey(node.getState())){
                 continue;
-            }*/
+            }
             visited.put(node.getState(), node.getCost());
 
             if (node.holds(problem.getGoal()) || solved(node.getState()) ) {
@@ -166,35 +144,22 @@ public class LCGRTDP {
         }
     }
 
-    private boolean someChildrenSolved(int sizeNode, int size){
-        return sizeNode + size > fringe.size();
-    }
-
-    private boolean successorsSolved(Node node) {
+    private boolean successorsSolved(fNode node) {
         /*TODO: must test all descendants or only the greedy action descendants?*/
         boolean sSolved = true;
-        for(Node successor : node.successors.get(node.greedyAction)){
+        for(fNode successor : node.successors.get(node.greedyAction)){
             if(!solved(successor.getState())) return false;
         }
         return sSolved;
     }
 
-    private void settleSolution(Node node){
-        while(policyP.action(node.getState()) < 0) {
-            expand(node);
-            int bestAction = greedyAction(node);
-            policyP.put((BitSet) node.getState().clone(), node.greedyAction);
-            node = node.successors.get(bestAction).get(0);
-        }
-    }
-
-    private void regressPlan(Node node) {
+    private void regressPlan(fNode node) {
         //boolean flag = true;
-        pendentState = null;
+        //pendentState = null;
         if(node.holds(problem.getGoal())){
             node.value = 0;
             solved.add((BitSet) node.getState().clone());
-            values.put((BitSet) node.getState().clone(), 0L);
+            values.put((BitSet) node.getState().clone(), 0f);
         }else{
             node.greedyAction = greedyAction(node);
             if(checkSolved(node)) policyP.put((BitSet) node.getState().clone(), node.greedyAction);
@@ -219,15 +184,15 @@ public class LCGRTDP {
         return b;
     }
 
-    private boolean checkSolved(Node n) {
+    private boolean checkSolved(fNode n) {
         boolean rv = true;
-        Stack<Node> open = new Stack<Node>();
-        Stack<Node> closed = new Stack<Node>();
+        Stack<fNode> open = new Stack<fNode>();
+        Stack<fNode> closed = new Stack<fNode>();
         if(!solved.contains(n.getState())){
             open.push(n);
         }
         while(!open.isEmpty()){
-            Node s = open.pop();
+            fNode s = open.pop();
             closed.push(s);
             //Check residual
             if(residual(s) > 0){
@@ -241,14 +206,14 @@ public class LCGRTDP {
             /*Problem encountered: state s has a residual of 0 calculated with the
              * greedy action, however has a child that is not solved.
              * Approach: get out of this function and keep searching a solution.*/
-            ArrayList<Node> succs = s.successors.get(s.greedyAction);
-            for(Node succ : succs){
+            ArrayList<fNode> succs = s.successors.get(s.greedyAction);
+            for(fNode succ : succs){
                 if(!solved(succ.getState()) && !open.contains(succ) && !closed.contains(succ)){
                     if(succ.holds(problem.getGoal())){
                         solved.add((BitSet) succ.getState().clone());
-                        values.put((BitSet) succ.getState().clone(), 0L);
+                        values.put((BitSet) succ.getState().clone(), 0f);
                     }else {
-                        pendentState = (BitSet) succ.getState().clone();
+                        //pendentState = (BitSet) succ.getState().clone();
                         return false;
                         //open.push(succ);
                     }
@@ -258,7 +223,7 @@ public class LCGRTDP {
         if(rv){
             //label relevant states
             while(!closed.isEmpty()){
-                Node sPrima = closed.pop();
+                fNode sPrima = closed.pop();
                 updateFinal(sPrima);
                 solved.add((BitSet) sPrima.getState().clone());
                 //updateWave(sPrima);
@@ -266,53 +231,41 @@ public class LCGRTDP {
         }else{
             //update states with residuals and ancestors
             while(!closed.isEmpty()){
-                Node sPrima = closed.pop();
+                fNode sPrima = closed.pop();
                 update(sPrima);
             }
         }
         return rv;
     }
 
-    private void updateFinal(Node n) {
+    private void updateFinal(fNode n) {
         int act = n.greedyAction;
         if(!n.successors.containsKey(act)){
             return;
         }
-        long nValue = qDead(n, act);
+        float nValue = qFPUDE(n, act);
         n.value = nValue;
         values.put(n.getState(), nValue);
     }
 
-    private boolean deadEndSuccessors(Node node) {
-        boolean deadchild = false;
-        for(Node successor : node.successors.get(node.greedyAction)){
-            if(deadEnds.contains(successor.getState())) return true;
-        }
-        return deadchild;
-    }
-
-    private boolean notDeadEndSuccessors(Node node) {
-        boolean sSolved = true;
-        for(Node successor : node.successors.get(node.greedyAction)){
-            if(!solved(successor.getState()) || deadEnds.contains(successor.getState())) return false;
-        }
-        return sSolved;
-    }
-
-    private long residual(Node n){
+    private float residual(fNode n){
         //Take the minimal action
-        long residual = 0L;
+        float residual = 0f;
         int action = greedyAction(n);
         if(!n.successors.containsKey(action)) return 1;
         //Verify next line!!!!
-        long succValue = qDead(n, action);
+        float succValue = qFPUDE(n, action);
         if((succValue + problem.cost[action]) < values.get(n.getState())){
             residual = Math.abs((succValue + problem.cost[action]) - values.get(n.getState()));
+            if(residual <= epsilon){
+                System.out.println("Converged state");
+                return 0;
+            }
         }
         return residual;
     }
 
-    private long getValue(Node n){
+    private float getValue(fNode n){
         if(values.containsKey(n.getState())){
             return values.get(n.getState());
         }
@@ -327,46 +280,35 @@ public class LCGRTDP {
         h.useCosts(heuristicP.cost);
     }
 
-    private void expand(Node n){
+    private void expand(fNode n){
         for(int action = n.getScheduledActions().nextSetBit(0); action >= 0; action = n.getScheduledActions().nextSetBit(action+1)){
             if(forbiddenActionPairs.containsKey(n.getState()) && (action == forbiddenActionPairs.get(n.getState()))){
                 continue;
             }
             VAction vAct = problem.getAction(action);
-            ArrayList<Node> listSucc = new ArrayList<Node>();
+            ArrayList<fNode> listSucc = new ArrayList<fNode>();
             if(vAct.isNondeterministic || vAct.isObservation){
-                ArrayList<Node> successors = n.applyNonDeterministicAction(vAct,problem);
-                for(Node succ : successors){
-                    if(n.visited.contains(succ.getState())) {
-                        continue;
-                    }
+                ArrayList<fNode> successors = n.applyNonDeterministicAction(vAct,problem);
+                for(fNode succ : successors){
                     updateCostExpandedChild(succ, n, vAct);
                     if(isDeadEnd(succ)){
                         processDeadEnds(succ, n, vAct);
                     }
                     listSucc.add(succ);
-                    if(!solved(succ.getState())){
+                    if(!solved(succ.getState()) && !n.visited.contains(succ.getState())){
                         fringe.add(succ);
                     }
                     succ.addVisited(n.visited);
                 }
             }else{
-                Node child = n.applyDeterministicAction(vAct, problem);
-                if(n.visited.contains(child.getState())) {
-                    //continue;
-                }
-                if(n.parent != null && child.getState().equals(n.parent.getState())){
-                    //continue;
-                }
+                fNode child = n.applyDeterministicAction(vAct, problem);
                 updateCostExpandedChild(child, n, vAct);
                 child.setHeuristic(Math.min(Long.MAX_VALUE, child.getH()));
                 listSucc.add(child);
                 if(!solved(child.getState()) && !n.visited.contains(child.getState())){
                     fringe.add(child);
-                    //if(!visited.containsKey(child.getState()))
                 }
                 child.addVisited(n.visited);
-                //fringe.add(child);
             }
             n.numberSuccessors += listSucc.size();
             if(!listSucc.isEmpty()) {
@@ -380,27 +322,25 @@ public class LCGRTDP {
         }
     }
 
-    private void processDeadEnds(Node child, Node father, VAction vAct){
-        deadEnds.add(child.getState());
-        BitSet deadend = (BitSet) father.getState().clone();
-        deadend.and(child.getState());
-        deadEnds.add(deadend);
+    private void processDeadEnds(fNode child, fNode father, VAction vAct){
         numberDE.put(child.getState(), 1);
-        //forbiddenActionPairs.put((BitSet) father.getState().clone(), vAct.index);
+        deadEnds.add(child.getState());
+        solved.add((BitSet) child.getState().clone());
+        values.put((BitSet) child.getState().clone(), dValue);
+        child.setHeuristic(dValue);
+        child.value = dValue;
+        //fringe.add(child);
     }
 
-    private boolean isDeadEnd(Node succ){
-        if(deadEnds.contains(succ.getState()) || succ.getH() >= Long.MAX_VALUE){
-            deadEnds.add(succ.getState());
-            solved.add((BitSet) succ.getState().clone());
-            values.put((BitSet) succ.getState().clone(), dValue);
-            succ.setHeuristic(dValue);
+    private boolean isDeadEnd(fNode succ){
+        if(deadEnds.contains(succ.getState()) || succ.getH() >= Float.MAX_VALUE){
+            System.out.println("Dead-end state found.");
             return true;
         }
         return false;
     }
 
-    private void updateCostExpandedChild(Node child, Node father, VAction vAct){
+    private void updateCostExpandedChild(fNode child, fNode father, VAction vAct){
         if(!values.containsKey(child.getState())) {
             searchHelper.updateHeuristic(child, father, vAct, h);
         }else{
@@ -410,122 +350,67 @@ public class LCGRTDP {
         }
     }
 
-    private void update(Node n){
+    private void update(fNode n){
         int act = greedyAction(n);
         n.greedyAction = act;
         if(!n.successors.containsKey(act)){
             return;
         }
-        long nValue = qDead(n, act);
-    	/*if(!n.successors.containsKey(act)) return;
-    	ArrayList<Node> succs = n.successors.get(act);
-        //Add costs of the descendants
-    	for(Node succ : succs){
-            if(values.containsKey(succ.getState())){
-                n.value += values.get(succ.getState());
-            }else{
-                n.value += succ.getH();
-            }
-    	}
-    	values.put(n.getState(), n.value);*/
+        float nValue = qFPUDE(n, act);
         n.value = nValue;
         values.put(n.getState(), nValue);
     }
 
-    private long qValue(Node n, int act){
-        long nValue = 0;
-        ArrayList<Node> succs = n.successors.get(act);
+    /*private float qAverage(fNode n, int act){
+        float nValue = 0;
+        ArrayList<fNode> succs = n.successors.get(act);
         nValue += problem.cost[act];
         //Add costs of the descendants
-        for(Node succ : succs){
+        for(fNode succ : succs){
             if(values.containsKey(succ.getState())){
                 succ.value= values.get(succ.getState());
-                nValue += succ.value;
+                nValue += (succ.value / succs.size());
             }else{
-                nValue += succ.getH();
+                nValue += (succ.getH() / succs.size());
             }
         }
         return nValue;
-    }
-    
-    private long qValueMax(Node n, int act){
-        long nValue = 0;
-        ArrayList<Node> succs = n.successors.get(act);
-        //nValue += problem.cost[act];
+    }*/
+
+    private float qFPUDE(fNode n, int act){
+        float nValue = 0;
+        ArrayList<fNode> succs = n.successors.get(act);
+        nValue += problem.cost[act];
         //Add costs of the descendants
-        for(Node succ : succs){
+        for(fNode succ : succs){
             if(values.containsKey(succ.getState())){
                 succ.value= values.get(succ.getState());
-                if(nValue < succ.value) nValue = succ.value;
+                nValue += (succ.value / succs.size());
             }else{
-                if(nValue < succ.getH()) nValue = succ.getH();
+                nValue += (succ.getH() / succs.size());
             }
         }
-        nValue += problem.cost[act];
-        return nValue;
-    }
-    
-    private long qDead(Node n, int act){
-    	if(deadEndChild(n, act)){
-    		return qValue(n, act);
-    	}else{
-            //return qValue(n, act);
-    		return qValueMax(n,act);
-    	}
+        return Math.min(dValue, nValue);
     }
 
-    private boolean deadEndChild(Node node, int act) {
-        boolean deadchild = false;
-        for(Node successor : node.successors.get(act)){
-            if(deadEnds.contains(successor.getState())) return true;
+    private int greedyAction(fNode n){
+        int action = n.greedyAction;
+        float value = n.value;
+        for(int act : n.successors.keySet()){
+            float aux = qFPUDE(n, act);
+            if(aux + problem.cost[act] < value){
+                value = aux + problem.cost[act];
+                action = act;
+            }
         }
-        return deadchild;
+        return action;
     }
 
-    public void pickNextState(Node n){
-        //Random r = new Random();
-        ArrayList<Node> succs = n.successors.get(n.greedyAction);
-        for(Node succ : succs){
+    public void pickNextState(fNode n){
+        ArrayList<fNode> succs = n.successors.get(n.greedyAction);
+        for(fNode succ : succs){
             if(!solved(succ.getState())) fringe.add(succ);
         }
-        //return succs.get(r.nextInt(succs.size()));
     }
 
-    private int greedyAction(Node n){
-        int action = n.greedyAction;
-        long value = n.value;
-        for(int act : n.successors.keySet()){
-            long aux = qDead(n, act);
-            if(aux + problem.cost[act] < value){
-                value = aux + problem.cost[act];
-                action = act;
-            }
-        }
-        return action;
-    }
-
-    private int greedyActionDepr(Node n){
-        int action = n.greedyAction;
-        /*Problem: two nondet successors are goal...and the other action also minimizes the value*/
-        long value = n.value;
-        for(int act : n.successors.keySet()){
-            ArrayList<Node> succs = n.successors.get(act);
-            //Add costs of the descendants
-            long aux = 0L;
-            for(Node succ : succs){
-                if(values.containsKey(succ.getState())){
-                    aux += values.get(succ.getState());
-                }else{
-                    aux += succ.getH();
-                }
-            }
-            if(aux + problem.cost[act] < value){
-                value = aux + problem.cost[act];
-                action = act;
-                //n.value = aux;
-                //n.greedyAction = act;
-            }
-        }
-        return action;
-    }
 }

@@ -36,12 +36,43 @@ public class searchHelper {
         }
         n.visited.add(state.getState());
         n.setActionCounter(new int[p.getVaList().size()]);
-        n.setActionLayer(new int[p.getVaList().size()]);
+        //n.setActionLayer(new int[p.getVaList().size()]);
         n.setFacts(new int[p.getSize()]);
         BitSet scheduledActions = new BitSet();
         n.setCost(state.getCost());
         n.setHeuristic(state.getH());
-        //scheduledActions = new BitSet(problem.getVaList().size());
+        //2 For every predicate that is in the current state, update facts layer to put a 0 value
+        for (int i = state.getState().nextSetBit(0); i >= 0; i = state.getState().nextSetBit(i+1)) {
+            //System.out.println("Predicate: " + i + " correspond to: " + problem.getPredicate(i));
+            n.getFactslayer()[i] = 1;
+            //3 Update actions whose preconditions have been updated
+            n.updateActionCounter(i, p, n, scheduledActions);
+        }
+        n.setScheduledActions(scheduledActions);
+        return n;
+    }
+
+    public static fNode initLayers(fNode state, Problem p) {
+        /*if(state.parent != null) {
+            //state.parent.greedyAction = state.indexAction;
+        }*/
+        fNode n = new fNode((BitSet) state.getState().clone());
+        //1 Init list of scheduled actions: no action scheduled
+        n.parent = state.parent;
+        n.parentAction = state.parentAction;
+        n.indexAction = state.indexAction;
+        if(state.visited == null){
+            n.visited = new HashSet<BitSet>();
+        }else {
+            n.addVisited(state.visited);
+        }
+        n.visited.add(state.getState());
+        n.setActionCounter(new int[p.getVaList().size()]);
+        //n.setActionLayer(new int[p.getVaList().size()]);
+        n.setFacts(new int[p.getSize()]);
+        BitSet scheduledActions = new BitSet();
+        n.setCost(state.getCost());
+        n.setHeuristic(state.getH());
         //2 For every predicate that is in the current state, update facts layer to put a 0 value
         for (int i = state.getState().nextSetBit(0); i >= 0; i = state.getState().nextSetBit(i+1)) {
             //System.out.println("Predicate: " + i + " correspond to: " + problem.getPredicate(i));
@@ -60,11 +91,29 @@ public class searchHelper {
         child.setHeuristic(heuristic);
     }
 
+    public static void updateHeuristic(fNode child, fNode father, VAction va, Heuristic h) {
+        child.setCost(father.getCost() + va.cost);
+        float heuristic = h.getValue(child);
+        if(heuristic >= Long.MAX_VALUE) heuristic = Float.MAX_VALUE;
+        //if(va.isNondeterministic) heuristic += 1;
+        child.setHeuristic(heuristic);
+    }
+
     public static long getHeuristic(Node state, Heuristic h){
         return h.getValue(state);
     }
 
+    public static long getHeuristic(fNode state, Heuristic h){
+        return h.getValue(state);
+    }
+
     public static void updateCost(Node child, Node father, VAction va, long cost) {
+        child.setCost(father.getCost() + va.cost);
+        child.setHeuristic(cost);
+        child.value = cost;
+    }
+
+    public static void updateCost(fNode child, fNode father, VAction va, float cost) {
         child.setCost(father.getCost() + va.cost);
         child.setHeuristic(cost);
         child.value = cost;

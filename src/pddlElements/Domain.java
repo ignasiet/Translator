@@ -773,4 +773,14 @@ public class Domain {
 			}
 		}
 	}
+
+	public boolean inGoal(String prec) {
+		if(!prec.contains("_")){
+			return goalState.contains(prec);
+		}
+		for(String goal : goalState){
+			if(goal.contains(prec.substring(0, prec.indexOf("_")))) return true;
+		}
+		return false;
+	}
 }

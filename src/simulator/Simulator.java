@@ -11,11 +11,11 @@ import java.util.Scanner;
  */
 public class Simulator {
 
-    public Simulator(PartialPolicy policyP, BitSet initState, Problem problem, Problem heuristicProblem, JustificationGraph j, String h){
+    public Simulator(PartialPolicy policyP, BitSet initState, Problem problem, Problem heuristicProblem){
         if(policyP != null){
             simulatePolicy(policyP, initState, problem);
         }else{
-            simulateSearch(initState, problem, heuristicProblem, j, h);
+            //simulateSearch(initState, problem, heuristicProblem, j, h);
         }
     }
 
@@ -24,7 +24,7 @@ public class Simulator {
         Heuristic h = new Heuristic(hproblem, null, jG, heuristic);
         Node node = new Node(initState);
         node.setActionCounter(new int[problem.getVaList().size()]);
-        node.setActionLayer(new int[problem.getVaList().size()]);
+        //node.setActionLayer(new int[problem.getVaList().size()]);
         int[] factlayer = problem.initLayers(node.getState());
         node.setFacts(factlayer);
         while(!node.holds(problem.getGoal())){
@@ -78,7 +78,7 @@ public class Simulator {
     }
 
     public void simulatePolicy (PartialPolicy policyP, BitSet initState, Problem problem) {
-        Node n = new Node(initState);
+        Node n = searchHelper.initLayers(new Node(initState), problem);
         boolean solved = false;
         Scanner reader = new Scanner(System.in);  // Reading from System.in
         while(!solved) {
@@ -110,6 +110,7 @@ public class Simulator {
                 Node succ = n.applyDeterministicAction(action, problem);
                 n = succ;
             }
+            n = searchHelper.initLayers(new Node(n.getState()), problem);
         }
     }
 }

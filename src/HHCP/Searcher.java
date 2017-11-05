@@ -230,7 +230,7 @@ public class Searcher {
         initNode.setFacts(factlayer);
         initNode.setActionCounterInc(problem);
         //initNode.setActionCounter(new int[problem.getVaList().size()]);
-        initNode.setActionLayer(new int[problem.getVaList().size()]);
+        //initNode.setActionLayer(new int[problem.getVaList().size()]);
         Node returnNode = initNode.applyEffect(e, problem);
         return returnNode.getState();
     }
@@ -293,7 +293,7 @@ public class Searcher {
         Node initNode = new Node(initState);
         int[] factlayer = problem.initLayers(initState);
         initNode.setActionCounterInc(problem);
-        initNode.setActionLayer(new int[problem.getVaList().size()]);
+        //initNode.setActionLayer(new int[problem.getVaList().size()]);
         initNode.setFacts(factlayer);
         //
         h.getValue(initNode);

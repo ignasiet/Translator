@@ -46,6 +46,28 @@ public class Heuristic {
         }
     }
 
+    public long getValue(fNode node){
+        rp.solutionCost = 0;
+        if(heuristic.equals("ff")) {
+            HashSet<Integer> landmarksNotReached;
+            if (landmarks != null) {
+                landmarksNotReached = new HashSet<>(landmarks);
+                for (Integer i : landmarks) {
+                    if (node.getState().get(i)) {
+                        landmarksNotReached.remove(i);
+                    }
+                }
+                rp.calculateHeuristic(node.getState(), landmarks);
+                return returnValue(rp, node);
+            } else {
+                rp.calculateHeuristic(node.getState(), null);
+                return returnValue(rp, node);
+            }
+        }else{
+            return landmarkCutH.getHMax(node.getState(), justGraph, problem.getGoal());
+        }
+    }
+
     public long getValueI(Node node, BitSet acts){
         rp = new RelaxedGraphH(problem);
         rp.preScheduleActions(acts);
@@ -58,6 +80,22 @@ public class Heuristic {
     }
 
     private long returnValue(RelaxedGraphH rp, Node node){
+        try {
+            if (rp.getValue() != 0 && rp.getValue() < Long.MAX_VALUE) {
+                node.setRelaxedSolution(rp.getRelaxedSolution());
+                //node.setBestRelaxedAction(problem.getAction(extractPreferredAction(rp.reSolution)).getName());
+                node.setBestRelaxedAction(problem.getAction(rp.getRelaxedSolution().get(rp.getRelaxedSolution().size() - 1)).getName());
+            }
+            return rp.getValue();
+        }catch (Exception e){
+            System.out.println("Error: ");
+            e.printStackTrace();
+            System.exit(0);
+            return -1;
+        }
+    }
+
+    private long returnValue(RelaxedGraphH rp, fNode node){
         try {
             if (rp.getValue() != 0 && rp.getValue() < Long.MAX_VALUE) {
                 node.setRelaxedSolution(rp.getRelaxedSolution());

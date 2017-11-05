@@ -34,8 +34,8 @@ public class Main {
 		options.addOption("c", "correction", true, "Correction actions in any place in the plan.");
 		//options.addOption("s", "heuristic", true, "Heuristic used.");
 		options.addOption("e", "cost", true, "Cost of a dead-end (Default 400000000000l).");
-		options.addOption("a", "algorithm", true, "Selected algorithm (LRTDP or ADDMAXL).");
-		
+		options.addOption("a", "algorithm", true, "Selected algorithm (LRTDP - 1, MAXPROB - 2 or ADDMAXL - 3 (default)).");
+
 		try {
 	        // parse the command line arguments
 			CommandLineParser parser = new DefaultParser();
@@ -95,6 +95,8 @@ public class Main {
 							algorithm = "lrtdp";
 							break;
 						case "2":
+							algorithm = "maxprob";
+							break;
 						default:
 							algorithm = "addmax";
 							break;
