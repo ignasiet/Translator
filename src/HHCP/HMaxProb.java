@@ -1,13 +1,11 @@
 package HHCP;
 
-import simulator.Simulator;
-
 import java.util.*;
 
 /**
  * Created by ignasi on 11/09/17.
  */
-public class MaxProb {
+public class HMaxProb {
 
     private HashSet<BitSet> solved = new HashSet<BitSet>();
     private Problem problem;
@@ -27,7 +25,7 @@ public class MaxProb {
     private HashSet<BitSet> avoidable = new HashSet<BitSet>();
     private float epsilon = 0.5f;
 
-    public MaxProb(Problem p, Problem heuristicP, ArrayList<String> l, JustificationGraph jG, String heuristic, long cost) {
+    public HMaxProb(Problem p, Problem heuristicP, ArrayList<String> l, JustificationGraph jG, String heuristic, long cost) {
         problem = p;
         dValue = cost;
         initHeuristic(heuristicP, l, jG, heuristic);
@@ -163,7 +161,6 @@ public class MaxProb {
         //pendentState = null;
         if(node.holds(problem.getGoal())){
             node.value = 0;
-            node.goalPr = 1;
             probabilities.put((BitSet) node.getState().clone(), 1f);
             solved.add((BitSet) node.getState().clone());
             values.put((BitSet) node.getState().clone(), 0f);
@@ -235,9 +232,7 @@ public class MaxProb {
                         solved.add((BitSet) succ.getState().clone());
                         values.put((BitSet) succ.getState().clone(), 0f);
                     }else {
-                        //pendentState = (BitSet) succ.getState().clone();
                         return false;
-                        //open.push(succ);
                     }
                 }
             }
@@ -356,8 +351,6 @@ public class MaxProb {
         probabilities.put((BitSet) child.getState().clone(), 0f);
         child.setHeuristic(dValue);
         child.value = dValue;
-        child.goalPr = 0;
-        //fringe.add(child);
     }
 
     private boolean isDeadEnd(fNode succ){

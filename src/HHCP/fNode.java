@@ -30,6 +30,7 @@ public class fNode {
     public int greedyAction;
     public HashSet<BitSet> visited;
     public int numberSuccessors;
+    public boolean hAction = false;
 
 
     public fNode(BitSet state){

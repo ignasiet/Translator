@@ -108,7 +108,7 @@ public class Planner {
 		//LANDMARKS
 		//Landmarker l = new Landmarker(domain_translated.state, domain_translated.list_actions, domain_translated.goalState);
 
-		//addSpecialActions(hP, ontop);
+		addSpecialActions(hP, ontop);
 		cg = new CausalGraph(domain_translated);
 		HashSet<String> relevants = cg.relevantLiterals(domain_translated.goalState);
 
@@ -128,7 +128,7 @@ public class Planner {
 		if(algorithm.equals("lrtdp")) {
 			LRTDP lrtdp = new LRTDP(p, hP, new ArrayList<String>(), jG, heuristic, cost);
 		}else if(algorithm.equals("maxprob")){
-			MaxProb mprob = new MaxProb(p, hP, new ArrayList<String>(), jG, heuristic, cost);
+			HMaxProb mprob = new HMaxProb(p, hP, new ArrayList<String>(), jG, heuristic, cost);
 		}else{
 			LCGRTDP lcrtdp = new LCGRTDP(p, hP, new ArrayList<String>(), jG, heuristic, cost);
 		}
