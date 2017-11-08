@@ -94,6 +94,9 @@ public class searchHelper {
     public static void updateHeuristic(fNode child, fNode father, VAction va, Heuristic h, float dValue) {
         child.setCost(father.getCost() + va.cost);
         float heuristic = h.getValue(child);
+        //Modified here: without human help : Float.MAX_VALUE
+        //if(heuristic >= Long.MAX_VALUE) heuristic = Float.MAX_VALUE;
+        //with human help: dValue
         if(heuristic >= Long.MAX_VALUE) heuristic = dValue;
         child.setHeuristic(heuristic);
     }

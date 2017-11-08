@@ -129,6 +129,7 @@ public class Planner {
 			LRTDP lrtdp = new LRTDP(p, hP, new ArrayList<String>(), jG, heuristic, cost);
 		}else if(algorithm.equals("maxprob")){
 			HMaxProb mprob = new HMaxProb(p, hP, new ArrayList<String>(), jG, heuristic, cost);
+			//MaxProb mprob = new MaxProb(p, hP, new ArrayList<String>(), jG, heuristic, cost);
 		}else{
 			LCGRTDP lcrtdp = new LCGRTDP(p, hP, new ArrayList<String>(), jG, heuristic, cost);
 		}
@@ -184,6 +185,12 @@ public class Planner {
 		}
 	}
 
+	private static void addSpecialActions(Problem p, boolean ontop) {
+		int cost = 10;
+		changes = true;
+		addHumanInterventionActions(cost, ontop);
+	}
+
 	private static void addHumanInterventionActions(int cost, boolean ontop){
 		//Add human observations
 		ArrayList<String> replaceObjects = new ArrayList<String>();
@@ -228,7 +235,8 @@ public class Planner {
 		for(String element : replacingActions){
 			Action a_human = new Action();
 			a_human.Name = "Modify_human_" + element;
-			a_human.cost = 10*cost;
+			//400000000000 cost D
+			a_human.cost = cost;
 			if(element.startsWith("K")){
 				a_human._precond.add("K~" + element.substring(1));
 			}else{
@@ -294,12 +302,6 @@ public class Planner {
 		a_human._Branches.add(br1);
 		a_human._Branches.add(br2);
 		domain_translated.list_actions.put(a_human.Name, a_human);
-	}
-
-	private static void addSpecialActions(Problem p, boolean ontop) {
-		int cost = 10;
-		changes = true;
-		addHumanInterventionActions(cost, ontop);
 	}
 
 	private static void initDomain(String domain_file_path, String problem_file_path) {

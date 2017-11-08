@@ -12,7 +12,7 @@ public class MaxProb {
     private HashSet<BitSet> solved = new HashSet<BitSet>();
     private Problem problem;
     private Heuristic h;
-    private HashMap<BitSet, Long> visited;
+    private HashMap<BitSet, Float> visited;
     private HashSet<BitSet> deadEnds = new HashSet<BitSet>();
     private ArrayList<Integer> landmarks;
     private PriorityQueue<fNode> fringe;
@@ -25,7 +25,7 @@ public class MaxProb {
     private float AvoidValue = Float.MAX_VALUE;
     private HashMap<BitSet, Integer> numberDE = new HashMap<>();
     private HashSet<BitSet> avoidable = new HashSet<BitSet>();
-    private float epsilon = 0.5f;
+    private float epsilon = 0.005f;
 
     public MaxProb(Problem p, Problem heuristicP, ArrayList<String> l, JustificationGraph jG, String heuristic, long cost) {
         problem = p;
@@ -49,7 +49,7 @@ public class MaxProb {
         Comparator<fNode> comparator = new fNodeComparator();
         fringe = new PriorityQueue<fNode>(100, comparator);
         //HashSet<BitSet> visited = new HashSet<BitSet>();
-        visited = new HashMap<BitSet, Long>();
+        visited = new HashMap<BitSet, Float>();
         fNode node = searchHelper.initLayers(new fNode(s), problem);
         node.setHeuristic(searchHelper.getHeuristic(node, h));
         //fringe.add(initialNode);
@@ -92,7 +92,7 @@ public class MaxProb {
         }
     }
 
-    private void genWeakSolution(BitSet initState) {
+    /*private void genWeakSolution(BitSet initState) {
         BitSet s = (BitSet) initState.clone();
         Comparator<fNode> comparator = new fNodeComparator();
         fringe = new PriorityQueue<fNode>(100, comparator);
@@ -147,7 +147,7 @@ public class MaxProb {
                 break;
             }
         }
-    }
+    }*/
 
     private boolean successorsSolved(fNode node) {
         /*TODO: must test all descendants or only the greedy action descendants?*/
@@ -355,6 +355,7 @@ public class MaxProb {
         probabilities.put((BitSet) child.getState().clone(), 0f);
         child.setHeuristic(dValue);
         child.value = dValue;
+        //fringe.add(child);
     }
 
     private boolean isDeadEnd(fNode succ){

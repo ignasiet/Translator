@@ -11,7 +11,7 @@ public class fNode {
     //implement WA*?
     //private int w = 2;
     private float h; //Heuristic
-    private long g; //Cost to that node from root
+    private float g; //Cost to that node from root
     public fNode parent;
     public String parentAction;
     //Index of the parent action
@@ -103,7 +103,7 @@ public class fNode {
         return true;*/
     }
 
-    public void setCost(long cost) {
+    public void setCost(float cost) {
         this.g = cost;
     }
 
@@ -115,7 +115,7 @@ public class fNode {
         return h;
     }
 
-    public long getCost() {
+    public float getCost() {
         return g;
     }
 

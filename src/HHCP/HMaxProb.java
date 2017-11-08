@@ -10,12 +10,15 @@ public class HMaxProb {
     private HashSet<BitSet> solved = new HashSet<BitSet>();
     private Problem problem;
     private Heuristic h;
-    private HashMap<BitSet, Long> visited;
+    private HashMap<BitSet, Float> visited;
     private HashSet<BitSet> deadEnds = new HashSet<BitSet>();
     private ArrayList<Integer> landmarks;
     private PriorityQueue<fNode> fringe;
     private HashMap<BitSet, ArrayList<Integer>> forbiddenActionPairs = new HashMap<BitSet, ArrayList<Integer>>();
     private HashMap<BitSet, Float> values = new HashMap<BitSet, Float>();
+    //
+    private HashMap<BitSet, Float> costs = new HashMap<BitSet, Float>();
+    //
     private HashMap<BitSet, Float> probabilities = new HashMap<BitSet, Float>();
     private PartialPolicy policyP = new PartialPolicy();
     //private HashMap<BitSet, Integer> GreedyEnvelope = new HashMap<BitSet, Integer>();
@@ -25,6 +28,7 @@ public class HMaxProb {
     private HashSet<BitSet> avoidable = new HashSet<BitSet>();
     private HashSet<BitSet> humanGenStates = new HashSet<BitSet>();
     private float epsilon = 0.005f;
+    private HashSet<Integer> humanActions = new HashSet<>();
 
     public HMaxProb(Problem p, Problem heuristicP, ArrayList<String> l, JustificationGraph jG, String heuristic, long cost) {
         problem = p;
@@ -47,7 +51,7 @@ public class HMaxProb {
         BitSet s = (BitSet) initState.clone();
         Comparator<fNode> comparator = new fNodeComparator();
         fringe = new PriorityQueue<fNode>(100, comparator);
-        visited = new HashMap<BitSet, Long>();
+        visited = new HashMap<BitSet, Float>();
         fNode node = searchHelper.initLayers(new fNode(s), problem);
         node.setHeuristic(searchHelper.getHeuristic(node, h));
         //fringe.add(initialNode);
@@ -101,11 +105,13 @@ public class HMaxProb {
                 probabilities.put((BitSet) node.getState().clone(), 1f);
                 solved.add((BitSet) node.getState().clone());
                 values.put((BitSet) node.getState().clone(), 0f);
+                costs.put((BitSet) node.getState().clone(), node.getCost());
             }else{
-                //node.value = dValue;
+                node.value = dValue;
                 probabilities.put((BitSet) node.getState().clone(), 0f);
                 solved.add((BitSet) node.getState().clone());
-                values.put((BitSet) node.getState().clone(), 0f);
+                values.put((BitSet) node.getState().clone(), dValue);
+                costs.put((BitSet) node.getState().clone(), node.getCost());
                 //values.put((BitSet) node.getState().clone(), dValue);
             }
         }else{
@@ -113,6 +119,7 @@ public class HMaxProb {
             if(node.successors.containsKey(node.greedyAction)){
                 if(checkSolved(node)){
                     policyP.put((BitSet) node.getState().clone(), node.greedyAction);
+                    costs.put((BitSet) node.getState().clone(), node.getCost());
                     updateProbabilities(node);
                 }
             }
@@ -125,6 +132,7 @@ public class HMaxProb {
                 break;
             } else {
                 policyP.put((BitSet) node.getState().clone(), node.greedyAction);
+                costs.put((BitSet) node.getState().clone(), node.getCost());
                 updateProbabilities(node);
             }
         }
@@ -182,7 +190,7 @@ public class HMaxProb {
             //label relevant states
             while(!closed.isEmpty()){
                 fNode sPrima = closed.pop();
-                update(sPrima);
+                updateFinal(sPrima);
                 solved.add((BitSet) sPrima.getState().clone());
             }
         }else{
@@ -271,6 +279,9 @@ public class HMaxProb {
             }
         }
         if(n.successors.isEmpty()){
+            //Modified here
+            if(n.parent == null) return;
+            //
             addForbiddenAction((BitSet) n.parent.getState().clone(), n.indexAction);
             avoidable.add((BitSet) n.getState().clone());
         }
@@ -279,7 +290,8 @@ public class HMaxProb {
     private void isHumanSuccessor(fNode succ, VAction vAct) {
         if(vAct.getName().startsWith("Modify_human_")){
             humanGenStates.add(succ.getState());
-            succ.setHeuristic(dValue);
+            humanActions.add(vAct.index);
+            //succ.setHeuristic(dValue);
         }else if(humanGenStates.contains(succ.parent.getState())){
             humanGenStates.add(succ.getState());
         }
@@ -293,6 +305,7 @@ public class HMaxProb {
         probabilities.put((BitSet) child.getState().clone(), 0f);
         child.setHeuristic(dValue);
         child.value = dValue;
+        //fringe.add(child);
     }
 
     private boolean isDeadEnd(fNode succ){
@@ -327,6 +340,12 @@ public class HMaxProb {
         nValue += problem.cost[act];
         //Add costs of the descendants
         for(fNode succ : succs){
+            //Modified here
+            /*if(humanActions.contains(act)){
+                nValue += (dValue / succs.size());
+                continue;
+            }*/
+            //Until here
             if(values.containsKey(succ.getState())){
                 succ.value= values.get(succ.getState());
                 nValue += (succ.value / succs.size());
@@ -352,7 +371,8 @@ public class HMaxProb {
     private int greedyAction(fNode n){
         int action = n.greedyAction;
         float value = n.value;
-        if(humanGenStates.contains(n.getState())){
+        //Modified here
+        /*if(humanGenStates.contains(n.getState())){
             for (int act : n.successors.keySet()) {
                 float aux = qFPUDE(n, act);
                 if(aux < dValue){
@@ -363,7 +383,8 @@ public class HMaxProb {
                     action = act;
                 }
             }
-        }else {
+        }else {*/
+        //until here
             for (int act : n.successors.keySet()) {
                 float aux = qFPUDE(n, act);
                 if (aux + problem.cost[act] < value) {
@@ -371,10 +392,9 @@ public class HMaxProb {
                     action = act;
                 }
             }
-        }
+        //}
         return action;
     }
-
 
     public void pickNextState(fNode n){
         ArrayList<fNode> succs = n.successors.get(n.greedyAction);
@@ -386,6 +406,11 @@ public class HMaxProb {
             }
             //if(!solved(succ.getState()))
         }
+        //Modified Here
+        if(fringe.isEmpty()){
+            fringe.add(succs.get(0));
+        }
+        //Until here
     }
 
 }
