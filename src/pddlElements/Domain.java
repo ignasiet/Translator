@@ -774,6 +774,16 @@ public class Domain {
 		}
 	}
 
+	public ArrayList<String> getInvariantsPosit(){
+		ArrayList<String> retList = new ArrayList<String>();
+		for(String predicate : predicates_posit.keySet()){
+			if(!isUncertain(predicate) && !isObservable(predicate)){
+				retList.add(predicate);
+			}
+		}
+		return retList;
+	}
+
 	public boolean inGoal(String prec) {
 		if(!prec.contains("_")){
 			return goalState.contains(prec);

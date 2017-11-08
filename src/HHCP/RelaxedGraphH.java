@@ -24,6 +24,7 @@ public class RelaxedGraphH {
     public long solutionCost = 0;
     private ArrayList<Integer> relaxedSolution = new ArrayList<Integer>();
     public HashMap<Integer, ArrayList<Integer>> reSolution = new HashMap<Integer, ArrayList<Integer>>();
+    public boolean HumanAction = false;
 
     public RelaxedGraphH(Problem p){
         problem = p;

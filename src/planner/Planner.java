@@ -148,6 +148,7 @@ public class Planner {
 		if(isHeuristic){
 			for(String name : domain_translated.list_actions.keySet()) {
 				Action a = domain_translated.list_actions.get(name);
+				if(name.startsWith("Modify_human_")) continue;
 				if(!a.IsObservation && !a._IsNondeterministic){
 					p.insertAction(a, false);
 				}else{
@@ -198,7 +199,7 @@ public class Planner {
 			//Human observations
 			Action a_old = domain.list_actions.get(name);
 			if(a.IsObservation){
-				addHumanObservation(a, a_old, cost, ontop);
+				//addHumanObservation(a, a_old, cost, ontop);
 			}else{
 				for(String obj : replaceObjects){
 					if(a.Name.contains("_" + obj)){
@@ -212,7 +213,14 @@ public class Planner {
 				}
 			}
 		}
-		addObjectAction(replacingActions, cost);
+		ArrayList<String> trueReplacements = domain.getInvariantsPosit();
+		ArrayList<String> newReplacements = new ArrayList<String>();
+		for(String replacement : trueReplacements){
+			if(replacingActions.contains("K" + replacement)){
+				newReplacements.add("K" + replacement);
+			}
+		}
+		addObjectAction(newReplacements, 1);
 		domain_translated.costFunction = true;
 	}
 
@@ -230,8 +238,18 @@ public class Planner {
 			Effect e = new Effect();
 			e._Effects.add(element);
 			e._Effects.add(ParserHelper.complement(element.replace("K", "K~")));
+			e._Effects.add("KHumanUsed");
+			e._Effects.add("~K~HumanUsed");
 			a_human._Effects.add(e);
 			domain_translated.list_actions.put(a_human.Name, a_human);
+
+			if(!domain_translated.predicates_grounded.contains("KHumanUsed")){
+				domain_translated.predicates_grounded.add("KHumanUsed");
+				domain_translated.predicates_grounded.add("K~HumanUsed");
+			}
+			domain_translated.predicates_posit.put("KHumanUsed", 1);
+			domain_translated.state.put("K~HumanUsed", 1);
+
 			ArrayList<Action> aList = new ArrayList<>();
 			for(String action : domain_translated.list_actions.keySet()){
 				Action a = domain_translated.list_actions.get(action);
@@ -280,32 +298,6 @@ public class Planner {
 
 	private static void addSpecialActions(Problem p, boolean ontop) {
 		int cost = 10;
-		//boolean deadEndsFound = false;
-        //Heuristic h = new Heuristic(p, null, jG, heuristic);
-        //Node initNode = new Node(p.getInitState());
-        //int hVal = h.getValue(initNode);
-        //if(hVal >= Integer.MAX_VALUE || hVal < 0){
-			/*BitSet acts = new BitSet();
-        	System.out.println("Dead-end!!!! of type 1 or 3");
-			addHumanInterventionActions(cost, ontop);
-			domain_translated.costFunction = true;
-			changes = true;
-			*//*for(VAction obs : p.hObservations){
-				acts.set(p.insertHumanObservation(obs, cost));
-				domain_translated.costFunction = true;
-			}*//*
-			h = new Heuristic(p, null, jG, heuristic);
-			h.useCosts();
-			initNode = new Node(p.getInitState());
-			hVal = h.getValueI(initNode,acts);
-			if(hVal < Integer.MAX_VALUE && hVal >= 0){
-				System.out.println("Corrected Problem.");
-				System.out.println("Excuse: " + h.getExcuse());
-			}
-        }else{
-			System.out.println("A priori there exists at least a weak solution.");
-
-		}*/
 		changes = true;
 		addHumanInterventionActions(cost, ontop);
 	}

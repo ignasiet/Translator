@@ -58,6 +58,7 @@ public class Heuristic {
                     }
                 }
                 rp.calculateHeuristic(node.getState(), landmarks);
+
                 return returnValue(rp, node);
             } else {
                 rp.calculateHeuristic(node.getState(), null);

@@ -163,7 +163,6 @@ public class MaxProb {
         //pendentState = null;
         if(node.holds(problem.getGoal())){
             node.value = 0;
-            node.goalPr = 1;
             probabilities.put((BitSet) node.getState().clone(), 1f);
             solved.add((BitSet) node.getState().clone());
             values.put((BitSet) node.getState().clone(), 0f);
@@ -356,8 +355,6 @@ public class MaxProb {
         probabilities.put((BitSet) child.getState().clone(), 0f);
         child.setHeuristic(dValue);
         child.value = dValue;
-        child.goalPr = 0;
-        //fringe.add(child);
     }
 
     private boolean isDeadEnd(fNode succ){
@@ -370,7 +367,7 @@ public class MaxProb {
 
     private void updateCostExpandedChild(fNode child, fNode father, VAction vAct){
         if(!values.containsKey(child.getState())) {
-            searchHelper.updateHeuristic(child, father, vAct, h);
+            searchHelper.updateHeuristic(child, father, vAct, h, dValue);
         }else{
             //int cost = vAct.cost;
             //if(vAct.isNondeterministic) cost += 1;
