@@ -15,6 +15,9 @@ public class Heuristic {
     private RelaxedGraphH rp;
     private String heuristic = "";
     private JustificationGraph justGraph;
+    private PartialPolicy policy;
+    private HashMap<BitSet, Float> values;
+    private HashSet<BitSet> solved;
 
     public Heuristic(Problem p, ArrayList<Integer> l, JustificationGraph jG, String h){
         problem = p;

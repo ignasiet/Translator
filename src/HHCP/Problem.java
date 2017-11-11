@@ -17,7 +17,7 @@ public class Problem {
     private BiMap<Integer, String> Predicates;
 
     private BitSet initState;
-    private BitSet humanActions = new BitSet();
+    public BitSet humanActions = new BitSet();
     private BitSet actionsUsed = new BitSet();
     //private BitSet goalSet;
     //private int[] goal;
@@ -32,6 +32,7 @@ public class Problem {
     public int[] cost;
     public int indexAxioms = 0;
     private int size;
+    public int humanIndex = -1;
 
     public Problem(ArrayList<String> predicates, Hashtable<String, ArrayList<String>> variables) {
         Predicates = HashBiMap.create();
@@ -51,6 +52,9 @@ public class Problem {
                  }
             }else {
                 Predicates.put(i, predicate);
+                if(predicate.contains("KHumanUsed")){
+                    humanIndex = i;
+                }
                 i++;
             }
         }
@@ -283,9 +287,11 @@ public class Problem {
         if(a.IsObservation) va.isObservation = true;
         if(isAxiom) vAxioms.add(va);
     	vaList.add(va);
-        //Set prec2act:
         va.index = vaList.indexOf(va);
-        if(a.Name.contains("Modify_human_")) humanActions.set(va.index);
+        if(a.Name.contains("Modify_human_")){
+            humanActions.set(va.index);
+        }
+        //Set prec2act:
         actionsIndex.put(va.getName(), va.index);
         setPrec2Act(va, prec);
         return va.index;

@@ -179,7 +179,7 @@ public class Solution {
         File file = new File("./solution.dot");
         try {
             toDot(new FileOutputStream(file), graph);
-            System.out.println("Dot file saved in solution.dot.\n Using graphviz: dot -Tpdf solution.dot -o plan.pdf");
+            System.out.println("Dot file saved in solution.dot.\nUsing graphviz: dot -Tpdf solution.dot -o plan.pdf");
         } catch (FileNotFoundException e1) {
             e1.printStackTrace();
         }

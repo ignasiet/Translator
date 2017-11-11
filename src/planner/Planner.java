@@ -29,6 +29,7 @@ public class Planner {
 	private static Hashtable<String, String> _ObservationSelected = new Hashtable<String, String>();
 	private static boolean changes = false;
 	private static String algorithm = "";
+	private static ArrayList<Action> newActions = new ArrayList<Action>();
 	
 	public static void startPlanner(String domain_file_path, String problem_file_path,
 									String file_out_path, String type, boolean ontop, String heuristic,
@@ -128,11 +129,21 @@ public class Planner {
 		if(algorithm.equals("lrtdp")) {
 			LRTDP lrtdp = new LRTDP(p, hP, new ArrayList<String>(), jG, heuristic, cost);
 		}else if(algorithm.equals("maxprob")){
-			HMaxProb mprob = new HMaxProb(p, hP, new ArrayList<String>(), jG, heuristic, cost);
-			//MaxProb mprob = new MaxProb(p, hP, new ArrayList<String>(), jG, heuristic, cost);
+			//HMaxProb mprob = new HMaxProb(p, hP, new ArrayList<String>(), jG, heuristic, cost);
+			MaxProb mprob = new MaxProb(p, hP, new ArrayList<String>(), jG, heuristic, cost);
+			insertHumanNewActions(p);
+			System.out.println("Finished.");
+			reMaxProb reMax = new reMaxProb(p, mprob.policyP, mprob.values, mprob.solved);
 		}else{
 			LCGRTDP lcrtdp = new LCGRTDP(p, hP, new ArrayList<String>(), jG, heuristic, cost);
 		}
+	}
+
+	private static void insertHumanNewActions(Problem p) {
+		for(Action act : newActions){
+			p.insertAction(act, false);
+		}
+		p.setVectorCosts();
 	}
 
 	private static Problem transformToVectors(Domain domain_translated, boolean isHeuristic, ArrayList<Action> listAxioms, Hashtable<String, ArrayList<String>> variables) {
@@ -236,7 +247,7 @@ public class Planner {
 			Action a_human = new Action();
 			a_human.Name = "Modify_human_" + element;
 			//400000000000 cost D
-			a_human.cost = cost;
+			//a_human.cost = 100;
 			if(element.startsWith("K")){
 				a_human._precond.add("K~" + element.substring(1));
 			}else{
@@ -249,7 +260,8 @@ public class Planner {
 			e._Effects.add("KHumanUsed");
 			e._Effects.add("~K~HumanUsed");
 			a_human._Effects.add(e);
-			domain_translated.list_actions.put(a_human.Name, a_human);
+			//domain_translated.list_actions.put(a_human.Name, a_human);
+			newActions.add(a_human);
 
 			if(!domain_translated.predicates_grounded.contains("KHumanUsed")){
 				domain_translated.predicates_grounded.add("KHumanUsed");
@@ -258,7 +270,7 @@ public class Planner {
 			domain_translated.predicates_posit.put("KHumanUsed", 1);
 			domain_translated.state.put("K~HumanUsed", 1);
 
-			ArrayList<Action> aList = new ArrayList<>();
+			/*ArrayList<Action> aList = new ArrayList<>();
 			for(String action : domain_translated.list_actions.keySet()){
 				Action a = domain_translated.list_actions.get(action);
 				if(a.affectedBranches(ParserHelper.complement(element))){
@@ -278,7 +290,7 @@ public class Planner {
 						//b._Branches.add(ParserHelper.complement("Knot-started"));
 					}
 				}
-			}
+			}*/
 		}
 	}
 

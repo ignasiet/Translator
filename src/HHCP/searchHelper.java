@@ -21,9 +21,6 @@ public class searchHelper {
     }
 
     public static Node initLayers(Node state, Problem p) {
-        /*if(state.parent != null) {
-            //state.parent.greedyAction = state.indexAction;
-        }*/
         Node n = new Node((BitSet) state.getState().clone());
         //1 Init list of scheduled actions: no action scheduled
         n.parent = state.parent;
@@ -53,9 +50,6 @@ public class searchHelper {
     }
 
     public static fNode initLayers(fNode state, Problem p) {
-        /*if(state.parent != null) {
-            //state.parent.greedyAction = state.indexAction;
-        }*/
         fNode n = new fNode((BitSet) state.getState().clone());
         //1 Init list of scheduled actions: no action scheduled
         n.parent = state.parent;
@@ -95,9 +89,9 @@ public class searchHelper {
         child.setCost(father.getCost() + va.cost);
         float heuristic = h.getValue(child);
         //Modified here: without human help : Float.MAX_VALUE
-        //if(heuristic >= Long.MAX_VALUE) heuristic = Float.MAX_VALUE;
+        if(heuristic >= Long.MAX_VALUE) heuristic = Float.MAX_VALUE;
         //with human help: dValue
-        if(heuristic >= Long.MAX_VALUE) heuristic = dValue;
+        //if(heuristic >= Long.MAX_VALUE) heuristic = dValue;
         child.setHeuristic(heuristic);
     }
 

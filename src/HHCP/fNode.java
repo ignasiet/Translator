@@ -305,7 +305,6 @@ public class fNode {
         }
     }
 
-
     public void updateActionCounter(int predicate, Problem problem, fNode node, BitSet scheduledActions){
         if(!problem.prec2Act.containsKey(predicate)) {
             return;
@@ -314,7 +313,7 @@ public class fNode {
         for(int index = 0; index< actions.length;index++){
             int actionIndex = actions[index];
             node.actionCounter[actionIndex]++;
-            if(actionIndex >= problem.indexAxioms) continue;
+            if(actionIndex >= problem.indexAxioms && !problem.humanActions.get(actionIndex)) continue;
             //node.actionCounter[actionIndex]++;
             if(problem.getVaList().get(actionIndex).getPreconditions().cardinality() == node.actionCounter[actionIndex]){
                 scheduledActions.set(actionIndex,true);
@@ -329,7 +328,6 @@ public class fNode {
     public BitSet getScheduledActions(){
         return scheduledActions;
     }
-
 
     public void cleanMemory(){
         axioms.clear();

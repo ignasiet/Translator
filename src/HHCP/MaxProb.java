@@ -9,27 +9,25 @@ import java.util.*;
  */
 public class MaxProb {
 
-    private HashSet<BitSet> solved = new HashSet<BitSet>();
+    public HashSet<BitSet> solved = new HashSet<BitSet>();
     private Problem problem;
-    private Heuristic h;
+    public  Heuristic h;
     private HashMap<BitSet, Float> visited;
     private HashSet<BitSet> deadEnds = new HashSet<BitSet>();
     private ArrayList<Integer> landmarks;
     private PriorityQueue<fNode> fringe;
     private HashMap<BitSet, ArrayList<Integer>> forbiddenActionPairs = new HashMap<BitSet, ArrayList<Integer>>();
-    private HashMap<BitSet, Float> values = new HashMap<BitSet, Float>();
+    public HashMap<BitSet, Float> values = new HashMap<BitSet, Float>();
     private HashMap<BitSet, Float> probabilities = new HashMap<BitSet, Float>();
-    private PartialPolicy policyP = new PartialPolicy();
+    public PartialPolicy policyP = new PartialPolicy();
     //private HashMap<BitSet, Integer> GreedyEnvelope = new HashMap<BitSet, Integer>();
-    private float dValue = 400000000000f;
-    private float AvoidValue = Float.MAX_VALUE;
-    private HashMap<BitSet, Integer> numberDE = new HashMap<>();
+    private float dValue = 100000000000f;
     private HashSet<BitSet> avoidable = new HashSet<BitSet>();
     private float epsilon = 0.005f;
 
     public MaxProb(Problem p, Problem heuristicP, ArrayList<String> l, JustificationGraph jG, String heuristic, long cost) {
         problem = p;
-        dValue = cost;
+        //dValue = cost;
         initHeuristic(heuristicP, l, jG, heuristic);
         double startTime = System.currentTimeMillis();
         while(!solved.contains(p.getInitState())){
@@ -67,7 +65,7 @@ public class MaxProb {
                 //node.value = Math.min();
                 update(node);
                 if(!node.successors.isEmpty() && successorsSolved(node)){
-                    System.out.println("Leaf states found.");
+                    //System.out.println("Leaf states found.");
                     update(node);
                     regressPlan(node);
                     break;
@@ -78,7 +76,7 @@ public class MaxProb {
             update(node);
             pickNextState(node);
             if(successorsSolved(node)){
-                System.out.println("Leaf states found.");
+                //System.out.println("Leaf states found.");
                 update(node);
                 regressPlan(node);
                 break;
@@ -348,7 +346,6 @@ public class MaxProb {
     }
 
     private void processDeadEnds(fNode child, fNode father, VAction vAct){
-        numberDE.put(child.getState(), 1);
         deadEnds.add(child.getState());
         solved.add((BitSet) child.getState().clone());
         values.put((BitSet) child.getState().clone(), dValue);
@@ -370,8 +367,6 @@ public class MaxProb {
         if(!values.containsKey(child.getState())) {
             searchHelper.updateHeuristic(child, father, vAct, h, dValue);
         }else{
-            //int cost = vAct.cost;
-            //if(vAct.isNondeterministic) cost += 1;
             searchHelper.updateCost(child, father,vAct,values.get(child.getState()));
         }
     }
@@ -452,5 +447,4 @@ public class MaxProb {
             if(!solved(succ.getState())) fringe.add(succ);
         }
     }
-
 }
