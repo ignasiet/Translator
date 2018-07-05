@@ -27,6 +27,7 @@ import org.jgrapht.graph.DirectedWeightedMultigraph;
 import parser.ParserHelper;
 import pddlElements.Action;
 import pddlElements.Axiom;
+import pddlElements.Branch;
 import pddlElements.Disjunction;
 import pddlElements.Domain;
 import pddlElements.Effect;
@@ -245,8 +246,8 @@ public class CausalGraph {
 	}
 
 	private void feedNonDetActions(Action a){
-		for(Effect effect : a._Effects){
-			for(String pred : effect._Effects){
+		for(Branch effect : a._Branches){
+			for(String pred : effect._Branches){
 				graph.addVertex(cleanStringDot(pred));
 				for(String precondition : a._precond){
 					graph.addVertex(cleanStringDot(precondition));
@@ -296,6 +297,7 @@ public class CausalGraph {
     	}
     }
 
+	@SuppressWarnings("rawtypes")
 	public HashSet<String> relevantLiterals(ArrayList<String> goalState){
 		HashSet<String> visited = new HashSet<String>();
 		//Start marking from node Dummy
@@ -323,6 +325,8 @@ public class CausalGraph {
 				fringe.add(vertex);
 			}
 		}
+		System.out.println("Number of total literals: " + literals.size());
+		System.out.println("Number of relevant literals: " + visited.size());
 		return cleanSetFluents(visited);
 	}
 

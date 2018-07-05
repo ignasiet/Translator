@@ -61,12 +61,12 @@ public class Planner {
 		//LANDMARKS
 		Landmarker l = new Landmarker(domain.state, domain.list_actions, domain.goalState);
 
-		cg = new CausalGraph(domain_translated);
-		HashSet<String> relevants = cg.relevantLiterals(domain_translated.goalState);
+		cg = new CausalGraph(domain);
+		HashSet<String> relevants = cg.relevantLiterals(domain.goalState);
 
 		if(changes) {
-			p = transformToVectors(domain_translated, false, null, domain.variables);
-			hP = transformToVectors(domain_translated, true, null, domain.variables);
+			p = transformToVectors(domain, false, null, domain.variables);
+			hP = transformToVectors(domain, true, null, domain.variables);
 		}
 		JustificationGraph jG = new JustificationGraph(hP);
 		jG.setRelevantLiterals(hP, relevants);
@@ -75,11 +75,11 @@ public class Planner {
 
 		//Simulator sim = new Simulator(null, p.getInitState(), p, hP);
 		if(algorithm.equals("lrtdp")) {
-			LRTDP lrtdp = new LRTDP(p, hP, new ArrayList<String>(), jG, heuristic, cost);
+			//LRTDP lrtdp = new LRTDP(p, hP, new ArrayList<String>(), jG, heuristic, cost);
 		}else if(algorithm.equals("maxprob")){
-			MaxProb mprob = new MaxProb(p, hP, new ArrayList<String>(), jG, heuristic, cost);
+			//MaxProb mprob = new MaxProb(p, hP, new ArrayList<String>(), jG, heuristic, cost);
 		}else{
-			LCGRTDP lcrtdp = new LCGRTDP(p, hP, new ArrayList<String>(), jG, heuristic, cost);
+			//LCGRTDP lcrtdp = new LCGRTDP(p, hP, new ArrayList<String>(), jG, heuristic, cost);
 		}
 	}
 
